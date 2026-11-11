@@ -15,10 +15,10 @@ FIELDS = ("species_id", "gbif_species_key", "scientific_name", "korean_name",
           "matched_scientific_name", "name_source")
 
 
-def import_species():
+def import_species(database=None):
     source = next(p for p in HERE.parent.glob("*.csv")
                   if unicodedata.normalize("NFC", p.name) == "제주 동물 종 ID 기준표.csv")
-    with source.open(encoding="utf-8-sig", newline="") as stream, closing(sqlite3.connect(DB)) as db, db:
+    with source.open(encoding="utf-8-sig", newline="") as stream, closing(sqlite3.connect(database or DB)) as db, db:
         db.execute("BEGIN")
         db.execute("DROP TABLE IF EXISTS species")
         db.execute("""CREATE TABLE species (
