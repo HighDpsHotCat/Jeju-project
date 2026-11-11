@@ -1,5 +1,21 @@
 # 제주 종 조회 API
 
+## 생태자연도 전체 데이터 동기화
+
+제주데이터허브에 로그인해 [생태자연도 정보](https://www.jejudatahub.net/data/view/data/864)를 프로젝트에 담습니다. 마이페이지 → 프로젝트 관리 → 해당 프로젝트에서 프로젝트키를 확인합니다. [공식 API 가이드](https://jejudatahub.net/api/file?id=2502&fileId=4644)
+
+PowerShell 7에서 저장소 루트를 열고 다음을 실행합니다. 입력한 키는 해당 터미널 세션의 환경변수에 설정됩니다.
+
+    $env:JEJU_DATAHUB_PROJECT_KEY = Read-Host "제주데이터허브 프로젝트키" -MaskInput
+    python backend/ecology.py
+    python backend/server.py
+
+동기화 명령은 필터 없이 페이지당 100건씩 조회해 전체 건수가 맞으면 backend/ecology.sqlite3에 반영합니다. 갱신할 때도 같은 명령을 사용합니다. 실패하면 기존 결과가 유지됩니다. 서버는 키 없이 마지막 동기화본을 읽습니다. 배포 환경에서는 동기화 작업의 비밀 환경변수에 키를 등록하고 서버와 같은 영구 저장소를 사용합니다.
+
+- 전체 첫 페이지: `GET /ecology?number=1&limit=100`
+- 습지 1등급: `GET /ecology?wetlandRank=1`
+- 응답: totCnt(필터 적용 건수), hasMore(다음 페이지 유무), data(원본 레코드 배열). 최초 동기화 전에는 HTTP 503입니다.
+
 ## 공모전 앱의 오프라인 DB
 
 빌드 전 `python -m pip install openpyxl`을 실행합니다. 생성되는 DB의 species는 제주 종 기준표, national_species는 국립생물자원관 국가생물종목록 v1.0의 통합 시트입니다. 분류군별 시트는 통합 시트와 중복되어 별도로 합산하지 않습니다. 전국 종 수를 제주 관찰 종 수로 집계하지 않습니다.

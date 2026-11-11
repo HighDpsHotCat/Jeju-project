@@ -7,6 +7,7 @@ from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
+import ecology
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "species.sqlite3"
@@ -51,6 +52,21 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         if url.path == "/":
             return self.reply(200, (HERE / "index.html").read_bytes(), "text/html")
+        if url.path == "/ecology":
+            params = parse_qs(url.query, keep_blank_values=True)
+            try:
+                number = int(params.get("number", ["1"])[0])
+                limit = int(params.get("limit", ["10"])[0])
+                rank = int(params["wetlandRank"][0]) if "wetlandRank" in params else None
+                if (not 1 <= number <= 2**31 or not 1 <= limit <= 100
+                        or rank not in (None, 1, 2, 3) or params.keys() - {"number", "limit", "wetlandRank"}):
+                    raise ValueError
+            except ValueError:
+                return self.reply(400, {"error": "number, limit(1~100), wetlandRank(1~3)를 확인하세요."})
+            try:
+                return self.reply(200, ecology.read_page(number, limit, rank))
+            except sqlite3.OperationalError:
+                return self.reply(503, {"error": "생태자연도 DB를 준비 중입니다. 동기화 후 다시 조회하세요."})
         with closing(sqlite3.connect(DB)) as db:
             db.row_factory = sqlite3.Row
             if url.path == "/species":
