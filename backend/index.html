@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제주 야생동물 도감</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f2e9;color:#163e34;font:16px/1.65 "Malgun Gothic",sans-serif}header,main{max-width:940px;margin:auto;padding:24px}header{border-bottom:1px solid #bdcbbc;font-weight:bold}h1{font-size:clamp(32px,6vw,60px);letter-spacing:-.06em;margin:25px 0}form{display:flex;gap:8px}input,button{font:inherit;border:1px solid #aebeb0;border-radius:8px;padding:10px 14px}input{min-width:0;flex:1}button{cursor:pointer;background:white;color:inherit}form button{background:#214e40;color:white}section{display:grid;grid-template-columns:1fr 1.5fr;gap:18px;margin-top:24px}article,aside{padding:24px;background:white;border-radius:14px}aside button{display:block;text-align:left;width:100%;margin:6px 0}aside{max-height:60vh;overflow:auto}h2{margin:0}dl{display:grid;grid-template-columns:auto 1fr;gap:12px}dd{margin:0}dt,small,em{color:#506859}@media(max-width:640px){section{grid-template-columns:1fr}aside{max-height:210px}}
+</style><header>제주 야생동물 도감</header><main><h1>제주의 종을 찾아보세요</h1>
+<form><input aria-label="종 검색" placeholder="국명, 학명 또는 종 ID" value="가마우지"><button>검색</button></form>
+<section><aside aria-label="검색 결과"></aside><article aria-live="polite"></article></section></main>
+<script>
+const list = document.querySelector('aside'), card = document.querySelector('article');
+let searchVersion = 0, detailVersion = 0;
+function node(tag, text) {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  return el;
+}
+async function get(url) {
+  const response = await fetch(url);
+  if (!response.ok) throw Error();
+  return response.json();
+}
+async function show(id) {
+  const version = ++detailVersion;
+  try {
+    const row = await get('/species/' + encodeURIComponent(id));
+    if (version !== detailVersion) return;
+    const dl = node('dl','');
+    for (const [label,key] of [['분류','class'],['원자료 관찰 기록 수','source_occurrence_count'],['학명 대조','name_match_status'],['국명 출처','name_source']]) {
+      dl.append(node('dt',label),node('dd',row[key] ?? '—'));
+    }
+    card.replaceChildren(node('small',row.species_id),node('h2',row.korean_name || row.scientific_name),node('em',row.scientific_name),dl);
+  } catch {
+    if (version === detailVersion) card.textContent = '상세 정보를 불러올 수 없습니다.';
+  }
+}
+async function search() {
+  const version = ++searchVersion;
+  ++detailVersion;
+  card.replaceChildren();
+  list.textContent = '검색 중…';
+  const q = document.querySelector('input').value.trim();
+  try {
+    const rows = await get('/species?q=' + encodeURIComponent(q));
+    if (version !== searchVersion) return;
+    list.replaceChildren(node('strong', rows.length ? '검색 결과 (최대 30종)' : '검색 결과가 없습니다.'));
+    for (const row of rows) {
+      const b = node('button',row.korean_name || row.scientific_name);
+      b.onclick = () => show(row.species_id);
+      list.append(b);
+    }
+    if (rows.length) show((rows.find(r => r.korean_name === q) || rows[0]).species_id);
+  } catch {
+    if (version === searchVersion) list.textContent = '검색에 실패했습니다. 다시 시도하세요.';
+  }
+}
+document.querySelector('form').onsubmit = e => {e.preventDefault(); search();};
+search();
+</script></html>
