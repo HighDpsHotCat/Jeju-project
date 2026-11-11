@@ -7,6 +7,7 @@ import sqlite3
 import tempfile
 
 from server import HERE, import_species
+from reference_data import import_references
 
 
 def build_catalog(output):
@@ -16,6 +17,8 @@ def build_catalog(output):
         import_species(database)
         with closing(sqlite3.connect(database)) as db:
             db.executescript((HERE / "device_schema.sql").read_text(encoding="utf-8"))
+            with db:
+                import_references(db)
         # Never overwrite a database that may already contain personal observations.
         os.link(database, output)
 
