@@ -3,6 +3,7 @@ import csv
 import json
 import sqlite3
 import unicodedata
+from contextlib import closing
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
@@ -17,7 +18,7 @@ FIELDS = ("species_id", "gbif_species_key", "scientific_name", "korean_name",
 def import_species():
     source = next(p for p in HERE.parent.glob("*.csv")
                   if unicodedata.normalize("NFC", p.name) == "제주 동물 종 ID 기준표.csv")
-    with source.open(encoding="utf-8-sig", newline="") as stream, sqlite3.connect(DB) as db:
+    with source.open(encoding="utf-8-sig", newline="") as stream, closing(sqlite3.connect(DB)) as db, db:
         db.execute("BEGIN")
         db.execute("DROP TABLE IF EXISTS species")
         db.execute("""CREATE TABLE species (
@@ -25,8 +26,16 @@ def import_species():
             korean_name TEXT, class TEXT, source_occurrence_count INTEGER,
             name_match_status TEXT, matched_scientific_name TEXT, name_source TEXT)""")
         rows = csv.DictReader(stream)
-        db.executemany("INSERT INTO species VALUES (?,?,?,?,?,?,?,?,?)",
-                       (tuple(row[k] for k in FIELDS) for row in rows))
+        missing = set(FIELDS).difference(rows.fieldnames or ())
+        if missing:
+            raise ValueError("CSV 필수 열 누락: " + ", ".join(sorted(missing)))
+        for row in rows:
+            if not (row["species_id"] or "").strip():
+                raise ValueError(f"CSV {rows.line_num}행에 종 ID가 없습니다.")
+            db.execute("INSERT INTO species VALUES (?,?,?,?,?,?,?,?,?)",
+                       tuple(row[k] for k in FIELDS))
+        if not db.execute("SELECT 1 FROM species LIMIT 1").fetchone():
+            raise ValueError("CSV에 종 데이터가 없습니다.")
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -42,13 +51,21 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         if url.path == "/":
             return self.reply(200, (HERE / "index.html").read_bytes(), "text/html")
-        with sqlite3.connect(DB) as db:
+        with closing(sqlite3.connect(DB)) as db:
             db.row_factory = sqlite3.Row
             if url.path == "/species":
-                query = parse_qs(url.query).get("q", [""])[0].strip().lower()
+                params = parse_qs(url.query, keep_blank_values=True)
+                query = params.get("q", [""])[0].strip().lower()
+                try:
+                    limit = int(params.get("limit", ["30"])[0])
+                    offset = int(params.get("offset", ["0"])[0])
+                    if not (1 <= limit <= 100 and 0 <= offset <= 2**63 - 1):
+                        raise ValueError
+                except ValueError:
+                    return self.reply(400, {"error": "limit은 1~100, offset은 0 이상의 64비트 정수를 입력하세요."})
                 rows = db.execute("""SELECT * FROM species WHERE instr(lower(species_id), ?)
                     OR instr(korean_name, ?) OR instr(lower(scientific_name), ?)
-                    ORDER BY species_id LIMIT 30""", (query, query, query))
+                    ORDER BY species_id LIMIT ? OFFSET ?""", (query, query, query, limit, offset))
                 return self.reply(200, [dict(row) for row in rows])
             if url.path.startswith("/species/"):
                 row = db.execute("SELECT * FROM species WHERE species_id=?",
