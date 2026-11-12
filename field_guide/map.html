@@ -22,13 +22,16 @@
     </header>
     <main class="atlas">
       <div class="map-title">
-        <div><h1>제주 관찰 지도</h1><p>여행할 지역을 고르고, 그곳에서 만날 수 있는 동물을 찾아보세요.</p></div>
-        <a class="guide-link" href="/"><i data-icon="book"></i>동물 도감</a>
+        <h1>제주 관찰 지도</h1>
+        <select id="layer-select" aria-label="지도에서 볼 내용">
+          <option value="visit">탐방 장소</option>
+          <option value="habitat">서식 기록</option>
+          <option value="records">관찰 기록</option>
+        </select>
       </div>
-      <div id="filters" class="filter-row" role="group" aria-label="지도에서 볼 내용"></div>
       <div class="atlas-layout" id="atlas-layout">
-        <section class="map-card paper" aria-label="관찰 지도와 지역 목록">
-          <div class="map-card-head"><h2><i data-icon="map"></i><span id="layer-title">탐방 장소</span></h2><span id="place-count"></span></div>
+        <section id="map-panel" class="map-card paper" aria-label="관찰 지도와 지역 목록">
+          <div class="map-card-head"><h2 id="map-heading" tabindex="-1"><span id="layer-title">지역 선택</span></h2><span id="place-count"></span></div>
           <p id="layer-note" class="layer-note"></p>
           <figure>
             <div class="map-frame">
@@ -47,7 +50,7 @@
               <button id="zoom" aria-pressed="false" aria-label="지도 확대">＋ 확대</button>
             </div>
             <div id="offshore"></div>
-            <figcaption>
+            <figcaption><details id="map-options"><summary>지도 설정</summary>
               <label class="grade-toggle"><input type="checkbox" id="grades" />생태·자연도 겹쳐 보기</label>
               <div class="legend" id="grade-legend" hidden>
                 <span><i style="--swatch:#508464"></i>1등급</span>
@@ -56,12 +59,11 @@
                 <span><i style="--swatch:#9690ac"></i>별도관리</span>
                 <span><i style="--swatch:#f3f0df"></i>도형 없음</span>
               </div>
-            </figcaption>
+            </details></figcaption>
           </figure>
           <div id="places" class="place-options" role="group" aria-label="모든 지도 항목"></div>
         </section>
-        <aside id="region-picker" class="paper" aria-label="여행 지역 선택" hidden></aside>
-        <article id="detail" class="detail paper" tabindex="-1"></article>
+        <article id="detail" class="detail paper" tabindex="-1" hidden></article>
       </div>
       <details class="source-note">
         <summary>지도와 관찰 기록의 출처</summary>

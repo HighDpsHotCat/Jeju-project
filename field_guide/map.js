@@ -1,9 +1,9 @@
 import { byId as $, node, icon } from "./ui.js";
 import { visits, habitats, speciesIds, guideUrl, mapUrl, loadRecords } from "./map-data.js";
-import { readVisit, renderVisits } from "./visit-map.js";
+import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 
 const layers = {
-  visit: ["탐방 장소", "지도에서 제주시 또는 서귀포시를 누르면 아래에 관광지와 생태공원이 열립니다."],
+  visit: ["지역 선택", "지도를 눌러 여행할 지역을 선택하세요."],
   habitat: ["서식 기록", "자료에 동물이 기록된 습지·해안·섬의 대략적인 위치입니다."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
@@ -105,14 +105,14 @@ function render() {
   $("layer-title").textContent = layers[layer][0];
   $("layer-note").textContent = layers[layer][1];
   $("place-count").textContent = layer === "records" ? (records ? Object.values(records).flat().length + "건" : "2개 행정시") : listing.length + "곳";
-  for (const b of $("filters").children) b.setAttribute("aria-pressed", String(b.dataset.layer === layer));
+  $("layer-select").value = layer;
   $("markers").replaceChildren();
   $("offshore").replaceChildren();
   $("places").replaceChildren();
   $("stage").dataset.layer = layer;
   const visiting = layer === "visit";
   $("atlas-layout").classList.toggle("visit-layout", visiting);
-  $("region-picker").hidden = !visiting;
+  $("map-panel").hidden = false;
   $("districts").style.display = visiting ? "block" : "none";
   $("places").hidden = visiting;
   $("detail").hidden = false;
@@ -152,18 +152,14 @@ async function fetchRecords() {
   try { records = await loadRecords(); } catch { recordError = true; }
   if (layer === "records") render();
 }
-for (const [id, [label]] of Object.entries(layers)) {
-  const b = node("button", label);
-  b.dataset.layer = id;
-  b.onclick = () => {
-    if (id === layer) return;
-    const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected?.habitat) :
-      id === "visit" && layer === "habitat" ? visits.find((p) => p.habitat === selected.id) : null;
-    if (id === "visit" && !equivalent) openTrip("/map", false);
-    else choose(id, (equivalent || (id === "habitat" ? habitats[0] : cities[0])).id);
-  };
-  $("filters").append(b);
-}
+$("layer-select").onchange = (event) => {
+  const id = event.target.value;
+  if (id === layer) return;
+  const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected?.habitat) :
+    id === "visit" && layer === "habitat" ? visits.find((p) => p.habitat === selected.id) : null;
+  if (id === "visit" && !equivalent) openTrip("/map");
+  else choose(id, (equivalent || (id === "habitat" ? habitats[0] : cities[0])).id);
+};
 $("grades").onchange = () => {
   $("stage").classList.toggle("show-grades", $("grades").checked);
   $("grade-legend").hidden = !$("grades").checked;
@@ -179,27 +175,73 @@ $("zoom").onclick = () => {
   view.scrollTo(active ? stage.offsetWidth * x / 1440 - view.clientWidth / 2 : 0,
     active ? stage.offsetHeight * y / 910 - view.clientHeight / 2 : 0);
 };
-window.addEventListener("popstate", () => { readSelection(); render(); });
-function openTrip(href, focus = true) {
-  const url = new URL(href, location.origin);
-  if (url.href !== location.href) history.pushState(null, "", url);
+function depth() {
+  return trip.place ? 2 : trip.zone ? 1 : 0;
+}
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+function navigate() {
+  const oldDepth = depth(), oldLayer = layer, oldTrip = trip;
   readSelection();
   render();
-  if (focus && !$("detail").hidden) {
-    $("detail").focus({preventScroll: true});
-    $("detail").scrollIntoView({block: "start"});
+  if (layer !== "visit") return;
+  const step = depth() - oldDepth;
+  const screen = trip.zone ? $("detail") : $("map-panel");
+  let focus = screen.querySelector("h2");
+  if (step < 0 && oldLayer === "visit") {
+    const id = oldTrip.place?.id || oldTrip.zone?.id;
+    focus = screen.querySelector('[data-return-to="' + id + '"]') || focus;
+  } else if (!step) {
+    focus = screen.querySelector(".kind-select") || focus;
   }
+  focus.focus({preventScroll: true});
+  if (reducedMotion.matches || (!step && oldLayer === layer)) return;
+  screen.getAnimations().forEach((a) => a.cancel());
+  const offset = step < 0 ? -32 : 36;
+  screen.animate([
+    {opacity: 0.25, transform: "translateX(" + offset + "px) scale(.985)"},
+    {opacity: 1, transform: "translateX(0) scale(1)"}
+  ], {duration: 235, easing: "cubic-bezier(.2,.75,.25,1)"});
+  const rows = screen.querySelectorAll(".trip-card, .animal-entry, .district-label");
+  Array.from(rows).slice(0, 5).forEach((row, index) => {
+    row.animate([{opacity: 0}, {opacity: 1}], {
+      duration: 170, delay: 24 + index * 22, fill: "backwards"
+    });
+  });
 }
+window.addEventListener("popstate", navigate);
+function openTrip(href, action = "open") {
+  const url = new URL(href, location.origin);
+  const state = history.state || {};
+  if (action === "back") {
+    const parent = state.tripParent && new URL(state.tripParent, location.origin);
+    const target = readVisit(url.searchParams);
+    const previous = parent && readVisit(parent.searchParams);
+    if (previous && previous.zone === target.zone && previous.kind === target.kind && !previous.place) {
+      history.back();
+      return;
+    }
+    history.replaceState(null, "", url);
+  } else if (action === "filter") {
+    history.replaceState({...state, tripScroll: 0}, "", url);
+  } else if (url.href !== location.href) {
+    const parent = location.pathname + location.search;
+    const list = $("detail").querySelector(".trip-scroll");
+    if (layer === "visit" && trip.zone && !trip.place && list)
+      history.replaceState({...state, tripScroll: list.scrollTop}, "");
+    history.pushState({tripParent: layer === "visit" ? parent : null}, "", url);
+  }
+  navigate();
+}
+$("detail").addEventListener("change", (event) => {
+  if (event.target.matches(".kind-select")) openTrip(filterUrl(trip, event.target.value), "filter");
+});
 $("atlas-layout").addEventListener("click", (event) => {
   if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-  const target = event.target.closest("[data-trip], [data-trip-zone]");
+  const target = event.target.closest("[data-trip], #districts path[data-zone]");
   if (!target) return;
   event.preventDefault();
-  openTrip(target.dataset.tripZone ? "/map?layer=visit&zone=" + target.dataset.tripZone : target.href);
+  openTrip(target.dataset.zone ? "/map?layer=visit&zone=" + target.dataset.zone : target.href, target.dataset.trip);
 });
 readSelection();
 render();
-if (layer === "visit" && trip.zone && new URLSearchParams(location.search).has("place")) {
-  requestAnimationFrame(() => $("detail").scrollIntoView({block: "start"}));
-}
 fetchRecords();
