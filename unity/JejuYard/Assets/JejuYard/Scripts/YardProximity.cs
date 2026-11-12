@@ -11,7 +11,7 @@ namespace Jeju.Yard
         const float LandReach = 2.1f;
         const float ShoreReach = 4.85f;
         const float CottageReach = 1.9f;
-        const float LeaveMargin = .5f;
+        const float AttentionLeaveMargin = .5f;
         const float FocusMargin = .12f;
 
         sealed class Resident
@@ -79,7 +79,7 @@ namespace Jeju.Yard
                 var atWaist = new Vector3(position.x, houseCentre.y, position.z);
                 Vector3 wall = cottage.ClosestPoint(atWaist);
                 float distance = GroundDistance(position, wall);
-                nearCottage = distance <= CottageReach + (nearCottage ? LeaveMargin : 0f);
+                nearCottage = distance <= CottageReach;
                 if (nearCottage)
                 {
                     best = distance / CottageReach - (focusCottage ? FocusMargin : 0f);
@@ -98,15 +98,16 @@ namespace Jeju.Yard
             foreach (var resident in residents)
             {
                 Transform point = resident.actor.InteractionPoint;
-                bool visible = point != null && point.gameObject.activeInHierarchy;
+                bool visible = resident.actor.isActiveAndEnabled && point != null && point.gameObject.activeInHierarchy;
                 float distance = visible ? GroundDistance(position, point.position) : float.PositiveInfinity;
-                bool near = distance <= resident.reach + (resident.near ? LeaveMargin : 0f);
+                // A resident can keep looking briefly beyond reach. The button follows actual reach.
+                bool near = distance <= resident.reach + (resident.near ? AttentionLeaveMargin : 0f);
                 if (near != resident.near)
                 {
                     resident.actor.SetObserver(near ? player : null);
                     resident.near = near;
                 }
-                if (!near) continue;
+                if (distance > resident.reach) continue;
                 float score = distance / resident.reach - (focused == resident ? FocusMargin : 0f);
                 if (score >= best) continue;
                 best = score;
