@@ -5,9 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 enum GuideRegion {
-  combined('제주 · 전국'),
-  jeju('제주'),
-  national('전국');
+  jeju('제주 목격 생물'),
+  national('전국 도감');
 
   const GuideRegion(this.label);
   final String label;
@@ -54,6 +53,7 @@ class Animal {
     this.korean,
     this.scientific,
     this.taxon,
+    this.region,
   );
 
   final String jejuId;
@@ -61,6 +61,7 @@ class Animal {
   final String korean;
   final String scientific;
   final String taxon;
+  final GuideRegion region;
 
   String get name => korean.isEmpty ? scientific : korean;
   String? get photo {
@@ -80,15 +81,18 @@ class Animal {
     _ => taxon.isEmpty ? '기타 동물' : taxon,
   };
 
-  bool matches(GuideRegion region, AnimalGroup group, String query) {
-    if (region == GuideRegion.jeju && jejuId.isEmpty) return false;
-    if (region == GuideRegion.national && nationalId.isEmpty) return false;
+  bool isDiscovered(Set<String> ids) =>
+      (jejuId.isNotEmpty && ids.contains(jejuId)) ||
+      (nationalId.isNotEmpty &&
+          (ids.contains(nationalId) || ids.contains('KTSN-$nationalId')));
+
+  bool matches(AnimalGroup group, String query) {
     if (group != AnimalGroup.all && group.taxon != taxon) return false;
     return query.isEmpty ||
         korean.contains(query) ||
         scientific.toLowerCase().contains(query) ||
         jejuId.toLowerCase().contains(query) ||
-        nationalId.contains(query);
+        (nationalId.isNotEmpty && 'ktsn-$nationalId'.contains(query));
   }
 }
 
@@ -103,7 +107,14 @@ List<Animal> decodeGuideCatalog(Uint8List compressed) {
       .convert(tsv)
       .map((line) {
         final fields = line.split('\t');
-        return Animal(fields[0], fields[1], fields[2], fields[3], fields[4]);
+        return Animal(
+          fields[0],
+          fields[1],
+          fields[2],
+          fields[3],
+          fields[4],
+          GuideRegion.values.byName(fields[5]),
+        );
       })
       .toList(growable: false);
 }

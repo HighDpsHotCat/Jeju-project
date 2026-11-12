@@ -25,7 +25,7 @@ class AnimalGuide extends StatefulWidget {
 class _AnimalGuideState extends State<AnimalGuide> {
   final _search = TextEditingController();
   String _query = '';
-  GuideRegion _region = GuideRegion.combined;
+  GuideRegion _region = GuideRegion.jeju;
   AnimalGroup _group = AnimalGroup.all;
 
   @override
@@ -44,14 +44,13 @@ class _AnimalGuideState extends State<AnimalGuide> {
           future: widget.catalog,
           builder: (context, snapshot) {
             final animals = snapshot.data ?? const <Animal>[];
-            final filtered =
-                _region == GuideRegion.combined &&
-                    _group == AnimalGroup.all &&
-                    _query.isEmpty
-                ? animals
-                : animals
-                      .where((a) => a.matches(_region, _group, _query))
-                      .toList(growable: false);
+            final regional = animals.where((a) => a.region == _region);
+            final filtered = regional
+                .where((a) => a.matches(_group, _query))
+                .toList(growable: false);
+            final discoveredCount = regional
+                .where((a) => a.isDiscovered(widget.discovered))
+                .length;
             return CustomScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
@@ -109,7 +108,9 @@ class _AnimalGuideState extends State<AnimalGuide> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    _region.label,
+                                    _region == GuideRegion.jeju
+                                        ? '제주 목격'
+                                        : _region.label,
                                     style: const TextStyle(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -197,7 +198,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       ),
                       const SizedBox(height: 14),
                       _DiscoveryBanner(
-                        total: widget.discovered.length,
+                        total: discoveredCount,
                         examples: widget.examples,
                       ),
                       const SizedBox(height: 16),
@@ -276,10 +277,9 @@ class _AnimalGuideState extends State<AnimalGuide> {
                             onPressed: () => setState(() {
                               _search.clear();
                               _query = '';
-                              _region = GuideRegion.combined;
                               _group = AnimalGroup.all;
                             }),
-                            child: const Text('전체 도감 보기'),
+                            child: const Text('검색·분류 초기화'),
                           ),
                         ],
                       ),
@@ -292,9 +292,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final animal = filtered[index];
-                        final found =
-                            widget.discovered.contains(animal.jejuId) ||
-                            widget.discovered.contains(animal.nationalId);
+                        final found = animal.isDiscovered(widget.discovered);
                         return _AnimalRow(
                           animal: animal,
                           found: found,
@@ -564,7 +562,7 @@ class _AnimalDetail extends StatelessWidget {
           child: Text(animal.description),
         ),
       const Divider(height: 28),
-      if (animal.jejuId.isNotEmpty) Text('제주 관찰 기록  ${animal.jejuId}'),
+      if (animal.jejuId.isNotEmpty) Text('제주 종 기준표  ${animal.jejuId}'),
       if (animal.nationalId.isNotEmpty) Text('국가생물종목록  ${animal.nationalId}'),
       const SizedBox(height: 14),
       Row(
