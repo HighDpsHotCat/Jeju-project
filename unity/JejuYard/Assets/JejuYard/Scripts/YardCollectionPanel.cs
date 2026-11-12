@@ -12,6 +12,7 @@ namespace Jeju.Yard
         public sealed class Entry
         {
             public string id, name;
+            public string firstMetDate, firstMetLocation;
             public Texture preview;
             public bool placed, supported = true;
         }
@@ -21,6 +22,7 @@ namespace Jeju.Yard
         static int closedFrame = -10;
         public static bool BlocksYardInput => (active != null && active.IsOpen) || Time.frameCount == closedFrame;
         public bool IsOpen { get; private set; }
+        public bool IsDetailOpen => selectedId != null;
         public event Action Opening;
 
         IReadOnlyList<Entry> entries = Empty;
@@ -33,10 +35,18 @@ namespace Jeju.Yard
         FontAsset typeface;
 
         VisualElement root, overlay, sheet, footer, emptyState;
+        VisualElement detail, detailSheet, detailStage;
+        Image detailModel;
+        PawMark detailPlaceholder;
+        Label detailName, detailDate, detailLocation;
+        Button detailClose, detailAction;
+        ScrollView detailBody, gridScroller;
+        Vector2 savedGridOffset;
+        string selectedId;
         ListView grid;
         Button launcher, closeButton, importButton, demoButton;
         Label title, counts, notice, emptyTitle;
-        const int RowHeight = 180;
+        const int RowHeight = 151;
         int columns = 2, screenW, screenH;
         Rect safeArea;
 
@@ -79,6 +89,7 @@ namespace Jeju.Yard
             }
             else
             {
+                CloseDetail(false);
                 closedFrame = Time.frameCount;
                 launcher.Focus();
             }
@@ -101,6 +112,7 @@ namespace Jeju.Yard
             }
             SizeSheet();
             grid.RefreshItems();
+            if (IsDetailOpen) RefreshDetail();
         }
 
         void OnEnable()
@@ -141,6 +153,7 @@ namespace Jeju.Yard
         void OnDisable()
         {
             if (active == this) active = null;
+            CloseDetail(false);
             IsOpen = false;
             if (uiObject != null) Destroy(uiObject);
             if (settings != null) Destroy(settings);
@@ -155,7 +168,11 @@ namespace Jeju.Yard
             if (root == null) return;
             if (screenW != Screen.width || screenH != Screen.height || safeArea != Screen.safeArea)
                 ApplyLayout();
-            if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) SetOpen(false);
+            if (IsOpen && Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (IsDetailOpen) CloseDetail();
+                else SetOpen(false);
+            }
         }
 
         void Build()
@@ -193,6 +210,7 @@ namespace Jeju.Yard
                 selectionType = SelectionType.None, showBorder = false, reorderable = false
             };
             grid.AddToClassList("animal-grid");
+            gridScroller = grid.Q<ScrollView>();
             sheet.Add(grid);
 
             emptyState = Element("empty-state");
@@ -214,7 +232,114 @@ namespace Jeju.Yard
             footer.Add(demoButton);
             sheet.Add(footer);
             UpdateActions();
+            BuildDetail();
             Show(overlay, false);
+        }
+
+        void BuildDetail()
+        {
+            detail = Element("detail-backdrop");
+            detail.name = "animal-detail";
+            overlay.Add(detail);
+            detail.RegisterCallback<ClickEvent>(evt =>
+            {
+                if (evt.target == detail) CloseDetail();
+                evt.StopPropagation();
+            });
+            detailSheet = Element("detail-sheet");
+            detailSheet.name = "detail-sheet";
+            detail.Add(detailSheet);
+
+            detailBody = new ScrollView(ScrollViewMode.Vertical);
+            detailBody.AddToClassList("detail-body");
+            var content = Element("detail-content");
+            detailBody.Add(content);
+            detailSheet.Add(detailBody);
+            detailStage = Element("detail-stage");
+            detailModel = new Image { name = "detail-model", scaleMode = ScaleMode.ScaleToFit, pickingMode = PickingMode.Ignore };
+            detailModel.AddToClassList("detail-model");
+            detailPlaceholder = new PawMark();
+            detailPlaceholder.AddToClassList("detail-placeholder");
+            detailStage.Add(detailModel);
+            detailStage.Add(detailPlaceholder);
+            content.Add(detailStage);
+
+            detailName = MakeLabel("", "detail-name");
+            detailName.name = "detail-name";
+            content.Add(detailName);
+            var records = Element("encounter-record");
+            detailDate = AddRecord(records, "처음 만난 날", "detail-first-met-date");
+            detailLocation = AddRecord(records, "처음 만난 장소", "detail-first-met-location");
+            content.Add(records);
+
+            var actions = Element("detail-actions");
+            detailAction = MakeButton("", "detail-action", "detail-action", () => { if (IsDetailOpen) toggle?.Invoke(selectedId); });
+            actions.Add(detailAction);
+            detailSheet.Add(actions);
+            detailClose = MakeButton("", "detail-close", "close-button", () => CloseDetail());
+            detailClose.AddToClassList("detail-close");
+            detailClose.tooltip = "동물 정보 닫기";
+            detailClose.Add(new CloseMark());
+            detailSheet.Add(detailClose);
+            Show(detail, false);
+        }
+
+        Label AddRecord(VisualElement parent, string caption, string id)
+        {
+            var row = Element("encounter-row");
+            row.Add(MakeLabel(caption, "encounter-label"));
+            var value = MakeLabel("", "encounter-value");
+            value.name = id;
+            row.Add(value);
+            parent.Add(row);
+            return value;
+        }
+
+        void OpenDetail(string id)
+        {
+            if (!IsOpen || id == null || IsDetailOpen) return;
+            selectedId = id;
+            savedGridOffset = gridScroller.scrollOffset;
+            sheet.SetEnabled(false);
+            Show(detail, true);
+            detailBody.scrollOffset = Vector2.zero;
+            RefreshDetail();
+            if (IsDetailOpen) detailClose.Focus();
+        }
+
+        void RefreshDetail()
+        {
+            foreach (var entry in entries)
+            {
+                if (entry.id != selectedId) continue;
+                detailName.text = entry.name;
+                detailDate.text = string.IsNullOrWhiteSpace(entry.firstMetDate) ? "기록 없음" : entry.firstMetDate;
+                detailLocation.text = string.IsNullOrWhiteSpace(entry.firstMetLocation) ? "기록 없음" : entry.firstMetLocation;
+                var studio = GetComponent<YardModelPortraits>();
+                detailModel.image = studio != null ? studio.Inspect(entry.preview) ?? entry.preview : entry.preview;
+                Show(detailPlaceholder, detailModel.image == null);
+                detailAction.text = entry.placed ? "내보내기" : entry.supported ? "초대하기" : "모델 준비 중";
+                detailAction.SetEnabled(entry.supported || entry.placed);
+                return;
+            }
+            CloseDetail();
+        }
+
+        void CloseDetail(bool restoreFocus = true)
+        {
+            if (!IsDetailOpen) return;
+            string previous = selectedId;
+            selectedId = null;
+            detailModel.image = null;
+            var studio = GetComponent<YardModelPortraits>();
+            if (studio != null) studio.Inspect(null);
+            Show(detail, false);
+            sheet.SetEnabled(true);
+            if (restoreFocus)
+            {
+                (grid.Q<Button>("animal-" + previous) ?? closeButton).Focus();
+                gridScroller.scrollOffset = savedGridOffset;
+            }
         }
 
         void UpdateActions()
@@ -238,12 +363,19 @@ namespace Jeju.Yard
             float right = (screenW - safe.xMax) / px, top = (screenH - safe.yMax) / px;
             launcher.style.right = right + 16;
             launcher.style.top = top + 16;
-            overlay.style.paddingLeft = safe.xMin / px;
-            overlay.style.paddingRight = right;
-            overlay.style.paddingTop = top;
-            overlay.style.paddingBottom = safe.yMin / px;
+            foreach (var backdrop in new[] { overlay, detail })
+            {
+                backdrop.style.paddingLeft = safe.xMin / px;
+                backdrop.style.paddingRight = right;
+                backdrop.style.paddingTop = top;
+                backdrop.style.paddingBottom = safe.yMin / px;
+            }
             float sheetWidth = Mathf.Min(632f, width - 24f);
             sheet.style.width = sheetWidth;
+            float detailHeight = Mathf.Min(466f, safe.height / px - 24f);
+            detailSheet.style.height = detailHeight;
+            detailSheet.style.width = Mathf.Min(410f, width - 32f);
+            detailStage.style.height = Mathf.Clamp(detailHeight - 224f, 110f, 242f);
             int newColumns = sheetWidth < 485 ? 2 : 3;
             if (newColumns != columns)
             {
@@ -265,11 +397,10 @@ namespace Jeju.Yard
 
         sealed class Tile
         {
-            public VisualElement root, stage;
+            public Button root;
             public Image model;
             public PawMark placeholder;
             public Label name;
-            public Button action;
             public string id;
         }
 
@@ -278,18 +409,20 @@ namespace Jeju.Yard
             var row = Element("animal-row");
             for (int i = 0; i < columns; i++)
             {
-                var tile = new Tile { root = Element("animal-tile"), stage = Element("model-stage") };
+                var tile = new Tile();
+                tile.root = MakeButton("", "", "animal-tile", () => OpenDetail(tile.id));
+                var stage = Element("model-stage");
+                stage.pickingMode = PickingMode.Ignore;
                 tile.model = new Image { scaleMode = ScaleMode.ScaleToFit, pickingMode = PickingMode.Ignore };
                 tile.model.AddToClassList("model-view");
                 tile.placeholder = new PawMark();
                 tile.placeholder.AddToClassList("model-placeholder");
-                tile.stage.Add(tile.model);
-                tile.stage.Add(tile.placeholder);
+                stage.Add(tile.model);
+                stage.Add(tile.placeholder);
                 tile.name = MakeLabel("", "animal-name");
-                tile.action = MakeButton("", "", "animal-action", () => { if (tile.id != null) toggle?.Invoke(tile.id); });
-                tile.root.Add(tile.stage);
+                tile.name.pickingMode = PickingMode.Ignore;
+                tile.root.Add(stage);
                 tile.root.Add(tile.name);
-                tile.root.Add(tile.action);
                 tile.root.userData = tile;
                 row.Add(tile.root);
             }
@@ -304,18 +437,14 @@ namespace Jeju.Yard
                 int i = index * columns + col;
                 bool visible = i < entries.Count;
                 tile.root.style.visibility = visible ? Visibility.Visible : Visibility.Hidden;
-                if (!visible) { tile.id = null; tile.model.image = null; continue; }
+                if (!visible) { tile.id = null; tile.root.name = ""; tile.model.image = null; continue; }
                 var e = entries[i];
                 tile.id = e.id;
                 tile.root.name = "animal-" + e.id;
                 tile.name.text = e.name;
-                tile.name.tooltip = e.name;
+                tile.root.tooltip = e.name;
                 tile.model.image = e.preview;
                 Show(tile.placeholder, e.preview == null);
-                tile.root.EnableInClassList("in-yard", e.placed);
-                tile.action.name = "toggle-" + e.id;
-                tile.action.text = e.placed ? "내보내기" : e.supported ? "들여오기" : "모델 준비 중";
-                tile.action.SetEnabled(e.supported || e.placed);
             }
         }
 
@@ -328,7 +457,7 @@ namespace Jeju.Yard
 
         Label MakeLabel(string text, string css)
         {
-            var e = new Label(text);
+            var e = new Label(text) { enableRichText = false };
             e.AddToClassList(css);
             ApplyFont(e);
             return e;

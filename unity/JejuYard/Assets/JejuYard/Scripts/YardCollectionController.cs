@@ -106,7 +106,13 @@ namespace Jeju.Yard
         {
             string json = File.ReadAllText(path);
             if (source == next && activeJson == json) return;
-            if (YardGuideSnapshot.TryParse(json, out var snapshot)) Apply(snapshot, next, json);
+            if (YardGuideSnapshot.TryParse(json, out var snapshot, out bool cleaned))
+            {
+                bool migrateImport = next == Source.Imported && cleaned;
+                if (migrateImport) json = JsonUtility.ToJson(snapshot);
+                Apply(snapshot, next, json);
+                if (migrateImport) YardGuideSnapshot.SaveImport(json);
+            }
             else
             {
                 // A damaged guide must not turn into a demo or erase a saved placement.
@@ -120,13 +126,14 @@ namespace Jeju.Yard
         public void LoadGuideSnapshot(string json)
         {
             if (File.Exists(YardGuideSnapshot.LinkedPath)) { Reload(); return; }
-            if (!YardGuideSnapshot.TryParse(json,out var snapshot))
+            if (!YardGuideSnapshot.TryParse(json, out var snapshot, out bool cleaned))
             {
                 panel.ShowNotice("도감 앱에서 ‘마당으로 보내기’를 먼저 눌러 주세요.");
                 return;
             }
             try
             {
+                if (cleaned) json = JsonUtility.ToJson(snapshot);
                 YardGuideSnapshot.SaveImport(json);
                 Apply(snapshot,Source.Imported,json);
                 panel.ShowNotice("도감을 불러왔어요.");
@@ -243,6 +250,7 @@ namespace Jeju.Yard
                     cards.Add(new YardCollectionPanel.Entry
                     {
                         id = animal.id, name = animal.name, placed = placed.Contains(animal.id),
+                        firstMetDate = animal.DisplayDate, firstMetLocation = animal.firstMetLocation,
                         supported = supported,
                         preview = panel.IsOpen && supported ? portraits.Get(animal.modelKey,models[animal.modelKey]) : null
                     });

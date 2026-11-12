@@ -12,6 +12,8 @@ namespace Jeju.Yard
         readonly Dictionary<string, Portrait> byKey = new Dictionary<string, Portrait>();
         readonly List<Portrait> portraits = new List<Portrait>();
         Camera lens;
+        Portrait inspected;
+        RenderTexture closeUp;
         int nextPortrait;
         float nextDraw;
 
@@ -76,13 +78,7 @@ namespace Jeju.Yard
             }
             pivot.SetActive(false);
 
-            var descriptor = new RenderTextureDescriptor(Width, Height, RenderTextureFormat.ARGB32, 16) { msaaSamples = 4 };
-            descriptor.msaaSamples = SystemInfo.GetRenderTextureSupportedMSAASampleCount(descriptor);
-            var target = new RenderTexture(descriptor)
-            {
-                name = modelKey + " portrait", filterMode = FilterMode.Bilinear
-            };
-            target.Create();
+            var target = CreateTarget(Width, Height, modelKey + " portrait");
             var portrait = new Portrait
             {
                 pivot = pivot, texture = target, bounds = bounds,
@@ -90,8 +86,37 @@ namespace Jeju.Yard
             };
             byKey.Add(modelKey, portrait);
             portraits.Add(portrait);
-            Draw(portrait, 52f);
+            Draw(portrait, target, 52f);
             return target;
+        }
+
+        static RenderTexture CreateTarget(int width, int height, string name)
+        {
+            var descriptor = new RenderTextureDescriptor(width, height, RenderTextureFormat.ARGB32, 16) { msaaSamples = 4 };
+            descriptor.msaaSamples = SystemInfo.GetRenderTextureSupportedMSAASampleCount(descriptor);
+            var target = new RenderTexture(descriptor) { name = name, filterMode = FilterMode.Bilinear };
+            target.Create();
+            return target;
+        }
+
+        // The larger view reuses the card's mesh and camera. Only the chosen animal is redrawn.
+        public Texture Inspect(Texture thumbnail)
+        {
+            if (inspected != null && inspected.texture == thumbnail) return closeUp;
+            inspected = null;
+            if (thumbnail != null)
+            {
+                foreach (var portrait in portraits)
+                    if (portrait.texture == thumbnail) { inspected = portrait; break; }
+            }
+            if (inspected == null)
+            {
+                if (closeUp != null) { closeUp.Release(); Destroy(closeUp); closeUp = null; }
+                return thumbnail;
+            }
+            if (closeUp == null) closeUp = CreateTarget(560, 384, "Animal detail");
+            Draw(inspected, closeUp, 41f);
+            return closeUp;
         }
 
         static Transform SetPose(GameObject copy)
@@ -110,26 +135,32 @@ namespace Jeju.Yard
         void LateUpdate()
         {
             if (!YardCollectionPanel.BlocksYardInput || portraits.Count == 0 || Time.unscaledTime < nextDraw) return;
+            if (inspected != null)
+            {
+                Draw(inspected, closeUp, 41f + 13f * Mathf.Sin(Time.unscaledTime * .5f));
+                nextDraw = Time.unscaledTime + 1f / 20f;
+                return;
+            }
             // Stagger the portraits so even a full grid costs at most one small render per frame.
             var portrait = portraits[nextPortrait];
             float angle = 52f + 16f * Mathf.Sin(Time.unscaledTime * .52f);
-            Draw(portrait, angle);
+            Draw(portrait, portrait.texture, angle);
             nextPortrait = (nextPortrait + 1) % portraits.Count;
             nextDraw = Time.unscaledTime + 1f / 30f;
         }
 
-        void Draw(Portrait portrait, float angle)
+        void Draw(Portrait portrait, RenderTexture target, float angle)
         {
             var direction = Quaternion.Euler(-portrait.elevation, angle, 0f) * Vector3.forward;
             var rotation = Quaternion.LookRotation(-direction, Vector3.up);
             var extent = portrait.bounds.extents;
             float Project(Vector3 axis) => Mathf.Abs(axis.x)*extent.x + Mathf.Abs(axis.y)*extent.y + Mathf.Abs(axis.z)*extent.z;
-            lens.aspect = (float)Width / Height;
+            lens.aspect = (float)target.width / target.height;
             float halfHeight = Project(rotation * Vector3.up);
             float halfWidth = Project(rotation * Vector3.right);
             lens.orthographicSize = Mathf.Max(.1f, Mathf.Max(halfHeight, halfWidth / lens.aspect)) * 1.08f;
             lens.transform.SetPositionAndRotation(portrait.bounds.center + direction * 8f, rotation);
-            lens.targetTexture = portrait.texture;
+            lens.targetTexture = target;
             var previous = RenderTexture.active;
             portrait.pivot.SetActive(true);
             try { lens.Render(); }
@@ -143,6 +174,7 @@ namespace Jeju.Yard
 
         void OnDestroy()
         {
+            Inspect(null);
             foreach (var portrait in portraits)
             {
                 portrait.texture.Release();

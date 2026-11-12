@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'catalog.dart';
+import 'encounter.dart';
 import 'style.dart';
 
 class AnimalGuide extends StatefulWidget {
@@ -19,7 +20,7 @@ class AnimalGuide extends StatefulWidget {
   final bool examples;
   final VoidCallback onBack;
   final VoidCallback onRetry;
-  final ValueChanged<Animal>? onRegister;
+  final void Function(Animal, FirstEncounter)? onRegister;
   final VoidCallback? onSendToYard;
 
   @override
@@ -459,7 +460,7 @@ class _AnimalRow extends StatelessWidget {
   final bool examples;
   final double photoWidth;
   final double badgeWidth;
-  final ValueChanged<Animal>? onRegister;
+  final void Function(Animal, FirstEncounter)? onRegister;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -468,7 +469,7 @@ class _AnimalRow extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
-            final register = await showFieldSheet<bool>(
+            final encounter = await showFieldSheet<FirstEncounter>(
               context,
               _AnimalDetail(
                 animal: animal,
@@ -477,7 +478,7 @@ class _AnimalRow extends StatelessWidget {
                 canRegister: !found && onRegister != null,
               ),
             );
-            if (register == true) onRegister?.call(animal);
+            if (encounter != null) onRegister?.call(animal, encounter);
           },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
@@ -597,14 +598,93 @@ class _AnimalDetail extends StatelessWidget {
           _Registration(found),
         ],
       ),
-      if (canRegister) ...[
-        const SizedBox(height: 12),
-        FilledButton.icon(
-          onPressed: () => Navigator.pop(context, true),
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('직접 관찰한 동물로 등록'),
+      if (canRegister) ...[const SizedBox(height: 12), const _EncounterForm()],
+    ],
+  );
+}
+
+class _EncounterForm extends StatefulWidget {
+  const _EncounterForm();
+
+  @override
+  State<_EncounterForm> createState() => _EncounterFormState();
+}
+
+class _EncounterFormState extends State<_EncounterForm> {
+  DateTime? day = DateTime.now();
+  String? city, district;
+
+  Future<void> _pickDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: day ?? DateTime.now(),
+      firstDate: DateTime(1),
+      lastDate: DateTime.now(),
+      helpText: '처음 만난 날짜',
+    );
+    if (selected != null && mounted) setState(() => day = selected);
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        children: [
+          const Text('처음 만난 날짜'),
+          Expanded(
+            child: TextButton(
+              onPressed: _pickDate,
+              child: Text(day == null ? '날짜 선택' : calendarDay(day!)),
+            ),
+          ),
+          if (day != null)
+            IconButton(
+              tooltip: '날짜 모름',
+              onPressed: () => setState(() => day = null),
+              icon: const Icon(Icons.clear, size: 18),
+            ),
+        ],
+      ),
+      DropdownButtonFormField<String>(
+        decoration: const InputDecoration(labelText: '처음 만난 장소 (선택)'),
+        hint: const Text('시 선택'),
+        items: [
+          const DropdownMenuItem(value: '', child: Text('장소 모름')),
+          for (final area in jejuDistricts.keys)
+            DropdownMenuItem(value: area, child: Text(area)),
+        ],
+        onChanged: (value) => setState(() {
+          city = value;
+          district = null;
+        }),
+      ),
+      if (jejuDistricts.containsKey(city)) ...[
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          key: ValueKey(city),
+          decoration: const InputDecoration(labelText: '읍·면·동 (선택)'),
+          hint: const Text('읍·면·동 선택'),
+          items: [
+            const DropdownMenuItem(value: '', child: Text('시까지만 기록')),
+            for (final name in jejuDistricts[city]!)
+              DropdownMenuItem(value: name, child: Text(name)),
+          ],
+          onChanged: (value) => setState(() => district = value),
         ),
       ],
+      const SizedBox(height: 12),
+      FilledButton.icon(
+        onPressed: () => Navigator.pop(
+          context,
+          FirstEncounter(
+            day == null ? '' : calendarDay(day!),
+            [city, district].whereType<String>().join(' ').trim(),
+          ),
+        ),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('직접 관찰한 동물로 등록'),
+      ),
     ],
   );
 }

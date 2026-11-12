@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:jeju_project/explore/catalog.dart';
 import 'package:jeju_project/main.dart';
 import 'package:jeju_project/explore/collection.dart';
+import 'package:jeju_project/explore/encounter.dart';
 import 'package:jeju_project/explore/yard_file.dart';
 import 'package:jeju_project/explore/yard_snapshot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -114,8 +115,24 @@ void main() {
       expect(jsonDecode(snapshot!)['animals'], hasLength(1));
       await tapText(tester, '도감');
       await tapText(tester, '호랑나비');
+      await tester.tap(find.byType(DropdownButtonFormField<String>).first);
+      await tester.pumpAndSettle();
+      await tapText(tester, '제주시');
+      final districtPicker = find.byType(DropdownButtonFormField<String>).last;
+      await tester.ensureVisible(districtPicker);
+      await tester.tap(districtPicker);
+      await tester.pumpAndSettle();
+      final areaOption = find.text('한림읍').last;
+      await tester.ensureVisible(areaOption);
+      await tester.tap(areaOption);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('직접 관찰한 동물로 등록'));
       await tapText(tester, '직접 관찰한 동물로 등록');
-      expect(prefs.getStringList('guide.manual.user:field-a'), ['JJ-003382']);
+      expect(
+        readManualEncounters(prefs.getString('guide.encounters.user:field-a'))
+            .keys,
+        ['JJ-003382'],
+      );
       expect(prefs.getStringList('guide.manual.user:field-b'), ['JJ-004729']);
       expect(find.text('2종'), findsOneWidget);
       await tapText(tester, '마당으로 보내기');
@@ -126,14 +143,24 @@ void main() {
       expect(data['examples'], false);
       expect(data['animals'], [
         {'id': 'JJ-000837', 'name': '노루', 'modelKey': ''},
-        {'id': 'JJ-003382', 'name': '호랑나비', 'modelKey': 'swallowtail'},
+        {
+          'id': 'JJ-003382',
+          'name': '호랑나비',
+          'modelKey': 'swallowtail',
+          'firstMetDate': calendarDay(DateTime.now()),
+          'firstMetLocation': '제주시 한림읍',
+        },
       ]);
       await prefs.setString('device_profile.user_id', 'field-b');
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
       expect(jsonDecode(snapshot!)['profile'], 'user:field-b');
-      expect(jsonDecode(snapshot!)['animals'].last['modelKey'], 'dolphin');
+      expect(jsonDecode(snapshot!)['animals'].last, {
+        'id': 'JJ-004729',
+        'name': '남방큰돌고래',
+        'modelKey': 'dolphin',
+      });
     },
   );
 

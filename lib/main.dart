@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'explore/camera.dart';
 import 'explore/catalog.dart';
 import 'explore/collection.dart';
+import 'explore/encounter.dart';
 import 'explore/guide.dart';
 import 'explore/home.dart';
 import 'explore/navigation.dart';
@@ -69,7 +70,7 @@ class _FieldJournalState extends State<_FieldJournal>
   late String _name = widget.app.preferences?.getString('explorer.name') ?? '';
   late bool _examples =
       widget.app.preferences?.getBool('explorer.examples') ?? false;
-  Set<String> _registered = {};
+  Map<String, FirstEncounter> _registered = {};
   String _profile = 'local';
   bool _recordsReady = false;
   String? _snapshotForCopy;
@@ -119,27 +120,41 @@ class _FieldJournalState extends State<_FieldJournal>
       final records = await widget.app.loadRecords(
         widget.app.preferences?.getString('device_profile.user_id'),
       );
-      final ids = {
-        ...records.species,
-        ...?widget.app.preferences?.getStringList(
-          'guide.manual.${records.profile}',
-        ),
-      }..remove('');
-      if (ids.isNotEmpty) {
-        final catalog = await _animals();
-        // A field card can use a national ID while a hand-entered card uses a Jeju ID.
-        for (final a in catalog) {
-          if (a.jejuId.isNotEmpty &&
-              a.nationalId.isNotEmpty &&
-              ids.remove(a.nationalId)) {
-            ids.add(a.jejuId);
-          }
+      final prefs = widget.app.preferences;
+      final manual = readManualEncounters(
+        prefs?.getString('guide.encounters.${records.profile}'),
+      );
+      final legacy =
+          prefs?.getStringList('guide.manual.${records.profile}') ??
+          const <String>[];
+      final entries = <String, FirstEncounter>{
+        for (final id in records.species)
+          id: records.firstMet[id] ?? FirstEncounter.unknown,
+      };
+      void add(String id, FirstEncounter entry) {
+        if (id.isEmpty) return;
+        entries.update(
+          id,
+          (previous) => previous.earliest(entry),
+          ifAbsent: () => entry,
+        );
+      }
+
+      for (final id in legacy) {
+        add(id, FirstEncounter.unknown);
+      }
+      manual.forEach(add);
+      if (entries.isNotEmpty) {
+        for (final a in await _animals()) {
+          if (a.nationalId.isEmpty || a.jejuId.isEmpty) continue;
+          final alias = entries.remove(a.nationalId);
+          if (alias != null) add(a.jejuId, alias);
         }
       }
       if (!mounted || generation != _readGeneration) return;
       setState(() {
         _profile = records.profile;
-        _registered = ids;
+        _registered = entries;
         _recordsReady = true;
       });
       await _publishYard();
@@ -151,13 +166,14 @@ class _FieldJournalState extends State<_FieldJournal>
   }
 
   Future<String> _yardSnapshot() async {
-    final ids = _examples ? exampleSpeciesIds : _registered;
+    final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
     final profile = _profile;
     final examples = _examples;
     return encodeYardSnapshot(
       profile: profile,
       examples: examples,
       discoveries: ids,
+      encounters: _examples ? const {} : _registered,
       catalog: ids.isEmpty ? const [] : await _animals(),
     );
   }
@@ -201,14 +217,17 @@ class _FieldJournalState extends State<_FieldJournal>
     }
   }
 
-  Future<void> _register(Animal animal) async {
-    if (_examples || !_recordsReady || _registered.contains(animal.id)) return;
+  Future<void> _register(Animal animal, FirstEncounter encounter) async {
+    if (_examples || !_recordsReady || _registered.containsKey(animal.id)) {
+      return;
+    }
     final prefs = widget.app.preferences;
-    final key = 'guide.manual.$_profile';
+    final key = 'guide.encounters.$_profile';
     try {
       if (prefs == null) throw StateError('Missing local preferences');
-      final ids = {...?prefs.getStringList(key), animal.id}.toList()..sort();
-      if (!await prefs.setStringList(key, ids)) {
+      final entries = readManualEncounters(prefs.getString(key));
+      entries.putIfAbsent(animal.id, () => encounter);
+      if (!await prefs.setString(key, writeManualEncounters(entries))) {
         throw StateError('Could not save registration');
       }
     } catch (_) {
@@ -305,7 +324,7 @@ class _FieldJournalState extends State<_FieldJournal>
 
   @override
   Widget build(BuildContext context) {
-    final ids = _examples ? exampleSpeciesIds : _registered;
+    final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,

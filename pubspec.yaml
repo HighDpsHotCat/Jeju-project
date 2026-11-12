@@ -65,6 +65,8 @@ flutter:
   assets:
     - assets/art/
     - assets/catalog/animals.tsv.gz
+    - assets/catalog/jeju_districts.json.gz
+    - assets/catalog/jeju_districts_credit.txt
     - path: assets/web_fonts/
       platforms: [web]
 
