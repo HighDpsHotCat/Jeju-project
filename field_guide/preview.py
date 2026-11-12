@@ -13,8 +13,10 @@ FILES = {
     "/": (HERE / "index.html", "text/html"),
     "/map": (HERE / "map.html", "text/html"),
     "/jeju-grades.png": (HERE / "jeju-grades.png", "image/png"),
+    "/jeju-map.png": (HERE / "jeju-map.png", "image/png"),
+    "/observations.json": (HERE / "observations.json", "application/json"),
 }
-for name in ("field.css", "map.css", "ui.js", "guide.js", "map.js"):
+for name in ("field.css", "map.css", "ui.js", "guide.js", "map.js", "map-data.js"):
     FILES["/" + name] = (HERE / name, "text/css" if name.endswith(".css") else "text/javascript")
 for path in (ROOT / "assets/art").glob("*.jpg"):
     FILES["/art/" + path.name] = (path, "image/jpeg")

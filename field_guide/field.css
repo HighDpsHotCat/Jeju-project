@@ -647,3 +647,17 @@ dialog::backdrop {
       color 0.15s;
   }
 }
+.guide-map-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.guide-map-links:empty { display: none; }
+.guide-map-links a {
+  color: var(--forest);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+  background: #edf2df;
+  border-radius: 10px;
+}

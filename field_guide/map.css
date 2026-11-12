@@ -410,3 +410,33 @@
 .detail > .tag {
   margin-bottom: 8px;
 }
+.map-stage { background-image: url("/jeju-map.png"); }
+.map-stage.show-grades { background-image: url("/jeju-grades.png"); }
+.map-stage[data-layer="records"] .jeju-city, .map-stage[data-layer="records"] .south { display: none; }
+.pin.label-right[aria-pressed="true"]:after { right: auto; left: 85%; }
+.map-stage[data-layer="habitat"] .pin:before { border-radius: 50%; background: #715f86; transform: none; }
+.city-marker {
+  position: absolute; transform: translate(-50%,-50%); border: 2px solid white;
+  border-radius: 18px; padding: 6px 10px; background: #fffef6; box-shadow: 0 2px 6px #253c3540;
+  color: #345342; font-size: 13px; font-weight: 750; white-space: nowrap;
+}
+.city-marker[aria-pressed="true"] { background: #285d42; color: white; }
+.offshore-button { border: 1px dashed #8e829a; background: #f3eff6; padding: 8px 12px; margin-top: 9px; color: #534661; border-radius: 12px; }
+.offshore-button[aria-pressed="true"] { background: #705b83; color: white; }
+.layer-note { margin: 6px 0 12px; line-height: 1.5; color: var(--muted); font-size: 14px; }
+.filter-row { margin: 0 0 17px; }
+.grade-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 10px 0; color: #425644; font-size: 13px; cursor: pointer; }
+.grade-toggle input { accent-color: var(--forest); }
+#grade-legend[hidden] { display: none; }
+#grade-legend { margin: 0 0 12px; }
+.source-links { display: flex; flex-wrap: wrap; gap: 5px 14px; }
+.source-links a { color: #38583b; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.record-filter { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 14px; font-weight: 700; }
+.record-filter select { flex: 1; min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fffdf6; }
+.record-list { padding: 0; list-style: none; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; }
+.record-list li { padding: 11px 0; border-bottom: 1px solid var(--line); }
+.record-title { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; }
+.record-title a { font-weight: 750; color: var(--forest); }
+.record-title time, .record-list small { color: var(--muted); font-size: 12px; }
+.record-list small { display: block; margin: 5px 0; overflow-wrap: anywhere; }
+@media(max-width:460px) { .city-marker { font-size: 11px; padding: 4px 7px; } }

@@ -1,4 +1,5 @@
 import { byId as $, node, icon } from "./ui.js";
+import { visits, habitats, speciesIds, mapUrl, loadRecords } from "./map-data.js";
 
 const featured = new Map([
   ["JJ-000837", ["roe_deer", "숲과 초원에 사는 동물"]],
@@ -31,6 +32,7 @@ const groups = {
 const cache = new Map(),
   pageSize = 20;
 const params = new URLSearchParams(location.search);
+let requestedSpecies = params.get("species");
 let group = [...$("groups").children].some(
   (b) => b.dataset.group === params.get("group"),
 )
@@ -135,6 +137,29 @@ function details(row) {
     img.alt = animalName(row);
     parts.unshift(img);
   }
+  const mapLinks = node("div", null, "guide-map-links");
+  function addLink(label, url) {
+    const a = node("a", label);
+    a.href = url;
+    mapLinks.append(a);
+  }
+  const id = animalId(row);
+  for (const [layer, label, entries] of [["visit", "탐방", visits], ["habitat", "서식", habitats]]) {
+    for (const place of entries) {
+      if (place.species.some((name) => [id, row.species_id].includes(speciesIds[name])))
+        addLink(label + " · " + place.name, mapUrl(layer, place.id));
+    }
+  }
+  loadRecords().then((regions) => {
+    for (const [name, records] of Object.entries(regions)) {
+      if (records.some((record) => record.species === id)) {
+        const url = new URL(mapUrl("records", name === "제주시" ? "jeju" : "seogwipo"), location.origin);
+        url.searchParams.set("species", id);
+        addLink("관찰 기록 · " + name, url.href);
+      }
+    }
+  }).catch(() => { /* The catalog is also usable when regional records are unavailable. */ });
+  parts.push(mapLinks);
   sheet(animalName(row), ...parts);
 }
 function counts() {
@@ -243,6 +268,11 @@ async function load() {
     rows = cache.get(scope);
     apply();
     counts();
+    if (requestedSpecies) {
+      const row = rows.find((item) => item.species_id === requestedSpecies || item.jeju_id === requestedSpecies);
+      requestedSpecies = null;
+      if (row) details(row);
+    }
   } catch {
     if (version !== generation) return;
     const retry = node("button", "다시 불러오기", "pill");
@@ -342,6 +372,11 @@ $("capture").onchange = () => {
   );
 };
 $("sheet").addEventListener("close", () => {
+  const url = new URL(location.href);
+  if (url.searchParams.has("species")) {
+    url.searchParams.delete("species");
+    history.replaceState(null, "", url);
+  }
   if (photoURL) {
     URL.revokeObjectURL(photoURL);
     photoURL = null;

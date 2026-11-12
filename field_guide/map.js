@@ -1,180 +1,185 @@
 import { byId as $, node, icon } from "./ui.js";
+import { visits, habitats, speciesIds, guideUrl, mapUrl, loadRecords } from "./map-data.js";
 
-const places = [
-  {
-    id: "hado",
-    name: "하도리 철새도래지",
-    type: "야생 조류",
-    area: "제주시 구좌읍 · 해안습지",
-    point: [126.896255, 33.51021],
-    pixel: [1288.4, 202.9],
-    species: [
-      ["저어새", "jeju"],
-      ["청둥오리", "jeju"],
-    ],
-    why: "바닷물과 민물이 만나는 해안습지입니다. 겨울에는 물새가 갈대 가장자리와 모래밭에서 먹이를 찾고 쉬는 모습을 관찰할 수 있습니다.",
-    grade: "대표 지점 1등급",
-    near: "반경 500m에는 1·2등급 구역이 있습니다.",
-    visit: "겨울철에 쌍안경을 챙겨 공개된 관찰 구역에서 물가를 살펴보세요.",
-    source:
-      "https://www.visitjeju.net/kr/detail/view?contentsid=CNTS_000000000022753",
-    extra:
-      "https://www.visitjeju.net/kr/detail/view?contentsid=CONT_000000000500610",
-  },
-  {
-    id: "park",
-    name: "제주자연생태공원",
-    type: "보호·사육",
-    area: "서귀포시 성산읍 · 금백조로 446",
-    point: [126.823609, 33.43972902],
-    pixel: [1165.4, 344.8],
-    species: [
-      ["노루", "jeju"],
-      ["독수리", "jeju"],
-      ["반달가슴곰", "national"],
-    ],
-    why: "제주특별자치도 무장애여행 안내서에 맹금류와 노루, 반달가슴곰을 보호·사육하는 관찰장이 소개되어 있습니다.",
-    grade: "주출입구 등급 도형 없음",
-    near: "입구 반경 500m에는 2·3등급 구역이 있습니다. 가장 가까운 2등급 경계까지는 약 167m입니다.",
-    visit:
-      "맹금류 관찰장 앞에는 잔디가 섞여 있고 전망대 방향에는 약 9° 오르막이 있습니다. 당일 관람 가능한 동물은 공원(064-787-4711)에 확인하세요.",
-    source: "https://jejudatahub.net/data/view/data/740",
-  },
-  {
-    id: "oreum",
-    name: "물영아리오름",
-    type: "야생 습지동물",
-    area: "서귀포시 남원읍 · 산정 습지",
-    point: [126.7167428, 33.3275795],
-    pixel: [984.1, 570.6],
-    species: [
-      ["맹꽁이", "jeju"],
-      ["물장군", "national"],
-    ],
-    why: "분화구 습지에 맹꽁이와 물장군의 서식 기록이 있습니다. 계절과 습지의 물 상태에 따라 관찰할 수 있는 생물이 달라집니다.",
-    grade: "관광 대표 지점 등급 도형 없음",
-    near: "대표 지점 반경 500m에는 2등급 구역이 있습니다. 표시 지점은 관광 안내 위치입니다.",
-    visit: "지정 탐방로와 관찰 데크에서 습지를 살펴보세요.",
-    source:
-      "https://m.visitjeju.net/kr/detail/view?contentsid=CNTS_000000000021614",
-  },
+const layers = {
+  visit: ["탐방 장소", "안내센터·주차장·탐방로처럼 찾아가기 쉬운 출발점을 골라보세요."],
+  habitat: ["서식 기록", "자료에 동물이 기록된 습지·해안·섬의 대략적인 위치입니다."],
+  records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
+};
+const cities = [
+  { id: "jeju", name: "제주시", pixel: [720, 272] },
+  { id: "seogwipo", name: "서귀포시", pixel: [722, 666] },
 ];
-let filter = "전체";
-let selected =
-  places.find(
-    (p) => p.id === new URL(location.href).searchParams.get("place"),
-  ) || places[0];
-function link(label, url, cls) {
+let records, recordError = false;
+let layer, selected, filterSpecies;
+
+function readSelection() {
+  const params = new URLSearchParams(location.search);
+  layer = Object.hasOwn(layers, params.get("layer")) ? params.get("layer") : "visit";
+  selected = items().find((p) => p.id === params.get("place")) || items()[0];
+  filterSpecies = layer === "records" ? params.get("species") || "" : "";
+}
+function items() {
+  return layer === "visit" ? visits : layer === "habitat" ? habitats : cities;
+}
+function anchor(label, url, cls) {
   const a = node("a", label, cls);
   a.href = url;
   return a;
 }
-function block(title, content, cls = "detail-section") {
-  const div = node("section", null, cls);
-  div.append(node("h3", title), ...content);
-  return div;
+function section(heading, ...children) {
+  const el = node("section", null, "detail-section");
+  el.append(node("h3", heading), ...children);
+  return el;
 }
-function render() {
-  const p = selected,
-    shown = places.filter((item) => filter === "전체" || item.type === filter);
-  $("place-count").textContent = shown.length + "곳";
-  for (const b of $("filters").children)
-    b.setAttribute("aria-pressed", String(b.textContent === filter));
-  for (const b of document.querySelectorAll("[data-place]")) {
-    b.hidden = !shown.some((item) => item.id === b.dataset.place);
-    b.setAttribute("aria-pressed", String(b.dataset.place === p.id));
-  }
-  const tag = node("span", p.type, p.id === "park" ? "tag managed" : "tag");
-  const address = node("p", null, "area");
-  address.append(icon("pin"), p.area);
-  const species = node("div", null, "animals-here");
-  for (const [name, scope] of p.species) {
-    const params = new URLSearchParams({ q: name, region: scope });
-    const a = link(name + " ↗", "/?" + params);
-    a.setAttribute(
-      "aria-label",
-      name + " " + (scope === "national" ? "전국" : "제주") + " 도감 열기",
-    );
-    species.append(a);
-  }
-  const actions = node("div", null, "actions");
-  actions.append(
-    link(
-      "길찾기 ↗",
-      "https://map.kakao.com/link/to/" +
-        encodeURIComponent(p.name) +
-        "," +
-        p.point[1] +
-        "," +
-        p.point[0],
-    ),
-    link("장소 자료 ↗", p.source),
-  );
-  if (p.extra) actions.append(link("철새 기록 ↗", p.extra));
-  $("detail").replaceChildren(
-    tag,
-    node("h2", p.name),
-    address,
-    block("관찰할 수 있는 동물", [species, node("p", p.why)]),
-    block(
-      "생태·자연도",
-      [node("strong", p.grade), node("p", p.near)],
-      "grade-box",
-    ),
-    block("현장 관찰 안내", [node("p", p.visit)]),
-    actions,
-  );
-}
-function select(place, scroll = false) {
-  selected = place;
-  const url = new URL(location.href);
-  url.searchParams.set("place", place.id);
-  history.replaceState(null, "", url);
+function choose(nextLayer, id, scroll = false, species = "") {
+  const url = new URL(mapUrl(nextLayer, id), location.origin);
+  if (species) url.searchParams.set("species", species);
+  if (url.href !== location.href) history.pushState(null, "", url);
+  readSelection();
   render();
   if (scroll && matchMedia("(max-width:820px)").matches)
     $("detail").scrollIntoView({ block: "start" });
 }
-for (const type of ["전체", ...places.map((p) => p.type)]) {
-  const b = node("button", type);
+function placeDetail(p) {
+  const visiting = layer === "visit";
+  const address = node("p", null, "area");
+  address.append(icon("pin"), p.area);
+  const animals = node("div", null, "animals-here");
+  for (const name of p.species) animals.append(anchor(name + " ↗", guideUrl(speciesIds[name], name)));
+  const parts = [node("span", p.type, p.id === "park" ? "tag managed" : "tag"), node("h2", p.name),
+    address, node("p", p.description), section(p.id === "park" ? "보호·사육 동물 도감" : "관련 동물 도감", animals)];
+  const actions = node("div", null, "actions");
+  if (visiting) {
+    parts.push(section("탐방 출발점", node("p", p.access)));
+    const url = p.search ? "https://map.kakao.com/?" + new URLSearchParams({q: p.search})
+      : "https://map.kakao.com/link/to/" + encodeURIComponent(p.destinationName || p.name) + "," + p.destination.join(",");
+    actions.append(anchor(p.search ? p.search + " 찾기 ↗" : "출발점 길찾기 ↗", url));
+    if (p.habitat) actions.append(anchor("이곳의 서식 기록", mapUrl("habitat", p.habitat)));
+  } else {
+    const visit = visits.find((v) => v.habitat === p.id);
+    if (visit) actions.append(anchor("탐방 출발점 보기", mapUrl("visit", visit.id)));
+  }
+  const sources = node("div", null, "source-links");
+  for (const [label,url] of p.sources) sources.append(anchor(label + " ↗", url));
+  if (actions.childElementCount) parts.push(actions);
+  if ($("grades").checked && p.grade)
+    parts.push(section("대표 지점 생태·자연도", node("p", p.grade)));
+  parts.push(section("자료 출처", sources));
+  $("detail").replaceChildren(...parts);
+}
+function cityDetail(city) {
+  const detail = $("detail");
+  detail.replaceChildren(node("span", "행정시 단위", "tag"), node("h2", city.name + " 관찰 기록"));
+  if (!records) {
+    detail.append(node("p", recordError ? "관찰 자료를 불러오지 못했습니다." : "관찰 자료를 불러오는 중…"));
+    if (recordError) {
+      const retry = node("button", "다시 불러오기", "pill");
+      retry.onclick = fetchRecords;
+      detail.append(retry);
+    }
+    return;
+  }
+  const rows = records[city.name];
+  const species = new Map(rows.map((r) => [r.species, r.name]));
+  detail.append(node("p", rows.length + "건 · " + species.size + "종. 지도에는 기록이 속한 행정시를 표시합니다."));
+  const label = node("label", "관찰 동물", "record-filter");
+  const select = node("select");
+  select.append(new Option("전체 동물", ""));
+  for (const [id, name] of [...species].sort((a,b) => a[1].localeCompare(b[1],"ko")))
+    select.append(new Option(name, id));
+  select.value = species.has(filterSpecies) ? filterSpecies : "";
+  select.onchange = () => choose("records", city.id, false, select.value);
+  label.append(select);
+  const filtered = rows.filter((row) => !select.value || row.species === select.value);
+  const list = node("ol", null, "record-list");
+  for (const row of filtered) {
+    const li = node("li");
+    const title = node("div", null, "record-title");
+    const date = node("time", row.date.slice(0, 10));
+    date.dateTime = row.date;
+    title.append(anchor(row.name + " ↗", guideUrl(row.species, row.name)), date);
+    const credit = node("small", [row.credit, row.dataset].filter(Boolean).join(" · "));
+    const sources = node("div", null, "source-links");
+    sources.append(anchor("GBIF 원문 ↗", "https://www.gbif.org/occurrence/" + row.id), anchor("이용허락 ↗", row.license));
+    li.append(title, credit, sources);
+    list.append(li);
+  }
+  detail.append(label, section("날짜순 기록 " + filtered.length + "건", list));
+}
+function render() {
+  const listing = items();
+  $("layer-title").textContent = layers[layer][0];
+  $("layer-note").textContent = layers[layer][1];
+  $("place-count").textContent = layer === "records" ? (records ? Object.values(records).flat().length + "건" : "2개 행정시") : listing.length + "곳";
+  for (const b of $("filters").children) b.setAttribute("aria-pressed", String(b.dataset.layer === layer));
+  $("markers").replaceChildren();
+  $("offshore").replaceChildren();
+  $("places").replaceChildren();
+  $("stage").dataset.layer = layer;
+  for (const [i, p] of listing.entries()) {
+    const active = String(p.id === selected.id);
+    const number = i + 1;
+    const region = layer === "records";
+    const count = region && records ? records[p.name].length + "건" : "";
+    const marker = node("button", null, p.offshore ? "offshore-button" : region ? "city-marker" : "pin");
+    marker.setAttribute("aria-label", p.name);
+    marker.setAttribute("aria-pressed", active);
+    marker.onclick = () => choose(layer, p.id, true);
+    if (p.offshore) {
+      marker.textContent = "본섬 밖 · " + p.name;
+      $("offshore").append(marker);
+    } else {
+      marker.style.left = p.pixel[0] / 1440 * 100 + "%";
+      marker.style.top = p.pixel[1] / 910 * 100 + "%";
+      if (p.pixel[0] < 350) marker.classList.add("label-right");
+      marker.append(node("span", region ? [p.name, count].filter(Boolean).join(" ") : number));
+      $("markers").append(marker);
+    }
+    const b = node("button", null, "place-option");
+    b.setAttribute("aria-pressed", active);
+    b.append(node("span", number, "place-number"), node("b", p.name),
+      node("small", region ? count : p.type));
+    b.onclick = marker.onclick;
+    $("places").append(b);
+  }
+  if (layer === "records") cityDetail(selected);
+  else placeDetail(selected);
+}
+async function fetchRecords() {
+  recordError = false;
+  if (layer === "records") render();
+  try { records = await loadRecords(); } catch { recordError = true; }
+  if (layer === "records") render();
+}
+for (const [id, [label]] of Object.entries(layers)) {
+  const b = node("button", label);
+  b.dataset.layer = id;
   b.onclick = () => {
-    filter = type;
-    select(type === "전체" ? selected : places.find((p) => p.type === type));
+    if (id === layer) return;
+    const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected.habitat) :
+      id === "visit" ? visits.find((p) => p.habitat === selected.id) : null;
+    const first = id === "visit" ? visits[0] : id === "habitat" ? habitats[0] : cities[0];
+    choose(id, (equivalent || first).id);
   };
   $("filters").append(b);
 }
-for (const [index, p] of places.entries()) {
-  const pin = node("button", null, "pin");
-  pin.dataset.place = p.id;
-  pin.setAttribute("aria-label", p.name);
-  pin.style.left = (p.pixel[0] / 1440) * 100 + "%";
-  pin.style.top = (p.pixel[1] / 910) * 100 + "%";
-  pin.append(node("span", index + 1));
-  pin.onclick = () => select(p, true);
-  $("stage").append(pin);
-  const b = node("button", null, "place-option");
-  b.dataset.place = p.id;
-  b.append(
-    node("span", index + 1, "place-number"),
-    node("b", p.name),
-    node("small", p.type),
-  );
-  b.onclick = () => select(p, true);
-  $("places").append(b);
-}
-$("zoom").onclick = () => {
-  const active = $("stage").classList.toggle("zoomed");
-  $("zoom").setAttribute("aria-pressed", String(active));
-  $("zoom").setAttribute("aria-label", active ? "지도 축소" : "지도 확대");
-  $("zoom").textContent = active ? "− 축소" : "＋ 확대";
-  const view = $("viewport"),
-    stage = $("stage");
-  view.scrollTo(
-    active
-      ? (stage.offsetWidth * selected.pixel[0]) / 1440 - view.clientWidth / 2
-      : 0,
-    active
-      ? (stage.offsetHeight * selected.pixel[1]) / 910 - view.clientHeight / 2
-      : 0,
-  );
+$("grades").onchange = () => {
+  $("stage").classList.toggle("show-grades", $("grades").checked);
+  $("grade-legend").hidden = !$("grades").checked;
+  render();
 };
+$("zoom").onclick = () => {
+  const stage = $("stage"), view = $("viewport");
+  const active = stage.classList.toggle("zoomed");
+  $("zoom").setAttribute("aria-pressed", String(active));
+  $("zoom").textContent = active ? "− 축소" : "＋ 확대";
+  $("zoom").setAttribute("aria-label", active ? "지도 축소" : "지도 확대");
+  const [x, y] = selected.pixel || [720,455];
+  view.scrollTo(active ? stage.offsetWidth * x / 1440 - view.clientWidth / 2 : 0,
+    active ? stage.offsetHeight * y / 910 - view.clientHeight / 2 : 0);
+};
+window.addEventListener("popstate", () => { readSelection(); render(); });
+readSelection();
 render();
+fetchRecords();

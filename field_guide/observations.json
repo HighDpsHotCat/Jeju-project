@@ -1,0 +1,888 @@
+{
+  "제주시": [
+    {
+      "id": "6499899503",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2026-08-22T12:15:47",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Young Jun Lee",
+      "license": "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+    },
+    {
+      "id": "6479086500",
+      "species": "JJ-002293",
+      "name": "직박구리",
+      "date": "2026-08-04T15:50:50",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Carman Chew",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6481022428",
+      "species": "JJ-003650",
+      "name": "여수별노린재",
+      "date": "2026-07-31T01:18:08",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6481196073",
+      "species": "JJ-003862",
+      "name": "Promethis valgipes",
+      "date": "2026-07-31T01:12:05",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6481314221",
+      "species": "JJ-004271",
+      "name": "왕바구미",
+      "date": "2026-07-31T01:07:07",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6481250734",
+      "species": "JJ-004405",
+      "name": "Strongylium cultellatum",
+      "date": "2026-07-31T01:01:32",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6479924792",
+      "species": "JJ-004405",
+      "name": "Strongylium cultellatum",
+      "date": "2026-07-31T01:01:31",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6551370782",
+      "species": "JJ-000631",
+      "name": "참금풍뎅이",
+      "date": "2026-07-29T01:11:18",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6518721353",
+      "species": "JJ-001771",
+      "name": "주홍흰무늬저녁나방",
+      "date": "2026-07-29T01:10:06",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6479449738",
+      "species": "JJ-002822",
+      "name": "주홍테불나방",
+      "date": "2026-07-29T01:09:30",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6479875321",
+      "species": "JJ-003412",
+      "name": "Paralebeda plagifera",
+      "date": "2026-07-29T01:09:12",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "6479285605",
+      "species": "JJ-002691",
+      "name": "분홍등줄박각시",
+      "date": "2026-07-29T01:08:40",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5868485482",
+      "species": "JJ-004720",
+      "name": "되지빠귀",
+      "date": "2025-09-15T00:00",
+      "dataset": "6ac3f774-d9fb-4796-b3e9-92bf6c81c084",
+      "credit": "988029548",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5868468526",
+      "species": "JJ-002293",
+      "name": "직박구리",
+      "date": "2025-09-15T00:00",
+      "dataset": "6ac3f774-d9fb-4796-b3e9-92bf6c81c084",
+      "credit": "988029548",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5231558146",
+      "species": "JJ-000464",
+      "name": "Argynnis hyperbius",
+      "date": "2025-07-21T16:19:40",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5238247562",
+      "species": "JJ-003091",
+      "name": "민어리여치",
+      "date": "2025-07-21T00:17:22",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5238349562",
+      "species": "JJ-004529",
+      "name": "왕귀뚜라미",
+      "date": "2025-07-20T23:56:25",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5231625960",
+      "species": "JJ-004237",
+      "name": "Serrognathus consentaneus",
+      "date": "2025-07-20T13:13:59",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "𝙃𝙤𝙢𝙤 𝙨𝙚𝙤𝙪𝙡𝙚𝙣𝙨𝙞𝙨 | 조현서",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5187700673",
+      "species": "JJ-001176",
+      "name": "큰부리까마귀",
+      "date": "2025-05-15T14:40:24",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "stolbovsky",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3337696104",
+      "species": "JJ-002172",
+      "name": "넓적배사마귀",
+      "date": "2021-08-04T15:53",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008551686",
+      "species": "JJ-001176",
+      "name": "큰부리까마귀",
+      "date": "2020-02-24T12:10",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008514675",
+      "species": "JJ-001572",
+      "name": "멧새",
+      "date": "2020-02-24T09:54",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008510670",
+      "species": "JJ-003658",
+      "name": "까치",
+      "date": "2020-02-24T09:51",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3061613473",
+      "species": "JJ-002894",
+      "name": "알락할미새",
+      "date": "2020-02-23T16:28",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3031889089",
+      "species": "JJ-002894",
+      "name": "알락할미새",
+      "date": "2020-02-23T16:27",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008547708",
+      "species": "JJ-000263",
+      "name": "흰뺨검둥오리",
+      "date": "2020-02-23T16:24",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3079490042",
+      "species": "JJ-000496",
+      "name": "산길깡충거미",
+      "date": "2020-02-23T13:03",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008570677",
+      "species": "JJ-004327",
+      "name": "검은머리방울새",
+      "date": "2020-02-23T12:58",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008388698",
+      "species": "JJ-004327",
+      "name": "검은머리방울새",
+      "date": "2020-02-23T12:55",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "1986609509",
+      "species": "JJ-003991",
+      "name": "큰산개구리",
+      "date": "2019-01-08T09:55:43",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Kim, Hyun-tae",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5008052514",
+      "species": "JJ-001176",
+      "name": "큰부리까마귀",
+      "date": "2018-08-31T22:16:31",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Ioannis Magouras",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "2984516305",
+      "species": "JJ-001938",
+      "name": "쇠살모사",
+      "date": "2017-12-16T13:24:34",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Kim, Hyun-tae",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100992202",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-12",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100943843",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100979613",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100851874",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-02",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "2597817709",
+      "species": "JJ-001176",
+      "name": "큰부리까마귀",
+      "date": "2017-01-04T09:20:24",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Kim, Hyun-tae",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "1453321971",
+      "species": "JJ-004398",
+      "name": "멧비둘기",
+      "date": "2017-01-01T11:26:31",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Kim, Hyun-tae",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "1453321912",
+      "species": "JJ-002293",
+      "name": "직박구리",
+      "date": "2017-01-01T10:57:44",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Kim, Hyun-tae",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100947446",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-11",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100882121",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-10",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100878191",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101012012",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100926193",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-04",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100982263",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-02",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100853774",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-11-27",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101001554",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-10",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100957691",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-10",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100873357",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-10",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101017103",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-09",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101012753",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-09",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101022280",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100990026",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100965846",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100895742",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101003475",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100922069",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100853627",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101000677",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-05-06",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101010292",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2014-10-15",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100923974",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2014-07-10",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5063893567",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2012-09-13T10:07",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Edmundas Greimas",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5063693161",
+      "species": "JJ-001176",
+      "name": "큰부리까마귀",
+      "date": "2012-09-13T07:39",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Edmundas Greimas",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5063652072",
+      "species": "JJ-002506",
+      "name": "먹그늘나비",
+      "date": "2012-09-13T06:58",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Edmundas Greimas",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    }
+  ],
+  "서귀포시": [
+    {
+      "id": "6550855967",
+      "species": "JJ-002774",
+      "name": "깨다시하늘소",
+      "date": "2026-09-11T14:23:21",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Young Jun Lee",
+      "license": "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+    },
+    {
+      "id": "6550856103",
+      "species": "JJ-003976",
+      "name": "흰점팔랑나비",
+      "date": "2026-08-22T12:29:58",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Young Jun Lee",
+      "license": "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+    },
+    {
+      "id": "6498769506",
+      "species": "JJ-001232",
+      "name": "말매미",
+      "date": "2025-08-28T11:50:42",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "Kimberly",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5134191842",
+      "species": "JJ-000263",
+      "name": "흰뺨검둥오리",
+      "date": "2025-04-03T15:36:47",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "soolhy",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "4162307946",
+      "species": "JJ-003065",
+      "name": "동양달팽이",
+      "date": "2023-07-11T18:11:42",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "黃美滿",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008411663",
+      "species": "JJ-002527",
+      "name": "멧강구",
+      "date": "2020-02-25T12:06",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008510674",
+      "species": "JJ-000727",
+      "name": "Cairina moschata",
+      "date": "2020-02-25T11:57",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "4596792520",
+      "species": "JJ-001655",
+      "name": "호리꽃등에",
+      "date": "2020-02-24T15:24",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "3008521700",
+      "species": "JJ-004398",
+      "name": "멧비둘기",
+      "date": "2020-02-24T14:41",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "yoseop ahn",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "2540727865",
+      "species": "JJ-000160",
+      "name": "원앙",
+      "date": "2019-05-01T17:55:07",
+      "dataset": "iNaturalist research-grade observations",
+      "credit": "jonlizard",
+      "license": "http://creativecommons.org/publicdomain/zero/1.0/legalcode"
+    },
+    {
+      "id": "5101013925",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-09",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100886158",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100943991",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-04",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101002447",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-03",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100883327",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-02",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100855630",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2017-02",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100925536",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-09",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100915867",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-08",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100984153",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100978153",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100894061",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100885396",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-07",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100973370",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-06",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100953549",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-04",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100929543",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-04",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101018903",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-03",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101024553",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2016-01",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101023829",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-10",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101012820",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-09",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100896007",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-06",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5101007642",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-04-12",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100937372",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-03-25",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100861549",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2015-03",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    },
+    {
+      "id": "5100969863",
+      "species": "JJ-000837",
+      "name": "노루",
+      "date": "2014-09-26",
+      "dataset": "Global Roadkill Data: a dataset on terrestrial vertebrate mortality caused by collision with vehicles",
+      "credit": "Baek, S.-Y.|Lee, S.-M.",
+      "license": "http://creativecommons.org/licenses/by/4.0/legalcode"
+    }
+  ]
+}
