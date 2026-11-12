@@ -8,6 +8,7 @@ import tempfile
 
 from server import HERE, import_species
 from reference_data import import_references
+from guide import upgrade
 
 
 def build_catalog(output):
@@ -19,6 +20,7 @@ def build_catalog(output):
             db.executescript((HERE / "device_schema.sql").read_text(encoding="utf-8"))
             with db:
                 import_references(db)
+        upgrade(database)
         # Never overwrite a database that may already contain personal observations.
         os.link(database, output)
 

@@ -8,6 +8,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 import ecology
+import guide
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "species.sqlite3"
@@ -50,6 +51,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlsplit(self.path)
+        if url.path.startswith("/guide/") and getattr(self.server, "demo_catalog", None):
+            status, body = guide.read(self.server.demo_catalog, url.path, parse_qs(url.query))
+            return self.reply(status, body)
         if url.path == "/":
             return self.reply(200, (HERE / "index.html").read_bytes(), "text/html")
         if url.path == "/map":
@@ -99,6 +103,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--demo-catalog", type=Path, help="가상 관찰 테스트용 기기 DB 파일")
     args = parser.parse_args()
+    if args.demo_catalog:
+        if args.host not in ("127.0.0.1", "localhost"):
+            parser.error("--demo-catalog는 로컬 테스트 전용입니다.")
+        guide.upgrade(args.demo_catalog)
     import_species()
-    ThreadingHTTPServer((args.host, args.port), Handler).serve_forever()
+    with ThreadingHTTPServer((args.host, args.port), Handler) as server:
+        server.demo_catalog = args.demo_catalog
+        server.serve_forever()

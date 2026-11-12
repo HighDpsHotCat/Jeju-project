@@ -1,5 +1,22 @@
 # 제주 종 조회 API
 
+## 홈과 개인 도감 조회
+
+Flutter는 기기 SQLite에서 홈과 목록을 읽을 수 있습니다. 새 배포 DB에는 조회 구조가 포함됩니다. 기존 기기 DB(전국 목록 포함)는 앱 DB 업그레이드 단계에서 `guide_schema.sql`을 적용합니다. 외부 트랜잭션 안에서 적용할 때는 파일의 BEGIN/COMMIT을 제외하세요.
+
+- 홈은 `SELECT species_count, observation_count FROM collection_progress WHERE user_id=?`로 조회합니다. 프로필만 있고 관찰이 없는 사용자는 두 값 모두 0입니다.
+- 목록은 `guide_entries.sql`의 이름 있는 인자 user_id, region, taxon, q, limit, offset을 바인딩합니다. region은 jeju 또는 national, taxon은 전체일 때 빈 문자열, 포유류·조류·곤충은 Mammalia·Aves·Insecta입니다. q는 국명·학명·ID 부분 검색입니다.
+- registered는 확인된 일반 관찰이 있으면 참입니다. photo_ref는 해당 사용자의 최신 사진 참조이며 사진이 없으면 null입니다. 촬영 시각은 같은 UTC ISO 8601 형식으로 저장합니다.
+- 전국 목록은 국가생물종목록의 동물 분류군만 사용합니다. 학명·국명이 양쪽에서 유일하게 대응하고 이름 검토가 완료된 항목은 제주 ID를 공유합니다. 나머지 전국 항목은 KTSN- 접두 ID를 사용합니다.
+
+개발 서버에서 가상 사용자와 관찰을 담은 DB로 확인할 때는 `python backend/server.py --demo-catalog build/jeju_catalog.sqlite3`로 실행하세요. user_id에는 테스트 DB의 device_profile에 있는 ID를 사용합니다. 신규 DB에는 가상 사용자를 자동 생성하지 않습니다.
+
+    GET /guide/home?user_id=demo
+    GET /guide/entries?user_id=demo&region=jeju&class=Aves&limit=20&offset=0
+    GET /guide/entries?user_id=demo&region=national&q=노루
+
+기기용 SQL과 개발용 HTTP 응답은 같은 쿼리를 사용합니다. 실제 개인 사진과 위치는 기기 안에 보관합니다.
+
 ## 생태자연도 전체 데이터 동기화
 
 제주데이터허브에 로그인해 [생태자연도 정보](https://www.jejudatahub.net/data/view/data/864)를 프로젝트에 담습니다. 마이페이지 → 프로젝트 관리 → 해당 프로젝트에서 프로젝트키를 확인합니다. [공식 API 가이드](https://jejudatahub.net/api/file?id=2502&fileId=4644)
