@@ -42,9 +42,13 @@ namespace Jeju.Yard
         Image detailModel;
         PawMark detailPlaceholder;
         Label detailName, detailDate, detailLocation;
-        Label detailAffectionScore;
+        Label detailAffectionScore, affectionCountdown;
+        Button affectionHelp;
         AffectionHearts detailHearts;
-        Func<string, int> readAffection;
+        Func<string, YardAffection.Bond> readAffection;
+        YardAffection.Bond detailBond;
+        bool affectionHelpOpen;
+        double nextCountdownRefresh;
         Button detailClose, detailAction;
         ScrollView detailBody, gridScroller;
         Vector2 savedGridOffset;
@@ -84,7 +88,7 @@ namespace Jeju.Yard
         }
 
         public void Bind(IReadOnlyList<Entry> items, Action<string> onToggle, string collectionLabel = null,
-            Func<string, int> readAffection = null)
+            Func<string, YardAffection.Bond> readAffection = null)
         {
             entries = items ?? Empty;
             toggle = onToggle;
@@ -228,6 +232,8 @@ namespace Jeju.Yard
                 else SetOpen(false);
             }
             else if (AnimalMenuOpen) UpdateAnimalMenu();
+            if (affectionHelpOpen && IsOpen && IsDetailOpen && Time.unscaledTimeAsDouble >= nextCountdownRefresh)
+                RefreshCountdown();
         }
 
         void Build()
@@ -377,6 +383,18 @@ namespace Jeju.Yard
             detailDate = AddRecord(records, "처음 만난 날", "detail-first-met-date");
             detailLocation = AddRecord(records, "처음 만난 장소", "detail-first-met-location");
             detailAffectionScore = AddRecord(records, "호감도", "detail-affection-score");
+            affectionHelp = MakeButton("?", "affection-help", "affection-help", () => SetAffectionHelp(!affectionHelpOpen));
+            affectionHelp.tooltip = "다음 호감도 시간 보기";
+            var helpRing = Element("affection-help-ring");
+            helpRing.pickingMode = PickingMode.Ignore;
+            affectionHelp.Add(helpRing);
+            detailAffectionScore.parent.AddToClassList("affection-heading");
+            detailAffectionScore.parent.Insert(1, affectionHelp);
+            affectionCountdown = MakeLabel("", "affection-countdown");
+            affectionCountdown.name = "affection-countdown";
+            affectionCountdown.pickingMode = PickingMode.Ignore;
+            Show(affectionCountdown, false);
+            records.Add(affectionCountdown);
             detailHearts = new AffectionHearts();
             records.Add(detailHearts);
             content.Add(records);
@@ -450,9 +468,38 @@ namespace Jeju.Yard
         public void RefreshAffection()
         {
             if (!IsDetailOpen) return;
-            int points = readAffection?.Invoke(selectedId) ?? 0;
-            detailAffectionScore.text = $"{points}/{YardAffection.Maximum}";
-            detailHearts.SetPoints(points);
+            detailBond = readAffection?.Invoke(selectedId) ?? default;
+            detailAffectionScore.text = $"{detailBond.points}/{YardAffection.Maximum}";
+            detailHearts.SetPoints(detailBond.points);
+            if (affectionHelpOpen) RefreshCountdown();
+        }
+
+        void SetAffectionHelp(bool open)
+        {
+            if (affectionHelpOpen == open) return;
+            affectionHelpOpen = open;
+            affectionHelp.EnableInClassList("affection-help-open", open);
+            affectionHelp.tooltip = open ? "다음 호감도 시간 닫기" : "다음 호감도 시간 보기";
+            Show(affectionCountdown, open);
+            if (open) RefreshCountdown();
+            SizeDetail();
+        }
+
+        void RefreshCountdown()
+        {
+            var reward = detailBond.RewardAt(DateTime.UtcNow.Ticks, out long remainingTicks);
+            string message;
+            if (reward == YardAffection.RewardState.CoolingDown)
+            {
+                long minutes = 1 + (remainingTicks - 1) / TimeSpan.TicksPerMinute;
+                message = $"다음 호감도까지 {minutes / 60:00}시간{minutes % 60:00}분";
+            }
+            else
+            {
+                message = reward == YardAffection.RewardState.Full ? "최대 호감도에 도달했어요" : "지금 호감도를 쌓을 수 있어요";
+            }
+            if (message != affectionCountdown.text) affectionCountdown.text = message;
+            nextCountdownRefresh = Time.unscaledTimeAsDouble + .5;
         }
 
         Label AddRecord(VisualElement parent, string caption, string id)
@@ -507,6 +554,7 @@ namespace Jeju.Yard
         {
             if (!IsDetailOpen) return;
             string previous = selectedId;
+            SetAffectionHelp(false);
             selectedId = null;
             detailModel.image = null;
             var studio = GetComponent<YardModelPortraits>();
@@ -576,9 +624,10 @@ namespace Jeju.Yard
 
         void SizeDetail()
         {
-            float height = Mathf.Min(IsResidentOpen ? 472f : 538f, SafeRect.height / settings.scale - 24f);
+            float extra = affectionHelpOpen ? 48f : 18f;
+            float height = Mathf.Min((IsResidentOpen ? 472f : 538f) + extra, SafeRect.height / settings.scale - 24f);
             detailSheet.style.height = height;
-            detailStage.style.height = Mathf.Clamp(height - (IsResidentOpen ? 230f : 296f), 110f, 242f);
+            detailStage.style.height = Mathf.Clamp(height - (IsResidentOpen ? 230f : 296f) - extra, 110f, 242f);
         }
 
         void SizeSheet()

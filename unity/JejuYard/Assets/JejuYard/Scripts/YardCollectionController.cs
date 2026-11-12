@@ -30,6 +30,20 @@ namespace Jeju.Yard
         public int RegisteredCount => registered.Count;
         public bool IsOpen => panel != null && panel.IsOpen;
 
+#if JEJU_YARD_VISITS
+        public YardVisitSnapshot CaptureVisitSnapshot()
+        {
+            var keys = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (string id in placed)
+                if (registered.TryGetValue(id, out var animal) && HasModel(animal))
+                    keys.Add(animal.modelKey);
+            return new YardVisitSnapshot(keys);
+        }
+
+        public bool TryReadVisitSnapshot(string json, out YardVisitSnapshot snapshot) =>
+            YardVisitSnapshot.TryRead(json, models.Keys, out snapshot);
+#endif
+
         void Awake()
         {
             panel = GetComponent<YardCollectionPanel>();
@@ -304,6 +318,6 @@ namespace Jeju.Yard
             panel.Bind(cards,Toggle,title,ReadAffection);
         }
 
-        int ReadAffection(string id) => YardAffection.GetPoints(placementKey, id);
+        YardAffection.Bond ReadAffection(string id) => YardAffection.GetBond(placementKey, id);
     }
 }

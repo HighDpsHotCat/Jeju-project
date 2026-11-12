@@ -10,11 +10,26 @@ namespace Jeju.Yard
         public const int PointsPerHeart = 5;
         public const long CooldownTicks = 6 * TimeSpan.TicksPerHour;
 
+        public enum RewardState { NeverPetted, Eligible, CoolingDown, Full }
+
         [Serializable]
-        sealed class Bond
+        public struct Bond
         {
             public int points;
             public long lastAwardUtcTicks;
+
+            public RewardState RewardAt(long utcTicks, out long remainingTicks)
+            {
+                if (utcTicks < 0 || utcTicks > DateTime.MaxValue.Ticks)
+                    throw new ArgumentOutOfRangeException(nameof(utcTicks));
+                remainingTicks = 0;
+                if (points >= Maximum) return RewardState.Full;
+                if (points == 0) return RewardState.NeverPetted;
+                long elapsed = utcTicks - lastAwardUtcTicks;
+                if (elapsed >= CooldownTicks) return RewardState.Eligible;
+                remainingTicks = CooldownTicks - elapsed;
+                return RewardState.CoolingDown;
+            }
         }
 
         public static string PreferenceKey(string collectionKey, string speciesId)
@@ -31,8 +46,8 @@ namespace Jeju.Yard
             {
                 try
                 {
-                    var saved = JsonUtility.FromJson<Bond>(json);
-                    if (saved != null && saved.lastAwardUtcTicks >= 0 && saved.lastAwardUtcTicks <= DateTime.MaxValue.Ticks)
+                    if (JsonUtility.FromJson(json, typeof(Bond)) is Bond saved &&
+                        saved.lastAwardUtcTicks >= 0 && saved.lastAwardUtcTicks <= DateTime.MaxValue.Ticks)
                     {
                         saved.points = Mathf.Clamp(saved.points, 0, Maximum);
                         return saved;
@@ -40,24 +55,23 @@ namespace Jeju.Yard
                 }
                 catch (ArgumentException) { }
             }
-            return new Bond();
+            return default;
         }
 
-        public static int GetPoints(string collectionKey, string speciesId) => Read(PreferenceKey(collectionKey, speciesId)).points;
+        public static Bond GetBond(string collectionKey, string speciesId) => Read(PreferenceKey(collectionKey, speciesId));
+        public static int GetPoints(string collectionKey, string speciesId) => GetBond(collectionKey, speciesId).points;
 
         public static int Pet(string collectionKey, string speciesId, long utcTicks, out bool gained)
         {
-            if (utcTicks < 0 || utcTicks > DateTime.MaxValue.Ticks) throw new ArgumentOutOfRangeException(nameof(utcTicks));
             string key = PreferenceKey(collectionKey, speciesId);
             var bond = Read(key);
-            gained = false;
-            if (bond.points == Maximum || (bond.points > 0 && utcTicks - bond.lastAwardUtcTicks < CooldownTicks))
-                return bond.points;
+            var state = bond.RewardAt(utcTicks, out _);
+            gained = state == RewardState.NeverPetted || state == RewardState.Eligible;
+            if (!gained) return bond.points;
             bond.points = Mathf.Min(Maximum, bond.points + PointsPerHeart);
             bond.lastAwardUtcTicks = utcTicks;
             PlayerPrefs.SetString(key, JsonUtility.ToJson(bond));
             PlayerPrefs.Save();
-            gained = true;
             return bond.points;
         }
     }

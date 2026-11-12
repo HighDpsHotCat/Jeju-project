@@ -206,6 +206,31 @@
     margin: 0 0 0 12px; padding: 0; flex-grow: 1; flex-shrink: 1; min-width: 0;
     white-space: normal; -unity-text-align: middle-right;
 }
+.affection-heading { padding-top: 0; padding-bottom: 0; }
+.affection-help {
+    width: 44px; height: 44px; flex-shrink: 0;
+    margin: 0 0 0 -4px; padding: 0;
+    border-width: 0; background-image: none; background-color: rgba(0, 0, 0, 0);
+    color: rgb(73, 94, 61); font-size: 13px;
+    -unity-font-style: bold; -unity-text-align: middle-center;
+}
+.affection-help-ring {
+    position: absolute; top: 12px; left: 12px; width: 20px; height: 20px;
+    border-width: 1px; border-radius: 10px; border-color: rgb(139, 153, 122);
+}
+.yard-root .affection-help:hover, .yard-root .affection-help:active, .yard-root .affection-help:focus {
+    border-width: 0; background-color: rgba(0, 0, 0, 0);
+}
+.affection-help:hover .affection-help-ring,
+.affection-help:focus .affection-help-ring,
+.affection-help-open .affection-help-ring { border-width: 2px; border-color: rgb(82, 108, 66); }
+.affection-countdown {
+    flex-shrink: 0; align-self: flex-start;
+    margin: 0 0 4px; padding: 3px 9px;
+    border-radius: 9px; background-color: rgb(235, 240, 220);
+    color: rgb(66, 88, 56); font-size: 13px;
+    -unity-text-align: middle-left; white-space: normal;
+}
 .detail-actions { padding: 10px 20px 15px; flex-shrink: 0; }
 .detail-action {
     height: 47px; flex-shrink: 0; border-radius: 22px;
