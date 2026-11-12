@@ -1,5 +1,11 @@
 # 제주 종 조회 API
 
+## 동물별 관찰 장소 추천
+
+`GET /recommendations?name=저어새` 또는 `GET /recommendations?species_id=JJ-000837`를 호출합니다. 응답의 places에는 해당 종이 공식 자료에 명시된 공개 관찰 장소, 추천 이유, 탐방 안내와 근거 링크가 담깁니다. kind=wild는 야생 서식·월동 기록, managed는 보호·사육 시설입니다. 좌표는 공개 장소의 대표 위치이고 point_grade는 기존 지도에서 판정한 그 지점의 생태·자연도 등급입니다. 등급 도형에 속하지 않으면 null입니다.
+
+regional_records는 GBIF 기록을 행정시와 등급별로 집계한 값입니다. 이 값만으로 특정 관광지에 종을 배정하지 않습니다. 두 근거는 독립적이므로 각각 빈 배열일 수 있습니다. 국명이 중복되면 409와 후보 ID를 반환합니다. 오프라인 DB에서는 place_species와 observation_place를 place_id로 연결하고 species_region_grade로 행정시 기록을 읽습니다.
+
 ## UI 연결 전 관찰 저장 계약
 
 공모전 앱은 기기 DB를 사용합니다. 개발 단계에서는 아래 경로로 가상 사용자와 관찰을 생성해 홈·목록의 변화를 확인할 수 있습니다. 저장 요청은 로컬 서버의 `--demo-catalog` 옵션에서만 활성화됩니다. 요청 본문은 JSON입니다.

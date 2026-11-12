@@ -11,6 +11,7 @@ import ecology
 import guide
 import region_grades
 import observations
+import recommendations
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "species.sqlite3"
@@ -41,6 +42,7 @@ def import_species(database=None):
         if not db.execute("SELECT 1 FROM species LIMIT 1").fetchone():
             raise ValueError("CSV에 종 데이터가 없습니다.")
         region_grades.load_records(db)
+        recommendations.load_places(db)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -105,6 +107,10 @@ class Handler(BaseHTTPRequestHandler):
                 return self.reply(503, {"error": "생태자연도 DB를 준비 중입니다. 동기화 후 다시 조회하세요."})
         with closing(sqlite3.connect(DB)) as db:
             db.row_factory = sqlite3.Row
+            if url.path == "/recommendations":
+                db.execute("BEGIN")
+                status, result = recommendations.lookup(db, parse_qs(url.query))
+                return self.reply(status, result)
             if url.path == "/species":
                 params = parse_qs(url.query, keep_blank_values=True)
                 query = params.get("q", [""])[0].strip().lower()

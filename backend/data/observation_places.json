@@ -1,0 +1,31 @@
+[
+  {
+    "place_id": "hado-wetland", "name": "하도리 철새도래지", "area": "제주시",
+    "kind": "wild", "latitude": 33.51021, "longitude": 126.896255, "point_grade": 1,
+    "reason": "먹이가 풍부한 연안습지와 갈대밭이 있어 겨울철 물새가 먹이를 찾고 쉬는 곳입니다.",
+    "visit_note": "겨울철에 공개된 관찰 구역에서 물가를 살펴보세요.",
+    "species": {
+      "JJ-003720": ["저어새", "https://www.visitjeju.net/kr/detail/view?contentsid=CNTS_000000000022753"],
+      "JJ-000261": ["청둥오리", "https://www.visitjeju.net/kr/detail/view?contentsid=CONT_000000000500610"]
+    }
+  },
+  {
+    "place_id": "mulyeongari", "name": "물영아리오름", "area": "서귀포시",
+    "kind": "wild", "latitude": 33.3275795, "longitude": 126.7167428, "point_grade": null,
+    "reason": "분화구 습지에 맹꽁이 서식 기록이 있습니다.",
+    "visit_note": "표시는 공개 관광 대표 지점입니다. 지정 탐방로와 관찰 데크를 이용하세요.",
+    "species": {
+      "JJ-002364": ["맹꽁이", "https://m.visitjeju.net/kr/detail/view?contentsid=CNTS_000000000021614"]
+    }
+  },
+  {
+    "place_id": "jeju-nature-park", "name": "제주자연생태공원", "area": "서귀포시",
+    "kind": "managed", "latitude": 33.43972902, "longitude": 126.823609, "point_grade": null,
+    "reason": "제주특별자치도 안내서에 맹금류와 노루 보호·사육 관찰장이 소개되어 있습니다.",
+    "visit_note": "표시는 공원 주출입구입니다. 당일 관람 가능 동물은 공원(064-787-4711)에 확인하세요.",
+    "species": {
+      "JJ-000837": ["노루", "https://jejudatahub.net/data/view/data/740"],
+      "JJ-000122": ["독수리", "https://jejudatahub.net/data/view/data/740"]
+    }
+  }
+]

@@ -4,6 +4,7 @@ from contextlib import closing
 from pathlib import Path
 import json
 from region_grades import load_records
+from recommendations import load_places
 
 HERE = Path(__file__).resolve().parent
 ENTRIES = (HERE / "guide_entries.sql").read_text(encoding="utf-8")
@@ -16,6 +17,7 @@ def upgrade(database):
         with db:
             db.execute("BEGIN IMMEDIATE")
             load_records(db)
+            load_places(db)
 
 
 def read(database, route, params):
