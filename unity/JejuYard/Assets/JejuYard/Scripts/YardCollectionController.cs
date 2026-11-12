@@ -36,6 +36,7 @@ namespace Jeju.Yard
             portraits = GetComponent<YardModelPortraits>();
             if (portraits == null) portraits = gameObject.AddComponent<YardModelPortraits>();
             BindSceneModels();
+            gameObject.AddComponent<YardProximity>().Initialize(this, panel, models);
             panel.Opening += OpenCollection;
             Reload();
         }
@@ -218,6 +219,18 @@ namespace Jeju.Yard
 
         bool HasModel(YardGuideSnapshot.Animal animal) =>
             !string.IsNullOrEmpty(animal.modelKey) && models.ContainsKey(animal.modelKey);
+
+        public void OpenResident(string modelKey)
+        {
+            Reload();
+            foreach (var card in cards)
+            {
+                if (!card.placed || registered[card.id].modelKey != modelKey) continue;
+                card.preview = portraits.Get(modelKey, models[modelKey]);
+                panel.OpenResident(card.id);
+                return;
+            }
+        }
 
         public void Toggle(string id)
         {

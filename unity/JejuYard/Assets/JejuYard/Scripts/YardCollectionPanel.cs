@@ -23,7 +23,10 @@ namespace Jeju.Yard
         public static bool BlocksYardInput => (active != null && active.IsOpen) || Time.frameCount == closedFrame;
         public bool IsOpen { get; private set; }
         public bool IsDetailOpen => selectedId != null;
+        public bool IsResidentOpen { get; private set; }
         public event Action Opening;
+        public event Action InteractRequested;
+        public event Action HouseExitRequested;
 
         IReadOnlyList<Entry> entries = Empty;
         readonly List<int> rows = new List<int>();
@@ -35,7 +38,7 @@ namespace Jeju.Yard
         FontAsset typeface;
 
         VisualElement root, overlay, sheet, footer, emptyState;
-        VisualElement detail, detailSheet, detailStage;
+        VisualElement detail, detailSheet, detailStage, detailActions;
         Image detailModel;
         PawMark detailPlaceholder;
         Label detailName, detailDate, detailLocation;
@@ -45,10 +48,37 @@ namespace Jeju.Yard
         string selectedId;
         ListView grid;
         Button launcher, closeButton, importButton, demoButton;
+        Button interactButton, houseBubble;
+        BubbleTail bubbleTail;
+        bool nearbyAvailable, targetIsHouse, hasHouseAnchor;
+        Vector2 houseAnchor;
+        const float BubbleWidth = 110f, BubbleHeight = 38f;
         Label title, counts, notice, emptyTitle;
         const int RowHeight = 151;
         int columns = 2, screenW, screenH;
         Rect safeArea;
+
+        // World input uses Unity's bottom-left pixel origin. UITK picks in scaled top-left panel coordinates.
+        public static bool BlocksPointerStart(Vector2 screenPoint)
+        {
+            if (BlocksYardInput) return true;
+            if (active == null || active.root?.panel == null) return false;
+            var p = RuntimePanelUtils.ScreenToPanel(active.root.panel, new Vector2(screenPoint.x, Screen.height - screenPoint.y));
+            bool Over(Button button) => button != null && button.resolvedStyle.display != DisplayStyle.None && button.worldBound.Contains(p);
+            return Over(active.interactButton) || Over(active.houseBubble) || Over(active.launcher);
+        }
+
+        public void SetNearby(bool available, bool atHouse, Vector2 houseScreenPoint)
+        {
+            bool valid = float.IsFinite(houseScreenPoint.x) && float.IsFinite(houseScreenPoint.y);
+            if (nearbyAvailable == available && targetIsHouse == atHouse && valid == hasHouseAnchor &&
+                (!valid || houseAnchor == houseScreenPoint)) return;
+            nearbyAvailable = available;
+            targetIsHouse = atHouse;
+            hasHouseAnchor = valid;
+            houseAnchor = houseScreenPoint;
+            UpdateNearbyHud();
+        }
 
         public void Bind(IReadOnlyList<Entry> items, Action<string> onToggle, string collectionLabel = null)
         {
@@ -79,6 +109,7 @@ namespace Jeju.Yard
             IsOpen = open;
             Show(overlay, open);
             Show(launcher, !open);
+            UpdateNearbyHud();
             if (open)
             {
                 ShowNotice(null);
@@ -93,6 +124,22 @@ namespace Jeju.Yard
                 closedFrame = Time.frameCount;
                 launcher.Focus();
             }
+        }
+
+        public bool OpenResident(string speciesId)
+        {
+            if (root == null || IsOpen || string.IsNullOrEmpty(speciesId)) return false;
+            foreach (var entry in entries)
+            {
+                if (entry.id != speciesId || !entry.placed || !entry.supported) continue;
+                IsOpen = true;
+                IsResidentOpen = true;
+                Show(launcher, false);
+                UpdateNearbyHud();
+                OpenDetail(speciesId);
+                return IsDetailOpen;
+            }
+            return false;
         }
 
         public void Refresh()
@@ -155,6 +202,7 @@ namespace Jeju.Yard
             if (active == this) active = null;
             CloseDetail(false);
             IsOpen = false;
+            nearbyAvailable = targetIsHouse = hasHouseAnchor = false;
             if (uiObject != null) Destroy(uiObject);
             if (settings != null) Destroy(settings);
             if (typeface != null) Destroy(typeface);
@@ -181,6 +229,7 @@ namespace Jeju.Yard
             launcher.tooltip = "등록한 동물 보기";
             launcher.Add(new PawMark());
             root.Add(launcher);
+            BuildNearbyHud();
 
             overlay = Element("collection-overlay");
             overlay.name = "collection-overlay";
@@ -236,11 +285,59 @@ namespace Jeju.Yard
             Show(overlay, false);
         }
 
+        void BuildNearbyHud()
+        {
+            interactButton = MakeButton("", "nearby-interact", "nearby-interact", () =>
+            {
+                if (!IsOpen && nearbyAvailable && closedFrame != Time.frameCount) InteractRequested?.Invoke();
+            });
+            var disc = Element("nearby-disc");
+            disc.pickingMode = PickingMode.Ignore;
+            disc.Add(new InteractionTick());
+            interactButton.Add(disc);
+            root.Add(interactButton);
+
+            houseBubble = MakeButton("마당 나가기", "house-exit-bubble", "house-exit-bubble", () =>
+            {
+                if (!IsOpen && hasHouseAnchor && closedFrame != Time.frameCount) HouseExitRequested?.Invoke();
+            });
+            houseBubble.style.width = BubbleWidth;
+            houseBubble.style.height = BubbleHeight;
+            bubbleTail = new BubbleTail();
+            houseBubble.Add(bubbleTail);
+            root.Add(houseBubble);
+            Show(interactButton, false);
+            Show(houseBubble, false);
+        }
+
+        void UpdateNearbyHud()
+        {
+            if (root?.panel == null || interactButton == null) return;
+            Show(interactButton, nearbyAvailable && !IsOpen);
+            interactButton.tooltip = targetIsHouse ? "마당 나가기" : "동물 만나기";
+            bool showBubble = !IsOpen && hasHouseAnchor;
+            Show(houseBubble, showBubble);
+            if (!showBubble) return;
+            var safe = SafeRect;
+            float px = settings.scale;
+            Vector2 anchor = new Vector2(Mathf.Clamp(houseAnchor.x, safe.xMin, safe.xMax),
+                Mathf.Clamp(houseAnchor.y, safe.yMin + px * 5f, safe.yMax - px * 5f));
+            var tip = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(anchor.x, Screen.height - anchor.y));
+            float safeTop = (Screen.height - safe.yMax) / px;
+            bool tailOnTop = tip.y < safeTop + BubbleHeight + 10f;
+            float left = Mathf.Clamp(tip.x - BubbleWidth * .5f, safe.xMin / px + 4f, safe.xMax / px - BubbleWidth - 4f);
+            houseBubble.style.left = left;
+            houseBubble.style.top = tailOnTop ? tip.y + 8f : tip.y - BubbleHeight - 8f;
+            bubbleTail.Point(tailOnTop, Mathf.Clamp(tip.x - left, 16f, BubbleWidth - 16f));
+        }
+
+        Rect SafeRect => safeArea.width > 0 && safeArea.height > 0 ? safeArea : new Rect(0, 0, Screen.width, Screen.height);
+
         void BuildDetail()
         {
             detail = Element("detail-backdrop");
             detail.name = "animal-detail";
-            overlay.Add(detail);
+            root.Add(detail);
             detail.RegisterCallback<ClickEvent>(evt =>
             {
                 if (evt.target == detail) CloseDetail();
@@ -272,10 +369,13 @@ namespace Jeju.Yard
             detailLocation = AddRecord(records, "처음 만난 장소", "detail-first-met-location");
             content.Add(records);
 
-            var actions = Element("detail-actions");
-            detailAction = MakeButton("", "detail-action", "detail-action", () => { if (IsDetailOpen) toggle?.Invoke(selectedId); });
-            actions.Add(detailAction);
-            detailSheet.Add(actions);
+            detailActions = Element("detail-actions");
+            detailAction = MakeButton("", "detail-action", "detail-action", () =>
+            {
+                if (IsDetailOpen && !IsResidentOpen) toggle?.Invoke(selectedId);
+            });
+            detailActions.Add(detailAction);
+            detailSheet.Add(detailActions);
             detailClose = MakeButton("", "detail-close", "close-button", () => CloseDetail());
             detailClose.AddToClassList("detail-close");
             detailClose.tooltip = "동물 정보 닫기";
@@ -299,8 +399,13 @@ namespace Jeju.Yard
         {
             if (!IsOpen || id == null || IsDetailOpen) return;
             selectedId = id;
-            savedGridOffset = gridScroller.scrollOffset;
-            sheet.SetEnabled(false);
+            if (!IsResidentOpen)
+            {
+                savedGridOffset = gridScroller.scrollOffset;
+                sheet.SetEnabled(false);
+            }
+            Show(detailActions, !IsResidentOpen);
+            SizeDetail();
             Show(detail, true);
             detailBody.scrollOffset = Vector2.zero;
             RefreshDetail();
@@ -312,6 +417,7 @@ namespace Jeju.Yard
             foreach (var entry in entries)
             {
                 if (entry.id != selectedId) continue;
+                if (IsResidentOpen && (!entry.placed || !entry.supported)) break;
                 detailName.text = entry.name;
                 detailDate.text = string.IsNullOrWhiteSpace(entry.firstMetDate) ? "기록 없음" : entry.firstMetDate;
                 detailLocation.text = string.IsNullOrWhiteSpace(entry.firstMetLocation) ? "기록 없음" : entry.firstMetLocation;
@@ -319,7 +425,7 @@ namespace Jeju.Yard
                 detailModel.image = studio != null ? studio.Inspect(entry.preview) ?? entry.preview : entry.preview;
                 Show(detailPlaceholder, detailModel.image == null);
                 detailAction.text = entry.placed ? "내보내기" : entry.supported ? "초대하기" : "모델 준비 중";
-                detailAction.SetEnabled(entry.supported || entry.placed);
+                detailAction.SetEnabled(!IsResidentOpen && (entry.supported || entry.placed));
                 return;
             }
             CloseDetail();
@@ -334,6 +440,15 @@ namespace Jeju.Yard
             var studio = GetComponent<YardModelPortraits>();
             if (studio != null) studio.Inspect(null);
             Show(detail, false);
+            if (IsResidentOpen)
+            {
+                IsResidentOpen = IsOpen = false;
+                closedFrame = Time.frameCount;
+                Show(launcher, true);
+                UpdateNearbyHud();
+                if (restoreFocus && nearbyAvailable) interactButton.Focus();
+                return;
+            }
             sheet.SetEnabled(true);
             if (restoreFocus)
             {
@@ -358,11 +473,14 @@ namespace Jeju.Yard
             float scale = screenW < screenH ? screenW / 400f : Mathf.Min(screenW / 810f, screenH / 600f);
             settings.scale = Mathf.Clamp(scale, .60f, 4f);
             float px = settings.scale;
-            Rect safe = safeArea.width > 0 && safeArea.height > 0 ? safeArea : new Rect(0, 0, screenW, screenH);
+            Rect safe = SafeRect;
             float width = safe.width / px;
             float right = (screenW - safe.xMax) / px, top = (screenH - safe.yMax) / px;
             launcher.style.right = right + 16;
             launcher.style.top = top + 16;
+            interactButton.style.right = right + 18f;
+            interactButton.style.top = top + safe.height / px * .70f - 32f;
+            UpdateNearbyHud();
             foreach (var backdrop in new[] { overlay, detail })
             {
                 backdrop.style.paddingLeft = safe.xMin / px;
@@ -372,10 +490,8 @@ namespace Jeju.Yard
             }
             float sheetWidth = Mathf.Min(632f, width - 24f);
             sheet.style.width = sheetWidth;
-            float detailHeight = Mathf.Min(466f, safe.height / px - 24f);
-            detailSheet.style.height = detailHeight;
             detailSheet.style.width = Mathf.Min(410f, width - 32f);
-            detailStage.style.height = Mathf.Clamp(detailHeight - 224f, 110f, 242f);
+            SizeDetail();
             int newColumns = sheetWidth < 485 ? 2 : 3;
             if (newColumns != columns)
             {
@@ -384,6 +500,13 @@ namespace Jeju.Yard
                 if (IsOpen) Refresh();
             }
             SizeSheet();
+        }
+
+        void SizeDetail()
+        {
+            float height = Mathf.Min(IsResidentOpen ? 400f : 466f, SafeRect.height / settings.scale - 24f);
+            detailSheet.style.height = height;
+            detailStage.style.height = Mathf.Clamp(height - (IsResidentOpen ? 158f : 224f), 110f, 242f);
         }
 
         void SizeSheet()
@@ -477,6 +600,66 @@ namespace Jeju.Yard
         }
 
         static void Show(VisualElement e, bool visible) => e.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+
+        sealed class InteractionTick : VisualElement
+        {
+            public InteractionTick()
+            {
+                AddToClassList("interaction-tick");
+                pickingMode = PickingMode.Ignore;
+                generateVisualContent += ctx =>
+                {
+                    var p = ctx.painter2D;
+                    float w = contentRect.width, h = contentRect.height;
+                    Vector2 At(float x, float y) => new Vector2(x * w, y * h);
+                    p.fillColor = resolvedStyle.color;
+                    p.BeginPath();
+                    p.MoveTo(At(.16f, .55f));
+                    p.LineTo(At(.26f, .43f));
+                    p.LineTo(At(.45f, .61f));
+                    p.BezierCurveTo(At(.55f, .43f), At(.68f, .16f), At(.73f, .08f));
+                    p.LineTo(At(.86f, .15f));
+                    p.LineTo(At(.49f, .86f));
+                    p.ClosePath();
+                    p.Fill();
+                };
+            }
+        }
+
+        sealed class BubbleTail : VisualElement
+        {
+            bool onTop;
+
+            public BubbleTail()
+            {
+                AddToClassList("house-bubble-tail");
+                pickingMode = PickingMode.Ignore;
+                generateVisualContent += ctx =>
+                {
+                    var p = ctx.painter2D;
+                    float w = contentRect.width, h = contentRect.height;
+                    if (w <= 0 || h <= 0) return;
+                    var a = new Vector2(1f, onTop ? h : 0f);
+                    var b = new Vector2(w * .5f, onTop ? 1f : h - 1f);
+                    var c = new Vector2(w - 1f, a.y);
+                    p.fillColor = parent.resolvedStyle.backgroundColor;
+                    p.strokeColor = resolvedStyle.color;
+                    p.lineWidth = 1.5f;
+                    p.BeginPath(); p.MoveTo(a); p.LineTo(b); p.LineTo(c); p.ClosePath(); p.Fill();
+                    p.BeginPath(); p.MoveTo(a); p.LineTo(b); p.LineTo(c); p.Stroke();
+                };
+            }
+
+            public void Point(bool top, float center)
+            {
+                // The button's border takes two units on each edge.
+                style.left = center - 10f;
+                style.top = top ? -10f : BubbleHeight - 5f;
+                if (top == onTop) return;
+                onTop = top;
+                MarkDirtyRepaint();
+            }
+        }
 
         sealed class PawMark : VisualElement
         {

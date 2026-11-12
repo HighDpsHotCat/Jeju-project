@@ -50,7 +50,8 @@ namespace Jeju.Yard
 
         void Begin(Vector2 pos, int id)
         {
-            if (!Screen.safeArea.Contains(pos) || pos.y > Screen.height * .69f) return;
+            if (!Screen.safeArea.Contains(pos) || pos.y > Screen.height * .69f ||
+                YardCollectionPanel.BlocksPointerStart(pos)) return;
             finger = id;
             origin = pos;
             thumb = Vector2.zero;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Jeju.Yard
 {
-    public sealed class DolphinVisitor : MonoBehaviour
+    public sealed class DolphinVisitor : YardResidentBehaviour
     {
         public Transform tail;
         public MeshRenderer wake;
@@ -18,23 +18,31 @@ namespace Jeju.Yard
         const float RouteLength = 2f * StraightLength + BendLength;
         static readonly float StartAngle = Mathf.Acos(1f - 2f * Reach / RouteLength);
         float elapsed;
+        public override Transform InteractionPoint => transform;
 
         void Update()
         {
-            elapsed = Mathf.Repeat(elapsed + Time.deltaTime, VisitPeriod);
-            PoseAt(elapsed);
+            elapsed = Mathf.Repeat(elapsed + AdvanceAttention(Time.deltaTime), VisitPeriod);
+            ApplyPose(elapsed, Attention, true);
         }
 
-        public void PoseAt(float seconds)
+        public void PoseAt(float seconds) => ApplyPose(seconds, 0f, false);
+
+        void ApplyPose(float seconds, float rest, bool followObserver)
         {
             Vector3 point = SwimPosition(seconds);
             Vector3 tangent = SwimPosition(seconds + .035f) - SwimPosition(seconds - .035f);
+            point.y = Mathf.Lerp(point.y, waterLevel - .12f + .035f * Mathf.Sin(Time.time * 1.7f), rest);
             transform.localPosition = point;
             transform.localRotation = Quaternion.LookRotation(tangent, Vector3.up);
-            tail.localRotation = Quaternion.Euler(15f * Mathf.Sin(seconds * 2f * Mathf.PI * 37f / VisitPeriod), 0, 0);
+            if (followObserver) FaceObserver();
+            float stroke = Mathf.Lerp(15f * Mathf.Sin(seconds * 2f * Mathf.PI * 37f / VisitPeriod),
+                5f * Mathf.Sin(Time.time * 2.3f), rest);
+            tail.localRotation = Quaternion.Euler(stroke, 0, 0);
 
             // Body and wake are siblings; both follow the bay, but only the swimmer pitches.
             Vector3 trail = SwimPosition(seconds - .28f);
+            trail = Vector3.Lerp(trail, point - transform.localRotation * Vector3.forward * .26f, rest);
             float visibility = Mathf.InverseLerp(-.83f, -.24f, trail.y - waterLevel);
             wake.enabled = visibility > .025f;
             if (wake.enabled)
@@ -45,13 +53,15 @@ namespace Jeju.Yard
                 wake.transform.localPosition = trail;
                 wake.transform.localRotation = Quaternion.LookRotation(heading, Vector3.up);
                 float spread = Mathf.SmoothStep(0f, 1f, visibility) * (1f + .23f * Mathf.Max(0f, point.y - waterLevel));
+                spread *= 1f - .72f * rest;
                 wake.transform.localScale = new Vector3(spread * Mathf.Abs(transform.localScale.x), 1,
                     spread * Mathf.Abs(transform.localScale.z));
             }
         }
 
-        void OnDisable()
+        protected override void OnDisable()
         {
+            base.OnDisable();
             if (wake != null) wake.enabled = false;
         }
 
