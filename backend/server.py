@@ -43,7 +43,7 @@ class Handler(BaseHTTPRequestHandler):
     def reply(self, status, body, mime="application/json"):
         data = body if isinstance(body, bytes) else json.dumps(body, ensure_ascii=False).encode()
         self.send_response(status)
-        self.send_header("Content-Type", mime + "; charset=utf-8")
+        self.send_header("Content-Type", mime if mime == "image/png" else mime + "; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
@@ -52,6 +52,10 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         if url.path == "/":
             return self.reply(200, (HERE / "index.html").read_bytes(), "text/html")
+        if url.path == "/map":
+            return self.reply(200, (HERE / "map.html").read_bytes(), "text/html")
+        if url.path == "/jeju-grades.png":
+            return self.reply(200, (HERE / "jeju-grades.png").read_bytes(), "image/png")
         if url.path == "/ecology":
             params = parse_qs(url.query, keep_blank_values=True)
             try:

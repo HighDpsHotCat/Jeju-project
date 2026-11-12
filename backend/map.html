@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>제주 동물 관찰 지도 · 제주 야생동물 도감</title>
+<style>
+*{box-sizing:border-box}body{margin:0;color:#183e35;background:#f7f6ef;font:16px/1.65 system-ui,"Malgun Gothic",sans-serif}main,nav{max-width:1190px;margin:auto;padding:20px clamp(16px,3vw,40px)}nav{display:flex;justify-content:space-between;border-bottom:1px solid #c7cec1}a{color:#205b46;text-underline-offset:3px}h1{font-size:clamp(32px,5vw,60px);letter-spacing:-.055em;line-height:1.15;margin:12px 0}p{margin:8px 0 16px}.layout{display:grid;grid-template-columns:minmax(0,1.8fr) minmax(290px,1fr);gap:18px;align-items:start}figure,article{margin:0;background:#fff;border:1px solid #cbd3c6;border-radius:14px;overflow:hidden}.map{position:relative;aspect-ratio:1440/910;background:#d6e9e9 url("jeju-grades.png") center/100% 100% no-repeat}.pin{position:absolute;left:var(--x);top:var(--y);transform:translate(-50%,-50%);border-radius:50%;font-weight:800;color:white;background:#254e55;border:2px solid white;box-shadow:0 0 0 1px #173f36;width:30px;height:30px;line-height:1;padding:0}.pin[aria-pressed=true]{background:#9d4023;outline:3px solid white}.geo{position:absolute;font-size:clamp(10px,1.3vw,14px);font-weight:650;pointer-events:none;text-shadow:0 1px 3px white}.north{left:4%;top:4%}.scale{position:absolute;left:4%;bottom:5%;width:12.63%;border-bottom:2px solid #2b554a;font-size:11px}.legend{display:flex;flex-wrap:wrap;gap:5px 16px;font-size:13px;padding:12px 16px}.legend i{display:inline-block;width:11px;height:11px;background:var(--c);border:1px solid #0002;margin-right:5px}.choice{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0}button{cursor:pointer;font:inherit}.choice button,.place{border:1px solid #bcc9be;border-radius:8px;background:white;color:#173e34;padding:7px 12px}.choice button[aria-pressed=true],.place[aria-pressed=true]{background:#254e42;color:white}.place{margin:3px;text-align:left;font-size:14px}article{padding:20px}h2{line-height:1.25;margin:5px 0 12px;font-size:26px;letter-spacing:-.04em}h3{margin:15px 0 3px;font-size:15px}small,.meta{color:#486451}.meta{font-size:14px}.links{display:flex;gap:16px;flex-wrap:wrap}.note{font-size:13px;color:#4b6259;margin-top:14px}button:focus-visible,a:focus-visible{outline:3px solid #a54619;outline-offset:3px}#places{padding:9px 12px;border-top:1px solid #dde1d9}@media(max-width:800px){.layout{grid-template-columns:1fr}.pin{width:25px;height:25px;font-size:13px}main{padding-top:12px}}
+</style></head>
+<body><nav><a href="/">← 야생동물 도감</a><a href="/ecology">생태자연도 원자료</a></nav><main>
+<h1>제주 동물 관찰 지도</h1><p>보고 싶은 동물을 고르면 관찰할 만한 장소와 주변의 생태·자연도 등급을 함께 볼 수 있습니다.</p>
+<div class="choice" id="filters" aria-label="관찰 목적"></div><div class="layout">
+<figure><div class="map" id="map" role="group" aria-label="제주 본섬 생태·자연도와 추천 장소">
+<span class="geo north">↑ 북</span><span class="geo" style="left:44%;top:20%">제주시</span><span class="geo" style="left:47%;top:78%">서귀포시</span><span class="geo" style="left:44%;top:51%">한라산</span><span class="scale">10 km</span></div>
+<figcaption class="legend"><span><i style="--c:#508464"></i>1등급</span><span><i style="--c:#9cb899"></i>2등급</span><span><i style="--c:#dbe4c9"></i>3등급</span><span><i style="--c:#9690ac"></i>별도관리지역</span><span><i style="--c:#f3f0df"></i>등급 도형 없음</span></figcaption><div id="places" aria-label="추천 장소 목록"></div></figure>
+<article id="detail" aria-live="polite"></article></div>
+<p class="note">동물 추천은 공개된 서식·관찰장 기록을 사용합니다. 등급은 대표 좌표와 반경 500m의 생태적 가치를 설명하며, 발견 확률을 뜻하지 않습니다. 등급 경계는 본섬과 주변 섬을 한눈에 볼 수 있도록 축소했습니다.</p>
+<p class="note">등급 자료 · 국립생태원 에코뱅크, 제주특별자치도 자료 · 기후에너지환경부 고시 제2026-128호 배포본 (2026.05.26). 해안선 · Natural Earth. <a href="https://www.nie-ecobank.kr/opn/file/list.do?svcId=101&amp;unitCode=U004&amp;unitSeRealCode=50&amp;unit=U004&amp;unitSeCode=50">공식 공간자료</a></p></main>
+<script>
+const places=[
+ {name:'하도리 철새도래지',type:'야생 조류',area:'구좌읍 · 해안습지',point:[126.896255,33.51021],pixel:[1288.4,202.9],animals:'물새와 철새',why:'바닷물과 민물이 만나는 해안습지입니다. 모래밭과 갈대 가장자리는 새들이 쉬는 곳이라, 공개된 관찰 구역에서 물가를 바라보기 좋습니다.',grade:'대표 지점 1등급',near:'반경 500m에는 1·2등급 구역이 있습니다.',visit:'겨울 철새를 보려면 쌍안경으로 물가와 갈대 가장자리를 살펴보세요.',url:'https://www.visitjeju.net/kr/detail/view?contentsid=CNTS_000000000022753'},
+ {name:'제주자연생태공원',type:'보호·사육 관찰',area:'성산읍 · 금백조로 446',point:[126.823609,33.43972902],pixel:[1165.4,344.8],animals:'맹금류·노루·반달가슴곰',why:'제주특별자치도 무장애여행 안내서는 독수리 등 맹금류, 노루, 반달가슴곰을 보호·사육하는 관찰장을 소개합니다. 야생에서 우연히 만나는 기록과 구분해 관람할 수 있는 곳입니다.',grade:'주출입구 등급 도형 없음',near:'입구 반경 500m에는 2·3등급 구역이 있습니다. 입구에서 가장 가까운 2등급 경계까지 약 167m입니다.',visit:'맹금류 관찰장 앞에는 잔디가 섞이고 전망대 방향에는 약 9° 오르막이 있습니다. 당일 관람 가능한 동물은 공원(064-787-4711)에 확인하세요.',url:'https://jejudatahub.net/data/view/data/740'},
+ {name:'물영아리오름',type:'야생 습지동물',area:'남원읍 · 산정 습지',point:[126.7167428,33.3275795],pixel:[984.1,570.6],animals:'맹꽁이·물장군',why:'분화구 습지에 맹꽁이와 물장군의 서식 기록이 있습니다. 습지 생물을 주제로 탐방하기 좋은 곳이며, 산책 중에 실제로 만나는지는 계절과 물 상태에 따라 달라집니다.',grade:'관광 대표 지점 등급 도형 없음',near:'대표 지점 반경 500m에는 2등급 구역이 있습니다. 이 지점의 등급을 분화구 습지 전체에 적용할 수 없습니다.',visit:'공개 탐방로와 관찰 데크에서 살펴보세요. 대표 지점은 관광 안내 위치입니다.',url:'https://m.visitjeju.net/kr/detail/view?contentsid=CNTS_000000000021614'}
+];
+const $=id=>document.getElementById(id);let selected=0,filter='전체';
+function elem(tag,text){const e=document.createElement(tag);e.textContent=text;return e}
+function button(text,action,pressed){const e=elem('button',text);e.type='button';e.onclick=action;e.setAttribute('aria-pressed',String(pressed));return e}
+function paint(){
+ $('map').querySelectorAll('button').forEach(e=>e.remove());$('places').replaceChildren();
+ places.forEach((p,i)=>{if(filter!=='전체'&&p.type!==filter)return;
+ const choose=()=>{selected=i;paint();$('detail').scrollIntoView({block:'nearest'})};
+ const pin=button(i+1,choose,i===selected);pin.className='pin';pin.setAttribute('aria-label',p.name);pin.style.setProperty('--x',p.pixel[0]/1440*100+'%');pin.style.setProperty('--y',p.pixel[1]/910*100+'%');$('map').append(pin);
+ const li=button((i+1)+' · '+p.name,choose,i===selected);li.className='place';$('places').append(li)});
+ const p=places[selected],links=elem('div','');links.className='links';const directions=elem('a','지도에서 위치 보기 ↗');directions.href='https://map.kakao.com/link/map/'+encodeURIComponent(p.name)+','+p.point[1]+','+p.point[0];const info=elem('a','장소 자료 ↗');info.href=p.url;links.append(directions,info);
+ $('detail').replaceChildren(elem('small',p.area+' · '+p.type),elem('h2',p.name),elem('h3',p.animals),elem('p',p.why),elem('h3',p.grade),elem('p',p.near),elem('h3','현장 관찰'),elem('p',p.visit),links);
+ for(const b of $('filters').children)b.setAttribute('aria-pressed',String(b.textContent===filter));
+}
+for(const type of ['전체',...places.map(p=>p.type)])$('filters').append(button(type,()=>{filter=type;selected=type==='전체'?0:places.findIndex(p=>p.type===type);paint()},type==='전체'));
+paint();
+</script></body></html>
+
