@@ -4,10 +4,12 @@ CREATE INDEX IF NOT EXISTS species_matched_name ON species(matched_scientific_na
 CREATE INDEX IF NOT EXISTS observation_cover ON observation(user_id, species_id, captured_at DESC, observation_id DESC)
     WHERE mode='general' AND identification='confirmed';
 
-CREATE VIEW IF NOT EXISTS guide_catalog AS
+DROP VIEW IF EXISTS guide_catalog;
+CREATE VIEW guide_catalog AS
     SELECT 'jeju' AS region, species_id, korean_name, scientific_name,
            class AS taxon_class
     FROM species
+    WHERE typeof(source_occurrence_count) = 'integer' AND source_occurrence_count > 0
     UNION ALL
     SELECT 'national', COALESCE(link.species_id, 'KTSN-' || n.KTSN), n.대표국명, n.학명, n.Class_Name
     FROM national_species n

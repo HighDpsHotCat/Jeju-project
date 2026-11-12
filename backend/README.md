@@ -47,6 +47,7 @@ Flutter는 기기 SQLite에서 홈과 목록을 읽을 수 있습니다. 새 배
 
 - 홈은 `SELECT species_count, observation_count FROM collection_progress WHERE user_id=?`로 조회합니다. 프로필만 있고 관찰이 없는 사용자는 두 값 모두 0입니다.
 - 목록은 `guide_entries.sql`의 이름 있는 인자 user_id, region, taxon, q, limit, offset을 바인딩합니다. region은 jeju 또는 national, taxon은 전체일 때 빈 문자열, 포유류·조류·곤충은 Mammalia·Aves·Insecta입니다. q는 국명·학명·ID 부분 검색입니다.
+- 기본값인 `region=jeju`는 제주 종 기준표의 원자료 관찰 건수(`source_occurrence_count`)가 양의 정수인 종을 표시합니다. 개인의 등록 여부는 목록 포함 조건과 별개입니다. `region=national`은 국가 목록의 국명·학명·분류를 사용합니다.
 - registered는 확인된 일반 관찰이 있으면 참입니다. photo_ref는 해당 사용자의 최신 사진 참조이며 사진이 없으면 null입니다. 촬영 시각은 같은 UTC ISO 8601 형식으로 저장합니다.
 - 전국 목록은 국가생물종목록의 동물 분류군만 사용합니다. 학명·국명이 양쪽에서 유일하게 대응하고 이름 검토가 완료된 항목은 제주 ID를 공유합니다. 나머지 전국 항목은 KTSN- 접두 ID를 사용합니다.
 
