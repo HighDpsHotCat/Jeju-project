@@ -26,6 +26,7 @@ namespace Jeju.Yard
         string activeJson, placementKey;
 
         public bool IsPlaced(string id) => id != null && placed.Contains(id);
+        public string ActiveCollectionKey => placementKey;
         public int RegisteredCount => registered.Count;
         public bool IsOpen => panel != null && panel.IsOpen;
 
@@ -220,16 +221,43 @@ namespace Jeju.Yard
         bool HasModel(YardGuideSnapshot.Animal animal) =>
             !string.IsNullOrEmpty(animal.modelKey) && models.ContainsKey(animal.modelKey);
 
-        public void OpenResident(string modelKey)
+        public string PlacedSpeciesId(string modelKey)
+        {
+            if (string.IsNullOrEmpty(modelKey) || !models.TryGetValue(modelKey, out var model) ||
+                !model.activeInHierarchy) return null;
+            // Older guides can share one model between species. Use the first placed card in guide order.
+            foreach (var card in cards)
+                if (card.placed && registered[card.id].modelKey == modelKey) return card.id;
+            return null;
+        }
+
+        public void OpenResident(string modelKey, string expectedSpeciesId = null, string expectedCollectionKey = null)
         {
             Reload();
+            string id = PlacedSpeciesId(modelKey);
+            if (id == null || (expectedSpeciesId != null && expectedSpeciesId != id) ||
+                (expectedCollectionKey != null && expectedCollectionKey != placementKey)) return;
             foreach (var card in cards)
-            {
-                if (!card.placed || registered[card.id].modelKey != modelKey) continue;
-                card.preview = portraits.Get(modelKey, models[modelKey]);
-                panel.OpenResident(card.id);
-                return;
-            }
+                if (card.id == id)
+                {
+                    card.preview = portraits.Get(modelKey, models[modelKey]);
+                    panel.OpenResident(id);
+                    return;
+                }
+        }
+
+        public bool PetResident(string modelKey, out bool gained, out bool full)
+        {
+            gained = full = false;
+            string id = PlacedSpeciesId(modelKey);
+            if (id == null) return false;
+            string scope = placementKey;
+            Reload();
+            if (scope != placementKey || PlacedSpeciesId(modelKey) != id) return false;
+            int points = YardAffection.Pet(scope, id, DateTime.UtcNow.Ticks, out gained);
+            full = points == YardAffection.Maximum;
+            if (gained && panel.IsDetailOpen) panel.RefreshAffection();
+            return true;
         }
 
         public void Toggle(string id)
@@ -273,7 +301,9 @@ namespace Jeju.Yard
                 collection != null && collection.examples ? "예시 도감" : "나의 도감";
             panel.SetSources(source == Source.Linked ? (Action)null : ImportClipboard,
                 source == Source.Unlinked ? (Action)UseDemo : null);
-            panel.Bind(cards,Toggle,title);
+            panel.Bind(cards,Toggle,title,ReadAffection);
         }
+
+        int ReadAffection(string id) => YardAffection.GetPoints(placementKey, id);
     }
 }

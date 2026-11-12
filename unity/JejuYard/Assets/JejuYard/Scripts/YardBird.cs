@@ -47,6 +47,18 @@ namespace Jeju.Yard
 
         public void PoseAt(float seconds) => ApplyPose(seconds, 0f);
 
+        protected override void ApplyPetPose(float elapsedSeconds, float strength)
+        {
+            bool gull = species == Species.Seagull;
+            float flutter = Mathf.Sin(elapsedSeconds * (gull ? 6f : 16f));
+            float spread = (gull ? 20f + 8f * flutter : 8f + 5f * flutter) * strength;
+            rightWing.localRotation = Quaternion.Euler(0f, -spread, spread * .65f) * rightWing.localRotation;
+            leftWing.localRotation = Quaternion.Euler(0f, spread, -spread * .65f) * leftWing.localRotation;
+            head.localRotation *= gull
+                ? Quaternion.Euler(-12f * strength, 0f, 4f * flutter * strength)
+                : Quaternion.Euler(-6f * strength, 0f, (15f + 5f * flutter) * strength);
+        }
+
         void ApplyPose(float seconds, float rest)
         {
             if (species == Species.Seagull) Gull(Mathf.Repeat(seconds, GullCycle), rest);

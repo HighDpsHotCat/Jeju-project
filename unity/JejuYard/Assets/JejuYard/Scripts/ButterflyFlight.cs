@@ -31,6 +31,14 @@ namespace Jeju.Yard
 
         public void PoseAt(float seconds) => ApplyPose(seconds, 0f);
 
+        protected override void ApplyPetPose(float elapsedSeconds, float strength)
+        {
+            // Briefly fan the wings open from their current resting or flying pose.
+            float fan = (22f + 17f * Mathf.Sin(elapsedSeconds * 18f)) * strength;
+            leftWing.localRotation *= Quaternion.Euler(0f, 0f, fan);
+            rightWing.localRotation *= Quaternion.Euler(0f, 0f, -fan);
+        }
+
         void ApplyPose(float seconds, float rest)
         {
             // Start above the flowers, midway through the outward leg.

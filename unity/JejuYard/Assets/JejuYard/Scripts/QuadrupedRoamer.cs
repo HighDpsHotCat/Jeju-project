@@ -41,6 +41,24 @@ namespace Jeju.Yard
 
         public void PoseAt(float seconds) => ApplyPose(seconds, 0f);
 
+        protected override void ApplyPetPose(float elapsedSeconds, float strength)
+        {
+            if (isCat)
+            {
+                // Press one cheek into the stroke while staying seated.
+                float nuzzle = Mathf.Sin(elapsedSeconds * 5.6f);
+                head.localRotation *= Quaternion.Euler(-10f * strength, 7f * nuzzle * strength,
+                    (15f + 7f * nuzzle) * strength);
+                tail.localRotation *= Quaternion.Euler(0f, 11f * nuzzle * strength, 0f);
+            }
+            else
+            {
+                float wag = Mathf.Sin(elapsedSeconds * 21f);
+                head.localRotation *= Quaternion.Euler(-14f * strength, 0f, 5f * wag * strength);
+                tail.localRotation *= Quaternion.Euler(6f * strength, 32f * wag * strength, 0f);
+            }
+        }
+
         void ApplyPose(float seconds, float rest)
         {
             float period = isCat ? CatCycleSeconds : CorgiCycleSeconds;

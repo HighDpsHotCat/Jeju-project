@@ -28,7 +28,8 @@ namespace Jeju.Yard
         Transform player;
         BoxCollider cottage;
         Camera lens;
-        Resident focused;
+        Resident focused, menuResident;
+        string menuCollectionKey, menuSpeciesId;
         bool nearCottage, focusCottage;
         static readonly Vector2 NoBubble = new Vector2(float.NaN, float.NaN);
 
@@ -53,6 +54,7 @@ namespace Jeju.Yard
             }
             panel.InteractRequested += Interact;
             panel.HouseExitRequested += ExitAtCottage;
+            panel.AnimalActionRequested += PerformAction;
         }
 
         static float GroundDistance(Vector3 a, Vector3 b)
@@ -63,12 +65,20 @@ namespace Jeju.Yard
 
         void LateUpdate()
         {
-            if (panel == null || player == null) return;
-            Resolve();
+            if (panel != null) Resolve();
         }
 
         void Resolve()
         {
+            if (player == null || !player.gameObject.activeInHierarchy)
+            {
+                ResetNearby();
+                return;
+            }
+            if (menuResident != null && (!panel.AnimalMenuOpen || panel.IsOpen ||
+                menuCollectionKey != collection.ActiveCollectionKey ||
+                menuSpeciesId != collection.PlacedSpeciesId(menuResident.modelKey)))
+                CloseMenu();
             Vector3 position = player.position;
             float best = float.PositiveInfinity;
             Vector2 bubble = NoBubble;
@@ -95,6 +105,7 @@ namespace Jeju.Yard
             else nearCottage = false;
 
             Resident next = null;
+            bool menuInReach = false;
             foreach (var resident in residents)
             {
                 Transform point = resident.actor.InteractionPoint;
@@ -108,22 +119,88 @@ namespace Jeju.Yard
                     resident.near = near;
                 }
                 if (distance > resident.reach) continue;
+                if (resident == menuResident) menuInReach = true;
                 float score = distance / resident.reach - (focused == resident ? FocusMargin : 0f);
                 if (score >= best) continue;
                 best = score;
                 next = resident;
             }
+            // Keep the selected animal when two residents approach each other.
+            if (menuResident != null)
+            {
+                if (menuInReach && TryAnchor(menuResident, out Vector2 anchor))
+                {
+                    next = menuResident;
+                    panel.MoveAnimalMenu(anchor);
+                }
+                else CloseMenu();
+            }
             focused = next;
-            focusCottage = next == null && nearCottage;
+            focusCottage = focused == null && nearCottage;
             panel.SetNearby(focused != null || focusCottage, focusCottage, bubble);
+        }
+
+        bool TryAnchor(Resident resident, out Vector2 anchor)
+        {
+            anchor = default;
+            if (lens == null) return false;
+            Vector3 screen = lens.WorldToScreenPoint(resident.actor.InteractionPoint.position);
+            anchor = screen;
+            return screen.z > 0;
+        }
+
+        void CloseMenu()
+        {
+            menuResident = null;
+            menuCollectionKey = menuSpeciesId = null;
+            panel.CloseAnimalMenu();
         }
 
         void Interact()
         {
             if (panel.IsOpen || player == null) return;
+            if (panel.AnimalMenuOpen)
+            {
+                PerformAction(panel.SelectedAnimalAction);
+                return;
+            }
             Resolve();
-            if (focused != null) collection.OpenResident(focused.modelKey);
+            if (focused != null && TryAnchor(focused, out Vector2 anchor))
+            {
+                string species = collection.PlacedSpeciesId(focused.modelKey);
+                if (species == null) return;
+                menuResident = focused;
+                menuCollectionKey = collection.ActiveCollectionKey;
+                menuSpeciesId = species;
+                panel.ShowAnimalMenu(anchor);
+            }
             else if (focusCottage) YardExit.Leave();
+        }
+
+        void PerformAction(YardCollectionPanel.AnimalAction action)
+        {
+            if (panel.IsOpen || !panel.AnimalMenuOpen || menuResident == null) return;
+            Resolve();
+            if (menuResident == null) return;
+            var resident = menuResident;
+            switch (action)
+            {
+                case YardCollectionPanel.AnimalAction.Info:
+                    string speciesId = menuSpeciesId, collectionKey = menuCollectionKey;
+                    CloseMenu();
+                    collection.OpenResident(resident.modelKey, speciesId, collectionKey);
+                    break;
+                case YardCollectionPanel.AnimalAction.Pet:
+                    if (collection.PetResident(resident.modelKey, out bool gained, out bool full))
+                    {
+                        resident.actor.PlayPetReaction();
+                        panel.ShowPetFeedback(gained, full);
+                    }
+                    break;
+                case YardCollectionPanel.AnimalAction.Decorate:
+                    panel.ShowDecorationPreview();
+                    break;
+            }
         }
 
         void ExitAtCottage()
@@ -133,7 +210,9 @@ namespace Jeju.Yard
             if (nearCottage) YardExit.Leave();
         }
 
-        void OnDisable()
+        void OnDisable() => ResetNearby();
+
+        void ResetNearby()
         {
             foreach (var resident in residents)
                 if (resident.near && resident.actor != null)
@@ -143,7 +222,11 @@ namespace Jeju.Yard
                 }
             nearCottage = focusCottage = false;
             focused = null;
-            if (panel != null) panel.SetNearby(false, false, NoBubble);
+            if (panel != null)
+            {
+                if (menuResident != null || panel.AnimalMenuOpen) CloseMenu();
+                panel.SetNearby(false, false, NoBubble);
+            }
         }
 
         void OnDestroy()
@@ -151,6 +234,7 @@ namespace Jeju.Yard
             if (panel == null) return;
             panel.InteractRequested -= Interact;
             panel.HouseExitRequested -= ExitAtCottage;
+            panel.AnimalActionRequested -= PerformAction;
         }
     }
 }

@@ -11,6 +11,32 @@ namespace Jeju.Yard
         float transition;
         bool turning;
         protected float Attention { get; private set; }
+        float petRemaining, petStrength, petElapsed;
+
+        public void PlayPetReaction()
+        {
+            if (isActiveAndEnabled) petRemaining = 1.25f;
+        }
+
+        protected abstract void ApplyPetPose(float elapsedSeconds, float strength);
+
+        // Each Update rebuilds the underlying pose. Add the touch motion after it,
+        // even when looking at the player has stopped the animal's travel clock.
+        protected void LateUpdate()
+        {
+            if (petRemaining <= 0f && petStrength <= 0f) return;
+            float dt = Time.deltaTime;
+            petRemaining = Mathf.Max(0f, petRemaining - dt);
+            float target = Mathf.SmoothStep(0f, 1f, petRemaining / .5f);
+            petStrength = Mathf.MoveTowards(petStrength, target, dt * 7f);
+            if (petStrength <= 0f)
+            {
+                petElapsed = 0f;
+                return;
+            }
+            petElapsed += dt;
+            ApplyPetPose(petElapsed, petStrength);
+        }
 
         public void SetObserver(Transform value)
         {
@@ -65,6 +91,7 @@ namespace Jeju.Yard
             observer = null;
             turning = false;
             transition = Attention = 0f;
+            petRemaining = petStrength = petElapsed = 0f;
         }
     }
 }

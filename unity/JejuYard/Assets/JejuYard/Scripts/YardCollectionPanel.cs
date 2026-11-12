@@ -7,7 +7,7 @@ using FontAsset = UnityEngine.TextCore.Text.FontAsset;
 namespace Jeju.Yard
 {
     [DisallowMultipleComponent]
-    public sealed class YardCollectionPanel : MonoBehaviour
+    public sealed partial class YardCollectionPanel : MonoBehaviour
     {
         public sealed class Entry
         {
@@ -42,6 +42,9 @@ namespace Jeju.Yard
         Image detailModel;
         PawMark detailPlaceholder;
         Label detailName, detailDate, detailLocation;
+        Label detailAffectionScore;
+        AffectionHearts detailHearts;
+        Func<string, int> readAffection;
         Button detailClose, detailAction;
         ScrollView detailBody, gridScroller;
         Vector2 savedGridOffset;
@@ -65,7 +68,7 @@ namespace Jeju.Yard
             if (active == null || active.root?.panel == null) return false;
             var p = RuntimePanelUtils.ScreenToPanel(active.root.panel, new Vector2(screenPoint.x, Screen.height - screenPoint.y));
             bool Over(Button button) => button != null && button.resolvedStyle.display != DisplayStyle.None && button.worldBound.Contains(p);
-            return Over(active.interactButton) || Over(active.houseBubble) || Over(active.launcher);
+            return Over(active.interactButton) || Over(active.houseBubble) || Over(active.launcher) || active.ActionMenuConsumes(p);
         }
 
         public void SetNearby(bool available, bool atHouse, Vector2 houseScreenPoint)
@@ -80,10 +83,12 @@ namespace Jeju.Yard
             UpdateNearbyHud();
         }
 
-        public void Bind(IReadOnlyList<Entry> items, Action<string> onToggle, string collectionLabel = null)
+        public void Bind(IReadOnlyList<Entry> items, Action<string> onToggle, string collectionLabel = null,
+            Func<string, int> readAffection = null)
         {
             entries = items ?? Empty;
             toggle = onToggle;
+            this.readAffection = readAffection;
             this.collectionLabel = string.IsNullOrEmpty(collectionLabel) ? "나의 도감" : collectionLabel;
             if (IsOpen) Refresh();
         }
@@ -200,6 +205,7 @@ namespace Jeju.Yard
         void OnDisable()
         {
             if (active == this) active = null;
+            CloseAnimalMenu();
             CloseDetail(false);
             IsOpen = false;
             nearbyAvailable = targetIsHouse = hasHouseAnchor = false;
@@ -221,6 +227,7 @@ namespace Jeju.Yard
                 if (IsDetailOpen) CloseDetail();
                 else SetOpen(false);
             }
+            else if (AnimalMenuOpen) UpdateAnimalMenu();
         }
 
         void Build()
@@ -308,6 +315,7 @@ namespace Jeju.Yard
             root.Add(houseBubble);
             Show(interactButton, false);
             Show(houseBubble, false);
+            BuildAnimalMenu();
         }
 
         void UpdateNearbyHud()
@@ -315,6 +323,7 @@ namespace Jeju.Yard
             if (root?.panel == null || interactButton == null) return;
             Show(interactButton, nearbyAvailable && !IsOpen);
             interactButton.tooltip = targetIsHouse ? "마당 나가기" : "동물 만나기";
+            RefreshAnimalMenu();
             bool showBubble = !IsOpen && hasHouseAnchor;
             Show(houseBubble, showBubble);
             if (!showBubble) return;
@@ -367,6 +376,9 @@ namespace Jeju.Yard
             var records = Element("encounter-record");
             detailDate = AddRecord(records, "처음 만난 날", "detail-first-met-date");
             detailLocation = AddRecord(records, "처음 만난 장소", "detail-first-met-location");
+            detailAffectionScore = AddRecord(records, "호감도", "detail-affection-score");
+            detailHearts = new AffectionHearts();
+            records.Add(detailHearts);
             content.Add(records);
 
             detailActions = Element("detail-actions");
@@ -382,6 +394,65 @@ namespace Jeju.Yard
             detailClose.Add(new CloseMark());
             detailSheet.Add(detailClose);
             Show(detail, false);
+        }
+
+        sealed class AffectionHearts : VisualElement
+        {
+            const int Columns = 10;
+            int filled = -1;
+
+            public AffectionHearts()
+            {
+                name = "detail-affection-hearts";
+                pickingMode = PickingMode.Ignore;
+                style.height = 40;
+                style.flexShrink = 0;
+                generateVisualContent += Paint;
+            }
+
+            public void SetPoints(int points)
+            {
+                int next = points / YardAffection.PointsPerHeart;
+                if (next == filled) return;
+                filled = next;
+                MarkDirtyRepaint();
+            }
+
+            void Paint(MeshGenerationContext context)
+            {
+                var rect = contentRect;
+                if (rect.width <= 0 || rect.height <= 0) return;
+                float step = Mathf.Min(24f, rect.width / Columns);
+                float size = Mathf.Min(16f, step - 2f);
+                if (size <= 0) return;
+                var p = context.painter2D;
+                p.lineWidth = 1.2f;
+                for (int i = 0; i < YardAffection.Maximum / YardAffection.PointsPerHeart; i++)
+                {
+                    float x = rect.center.x + (i % Columns + .5f - Columns * .5f) * step;
+                    float y = rect.yMin + (i / Columns + .5f) * rect.height * .5f;
+                    Vector2 At(float dx, float dy) => new Vector2(x + dx * size, y + dy * size);
+                    p.fillColor = i < filled ? new Color32(193, 85, 100, 255) : new Color32(248, 237, 228, 255);
+                    p.strokeColor = i < filled ? new Color32(157, 62, 78, 255) : new Color32(183, 155, 143, 255);
+                    p.BeginPath();
+                    p.MoveTo(At(0, .45f));
+                    p.BezierCurveTo(At(-.13f,.30f), At(-.49f,.08f), At(-.49f,-.16f));
+                    p.BezierCurveTo(At(-.49f,-.46f), At(-.16f,-.53f), At(0,-.29f));
+                    p.BezierCurveTo(At(.16f,-.53f), At(.49f,-.46f), At(.49f,-.16f));
+                    p.BezierCurveTo(At(.49f,.08f), At(.13f,.30f), At(0,.45f));
+                    p.ClosePath();
+                    p.Fill();
+                    p.Stroke();
+                }
+            }
+        }
+
+        public void RefreshAffection()
+        {
+            if (!IsDetailOpen) return;
+            int points = readAffection?.Invoke(selectedId) ?? 0;
+            detailAffectionScore.text = $"{points}/{YardAffection.Maximum}";
+            detailHearts.SetPoints(points);
         }
 
         Label AddRecord(VisualElement parent, string caption, string id)
@@ -421,6 +492,7 @@ namespace Jeju.Yard
                 detailName.text = entry.name;
                 detailDate.text = string.IsNullOrWhiteSpace(entry.firstMetDate) ? "기록 없음" : entry.firstMetDate;
                 detailLocation.text = string.IsNullOrWhiteSpace(entry.firstMetLocation) ? "기록 없음" : entry.firstMetLocation;
+                RefreshAffection();
                 var studio = GetComponent<YardModelPortraits>();
                 detailModel.image = studio != null ? studio.Inspect(entry.preview) ?? entry.preview : entry.preview;
                 Show(detailPlaceholder, detailModel.image == null);
@@ -504,9 +576,9 @@ namespace Jeju.Yard
 
         void SizeDetail()
         {
-            float height = Mathf.Min(IsResidentOpen ? 400f : 466f, SafeRect.height / settings.scale - 24f);
+            float height = Mathf.Min(IsResidentOpen ? 472f : 538f, SafeRect.height / settings.scale - 24f);
             detailSheet.style.height = height;
-            detailStage.style.height = Mathf.Clamp(height - (IsResidentOpen ? 158f : 224f), 110f, 242f);
+            detailStage.style.height = Mathf.Clamp(height - (IsResidentOpen ? 230f : 296f), 110f, 242f);
         }
 
         void SizeSheet()

@@ -28,6 +28,14 @@ namespace Jeju.Yard
 
         public void PoseAt(float seconds) => ApplyPose(seconds, 0f, false);
 
+        protected override void ApplyPetPose(float elapsedSeconds, float strength)
+        {
+            float beat = Mathf.Sin(elapsedSeconds * 10f);
+            transform.localRotation *= Quaternion.Euler((-11f - 3f * beat) * strength, 0f,
+                6f * strength);
+            tail.localRotation *= Quaternion.Euler(18f * beat * strength, 0f, 0f);
+        }
+
         void ApplyPose(float seconds, float rest, bool followObserver)
         {
             Vector3 point = SwimPosition(seconds);
