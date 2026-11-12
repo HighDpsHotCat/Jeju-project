@@ -455,7 +455,7 @@ class _AnimalRow extends StatelessWidget {
         child: InkWell(
           onTap: () => showFieldSheet<void>(
             context,
-            _AnimalDetail(animal: animal, found: found, examples: examples),
+            AnimalDetail(animal: animal, found: found, examples: examples),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
@@ -514,14 +514,15 @@ class _AnimalRow extends StatelessWidget {
   );
 }
 
-class _AnimalDetail extends StatelessWidget {
-  const _AnimalDetail({
+class AnimalDetail extends StatelessWidget {
+  const AnimalDetail({
+    super.key,
     required this.animal,
-    required this.found,
-    required this.examples,
+    this.found,
+    this.examples = false,
   });
   final Animal animal;
-  final bool found;
+  final bool? found;
   final bool examples;
   @override
   Widget build(BuildContext context) => Column(
@@ -567,12 +568,13 @@ class _AnimalDetail extends StatelessWidget {
       if (animal.jejuId.isNotEmpty) Text('제주 관찰 기록  ${animal.jejuId}'),
       if (animal.nationalId.isNotEmpty) Text('국가생물종목록  ${animal.nationalId}'),
       const SizedBox(height: 14),
-      Row(
-        children: [
-          Text(examples ? '예시 도감   ' : '나의 도감   '),
-          _Registration(found),
-        ],
-      ),
+      if (found case final registered?)
+        Row(
+          children: [
+            Text(examples ? '예시 도감   ' : '나의 도감   '),
+            _Registration(registered),
+          ],
+        ),
     ],
   );
 }
