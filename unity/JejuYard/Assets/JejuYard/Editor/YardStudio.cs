@@ -20,7 +20,8 @@ namespace Jeju.Yard.EditorArt
         {
             if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            Landscape.Build();
+            var courtyard = Landscape.Build();
+            Dolphin.Build(courtyard.transform);
             var house = Cottage.Build();
             PrefabUtility.SaveAsPrefabAssetAndConnect(house,"Assets/JejuYard/Art/JejuChoga.prefab",InteractionMode.AutomatedAction);
             house.transform.position = new Vector3(-5.4f,0,5.6f);
@@ -83,9 +84,13 @@ namespace Jeju.Yard.EditorArt
                             if (firstTouch<0 && (flags & CollisionFlags.Sides)!=0) firstTouch=i*dt;
                         }
                         float distance=new Vector2(actor.transform.position.x-spawn.x,actor.transform.position.z-spawn.z).magnitude;
-                        Debug.Log($"YARD WALK {direction} at {hz}Hz: first contact {firstTouch:F3}s, stopped at {distance:F3}m");
+                        bool atSea = direction == Vector2.right || direction == Vector2.down;
+                        string edge = atSea ? "waterline" : "basalt wall";
+                        Debug.Log($"YARD WALK {direction} at {hz}Hz: {edge} at {firstTouch:F3}s, stopped at {distance:F3}m, y={actor.transform.position.y:F3}");
                         if (Mathf.Abs(firstTouch-YardWalker.WallWalkSeconds)>dt+.023f || Mathf.Abs(distance-YardWalker.CentreToWallContact)>.045f)
-                            throw new Exception($"Wrong wall travel in direction {direction}: {firstTouch}s / {distance}m");
+                            throw new Exception($"Wrong travel to {edge} in direction {direction}: {firstTouch}s / {distance}m");
+                        if (atSea && Mathf.Abs(actor.transform.position.y - Coast.WaterLevel) > .18f)
+                            throw new Exception($"Character did not reach the sloping beach in direction {direction}");
                     }
                 }
             }
@@ -116,12 +121,38 @@ namespace Jeju.Yard.EditorArt
             var follow=cam.GetComponent<YardCamera>();
             cam.aspect=1376f/900f; follow.Frame(true);
             Take(cam,"yard-play",1376,900,cam.transform.rotation,cam.transform.position,cam.orthographicSize);
-            Quaternion angle=Quaternion.Euler(38,17,0);
-            Take(cam,"yard-overview",1376,970,angle,new Vector3(0,.5f,0)-angle*Vector3.forward*42f,14.7f);
+            Quaternion angle=Quaternion.Euler(42,-11,0);
+            Take(cam,"yard-overview",1376,970,angle,new Vector3(.8f,.5f,-.7f)-angle*Vector3.forward*42f,14.85f);
             angle=Quaternion.Euler(23,-12,0);
             Take(cam,"yard-cottage",1376,900,angle,new Vector3(-5.4f,1.6f,4.9f)-angle*Vector3.forward*20f,3.95f);
             cam.aspect=.60f; follow.Frame(true);
             Take(cam,"yard-portrait",600,1000,cam.transform.rotation,cam.transform.position,cam.orthographicSize);
+            var visitor=UnityEngine.Object.FindAnyObjectByType<DolphinVisitor>();
+            var walker=follow.player.GetComponent<YardWalker>();
+            Vector3 spawn=follow.player.position;
+            Quaternion facing=walker.visual.rotation;
+            try
+            {
+                follow.player.position=new Vector3(0,Coast.WaterLevel+.05f,-YardWalker.CentreToWallContact);
+                walker.visual.rotation=Quaternion.LookRotation(Vector3.back);
+                visitor.PoseAt(9.9f);
+                cam.aspect=1.5f; follow.Frame(true);
+                Take(cam,"yard-beach",1350,900,cam.transform.rotation,cam.transform.position,cam.orthographicSize);
+
+                follow.player.position=new Vector3(YardWalker.CentreToWallContact,Coast.WaterLevel+.05f,0);
+                walker.visual.rotation=Quaternion.LookRotation(Vector3.right);
+                visitor.PoseAt(0);
+                cam.aspect=.48f; follow.Frame(true);
+                Take(cam,"yard-beach-portrait",540,1125,cam.transform.rotation,cam.transform.position,cam.orthographicSize);
+            }
+            finally
+            {
+                follow.player.position=spawn;
+                walker.visual.rotation=facing;
+                visitor.PoseAt(0);
+                cam.ResetAspect();
+                follow.Frame(true);
+            }
         }
 
         static void Take(Camera cam,string name,int w,int h,Quaternion angle,Vector3 pos,float size)

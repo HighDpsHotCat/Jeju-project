@@ -26,47 +26,19 @@ namespace Jeju.Yard.EditorArt
             var rng = new Rand(4703);
             Ground(yard,rng);
             Paths(yard,rng);
-            for (int side=0; side<4; side++) Wall(yard,rng,side);
+            Wall(yard,rng,true);
+            Wall(yard,rng,false);
             Orchard(yard,rng);
             Meadow(yard,rng);
             return root;
         }
 
-        // A low rounded lawn terrace continues beyond the enclosed play space.
-        static Vector3[] Rim(float half, float radius, float y)
-        {
-            const int steps = 4;
-            var ring = new Vector3[4*(steps+1)];
-            for (int c=0;c<4;c++) {
-                float a = Mathf.PI*.5f*c;
-                var center = V(Mathf.Cos(a+Mathf.PI*.25f)>0 ? half-radius : radius-half,
-                    y, Mathf.Sin(a+Mathf.PI*.25f)>0 ? half-radius : radius-half);
-                for (int k=0;k<=steps;k++) {
-                    float t=a+Mathf.PI*.5f*k/steps;
-                    ring[c*(steps+1)+k]=center+V(radius*Mathf.Cos(t),0,radius*Mathf.Sin(t));
-                }
-            }
-            return ring;
-        }
-
         static void Ground(Transform root, Rand rng)
         {
             var d = new Draft();
-            var top = Rim(15.0f,2.45f,0);
-            var lip = Rim(15.13f,2.54f,-.20f);
-            var soil = Rim(15.06f,2.5f,-.57f);
-            var toe = Rim(14.70f,2.45f,-.98f);
-            for (int i=0;i<top.Length;i++) {
-                int j=(i+1)%top.Length;
-                Vector3 normal=(top[i]+top[j]).normalized;
-                d.Tri(Vector3.zero,top[i],top[j],Lawn,Up);
-                d.Quad(top[i],top[j],lip[j],lip[i],Draft.C(0x91AB66),normal);
-                d.Quad(lip[i],lip[j],soil[j],soil[i],Draft.C(0xAD9172),normal);
-                d.Quad(soil[i],soil[j],toe[j],toe[i],Draft.C(0x967D68),normal);
-            }
-            d.Box(V(0,-1.26f,0),V(160,.54f,160),Draft.C(0xA7C3AA));
+            Coast.Build(root, d, Lawn);
             var islands = new[] {new Vector2(-4.3f,-2.2f),new Vector2(3.8f,-2.7f),
-                new Vector2(4.9f,3.8f),new Vector2(-6.4f,-7.7f),new Vector2(8.6f,-6.7f),
+                new Vector2(4.9f,3.8f),new Vector2(-6.4f,-7.7f),new Vector2(7.1f,-6.4f),
                 new Vector2(6.9f,8.5f),new Vector2(-10.0f,1.0f),new Vector2(-3.0f,10.5f)};
             foreach (var spot in islands) {
                 float w=Range(rng,1.5f,2.8f), h=Range(rng,.8f,1.7f);
@@ -85,7 +57,7 @@ namespace Jeju.Yard.EditorArt
             // Small groups of painted blades give the grass texture without alpha cards.
             for(int i=0;i<550;i++) {
                 float x=Range(rng,-14.45f,14.45f), z=Range(rng,-14.45f,14.45f);
-                if(Mathf.Abs(x)>13 && Mathf.Abs(z)>13) continue;
+                if((Mathf.Abs(x)>13 && Mathf.Abs(z)>13) || !Coast.OnLawn(V(x,0,z),.28f)) continue;
                 var pos=V(x,.006f,z);
                 Color shade=Color.Lerp(Lawn,Pick(rng,Grass),.64f);
                 int blades=rng.Next(1,4);
@@ -94,9 +66,7 @@ namespace Jeju.Yard.EditorArt
                     d.Tri(a,a+V(.11f,0,.038f),a+V(.07f,0,.16f),shade,Up);
                 }
             }
-            var ground=d.Bake("GrassTerrace",root);
-            var floor=ground.AddComponent<BoxCollider>();
-            floor.center=V(0,-.15f,0); floor.size=V(29.8f,.30f,29.8f);
+            d.Bake("GrassTerrace",root);
         }
 
         // Softly scalloped earth around the porch, with flat hand-cut stepping stones.
@@ -189,48 +159,52 @@ namespace Jeju.Yard.EditorArt
             }
         }
 
-        static void Wall(Transform root,Rand rng,int side)
+        static void Wall(Transform root,Rand rng,bool north)
         {
             const float thickness=.86f;
             float inner=YardWalker.CentreToWallContact+YardWalker.BodyRadius;
-            Vector3 outward=Quaternion.Euler(0,90*side,0)*Vector3.forward;
+            Vector3 outward=north ? Vector3.forward : Vector3.left;
             Vector3 along=Vector3.Cross(Up,outward);
             float mid=inner+thickness*.5f;
             var d=new Draft();
-            // Reserve the corners for the north/south runs to avoid coplanar stonework.
-            float half=side%2==0 ? inner+thickness : inner;
-            Vector3 coreSize=side%2==0 ? V(half*2,.84f,.54f) : V(.54f,.84f,half*2);
-            d.Box(outward*mid+Up*.42f,coreSize,Draft.C(0x484C49));
+            float start=north ? -inner-thickness : -inner;
+            float end=inner;
+            // The last stones reach the wet sand where the coast meets each retained wall.
+            float length=end-start;
+            var middle=outward*mid+along*((start+end)*.5f);
+            var coreSize=north ? V(length,1.16f,.54f) : V(.54f,1.16f,length);
+            d.Box(middle+Up*.22f,coreSize,Draft.C(0x484C49));
             for(int row=0;row<3;row++){
                 int count=27+row*2;
                 float[] widths=new float[count];
                 float total=0;
                 for(int i=0;i<count;i++) {widths[i]=Range(rng,.68f,1.36f);total+=widths[i];}
-                float x=-half;
+                float x=start;
                 for(int i=0;i<count;i++){
-                    float w=widths[i]*2*half/total;
+                    float w=widths[i]*length/total;
                     float y=row==0?-.025f:row==1?.355f:.686f;
                     float height=row==0?.47f:row==1?.44f:Range(rng,.34f,.53f);
                     float depth=row==0? .86f : row==1?.84f:Range(rng,.67f,.83f);
                     Vector3 p=outward*(mid+Range(rng,-.025f,.025f))+along*(x+w*.5f)+Up*y;
+                    p.y+=Coast.SandHeight(p);
                     Rock(d,rng,p,along,outward,w*1.035f,depth,height,Pick(rng,Basalt),
                         row==2 && rng.NextDouble()<.24);
                     x+=w;
                 }
             }
-            var wall=d.Bake(new[]{"NorthBasalt","EastBasalt","SouthBasalt","WestBasalt"}[side],root);
+            var wall=d.Bake(north ? "NorthBasalt" : "WestBasalt",root);
             var box=wall.AddComponent<BoxCollider>();
-            box.center=outward*mid+Up*.56f;
-            box.size=side%2==0?V(2*(inner+thickness),1.12f,thickness):V(thickness,1.12f,2*(inner+thickness));
+            box.center=middle+Up*.41f;
+            box.size=north ? V(length,1.42f,thickness) : V(thickness,1.42f,length);
         }
 
         static void Orchard(Transform root,Rand rng)
         {
             var d=new Draft();
             Citrus(d,root,rng,V(6.0f,0,6.7f),1.07f);
-            Citrus(d,root,rng,V(9.6f,0,8.35f),.82f);
+            Citrus(d,root,rng,V(8.7f,0,8.65f),.82f);
             Citrus(d,root,rng,V(-10.3f,0,-4.6f),.85f);
-            Citrus(d,root,rng,V(9.8f,0,-6.4f),.92f);
+            Citrus(d,root,rng,V(7.65f,0,-5.95f),.92f);
             d.Bake("MandarinGrove",root);
         }
 
@@ -272,7 +246,7 @@ namespace Jeju.Yard.EditorArt
         static void Meadow(Transform root,Rand rng)
         {
             var d=new Draft();
-            var beds=new[]{V(10.7f,0,5),V(-10.9f,0,9.3f),V(-9.8f,0,-8.6f),V(7.5f,0,-10.8f),V(4.4f,0,10.6f),
+            var beds=new[]{V(8.8f,0,4.9f),V(-10.9f,0,9.3f),V(-9.8f,0,-8.6f),V(6.3f,0,-8.75f),V(4.4f,0,10.6f),
                 V(-7.7f,0,1.62f),V(-2.3f,0,2.05f),V(3.4f,0,3.25f),
                 V(-4.65f,0,-2.4f),V(4.05f,0,-2.65f),V(-1.45f,0,-5.7f)};
             for(int k=0;k<beds.Length;k++){
@@ -281,6 +255,7 @@ namespace Jeju.Yard.EditorArt
                 for(int i=0;i<plants;i++){
                     float angle=Range(rng,0,Mathf.PI*2), dist=Mathf.Sqrt(Range(rng,0,1));
                     var p=bed+V(Mathf.Cos(angle)*dist*1.30f,0,Mathf.Sin(angle)*dist*.64f);
+                    if(!Coast.OnLawn(p,.22f)) continue;
                     Tuft(d,rng,p,.19f);
                     if(i%2==0)Wildflower(d,rng,p, k%3==0 ? Draft.C(0xF5C858):Draft.C(0xFFF7DE));
                 }
@@ -288,10 +263,10 @@ namespace Jeju.Yard.EditorArt
             for(int i=0;i<140;i++){
                 float x=Range(rng,-12.5f,12.5f),z=Range(rng,-12.5f,12.5f);
                 if(Mathf.Abs(x)<1.2f || Mathf.Abs(z)<1.2f || (x < -1.15f && x > -9.8f && z>.9f && z<8.4f))continue;
-                Tuft(d,rng,V(x,0,z),Range(rng,.08f,.15f));
+                if(Coast.OnLawn(V(x,0,z),.18f)) Tuft(d,rng,V(x,0,z),Range(rng,.08f,.15f));
             }
-            foreach(var p in new[]{V(11.8f,0,-3.7f),V(11.75f,0,-4.9f),V(-11.75f,0,5.4f),
-                V(-10.95f,0,10.75f),V(4.3f,0,11.85f),V(-5.9f,0,-11.8f)})Camellia(d,rng,p);
+            foreach(var p in new[]{V(8.35f,0,-3.35f),V(8.5f,0,-4.45f),V(-11.75f,0,5.4f),
+                V(-10.95f,0,10.75f),V(4.3f,0,11.85f),V(-5.9f,0,-8.95f)})Camellia(d,rng,p);
             d.Bake("CamelliasAndMeadow",root);
         }
 

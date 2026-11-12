@@ -32,8 +32,11 @@ namespace Jeju.Yard
             float nearHome = 1f - Mathf.SmoothStep(0f, 1f, player.position.magnitude / 9f);
             Vector3 focus = player.position + new Vector3(-Mathf.Lerp(2.35f, 2.65f, portrait)*nearHome,
                 .70f, 1.0f + 1.55f*nearHome);
-            focus.x = Mathf.Clamp(focus.x, -11f, 11f);
-            focus.z = Mathf.Clamp(focus.z, -11f, 11f);
+            // Lead toward the sea so a visitor offshore stays in view on a narrow phone.
+            float eastShore = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(8f, 12.5f, player.position.x));
+            float southShore = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(8f, 12.5f, -player.position.z));
+            focus.x = Mathf.Clamp(focus.x + 1.65f * eastShore, -11f, 14.25f);
+            focus.z = Mathf.Clamp(focus.z - 1.8f * southShore, -13.45f, 11f);
             Vector3 destination = focus - tilt * Vector3.forward * 28f;
             transform.rotation = tilt;
             transform.position = snap ? destination : Vector3.SmoothDamp(transform.position, destination, ref velocity, .16f);
