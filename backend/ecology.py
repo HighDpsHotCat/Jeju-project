@@ -3,6 +3,7 @@ import json
 import os
 import sqlite3
 from contextlib import closing
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.error import HTTPError, URLError
 from urllib.parse import quote
@@ -51,6 +52,10 @@ def sync(key, database=DATABASE, fetch=fetch_page):
                 break
             number += 1
         db.execute("CREATE INDEX ecology_wetland ON ecology(wetland_rank)")
+        db.execute("""CREATE TABLE IF NOT EXISTS ecology_sync (
+            id INTEGER PRIMARY KEY CHECK(id = 1), synced_at TEXT NOT NULL)""")
+        db.execute("INSERT OR REPLACE INTO ecology_sync VALUES (1, ?)",
+                   (datetime.now(timezone.utc).isoformat(),))
     return count
 
 
@@ -62,7 +67,12 @@ def read_page(number, limit, rank, database=DATABASE):
         offset = (number - 1) * limit
         records = db.execute("SELECT record FROM ecology" + where + " ORDER BY id LIMIT ? OFFSET ?",
                              (*args, limit, offset))
-        return {"totCnt": total, "hasMore": offset + limit < total,
+        synced_at = None
+        if db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='ecology_sync'").fetchone():
+            meta = db.execute("SELECT synced_at FROM ecology_sync WHERE id=1").fetchone()
+            if meta:
+                synced_at = meta[0]
+        return {"totCnt": total, "hasMore": offset + limit < total, "syncedAt": synced_at,
                 "data": [json.loads(record) for record, in records]}
 
 

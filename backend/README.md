@@ -15,6 +15,7 @@ PowerShell 7에서 저장소 루트를 열고 다음을 실행합니다. 입력�
 - 전체 첫 페이지: `GET /ecology?number=1&limit=100`
 - 습지 1등급: `GET /ecology?wetlandRank=1`
 - 응답: totCnt(필터 적용 건수), hasMore(다음 페이지 유무), data(원본 레코드 배열). 최초 동기화 전에는 HTTP 503입니다.
+- syncedAt은 DB 전체를 마지막으로 정상 갱신한 UTC 시각입니다. 기존 DB는 다음 동기화까지 null을 반환합니다. 갱신에 실패하면 이전 데이터와 시각을 함께 유지합니다.
 
 ## 공모전 앱의 오프라인 DB
 
