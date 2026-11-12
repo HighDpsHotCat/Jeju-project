@@ -27,6 +27,7 @@ namespace Jeju.Yard
 
         void Update()
         {
+            if (YardCollectionPanel.BlocksYardInput) { Clear(); return; }
             if (Input.touchCount > 0)
             {
                 for (int i = 0; i < Input.touchCount; i++)
@@ -68,7 +69,7 @@ namespace Jeju.Yard
 
         void OnGUI()
         {
-            if (Event.current.type != EventType.Repaint || disc == null || (!Input.touchSupported && finger == NoFinger)) return;
+            if (YardCollectionPanel.BlocksYardInput || Event.current.type != EventType.Repaint || disc == null || (!Input.touchSupported && finger == NoFinger)) return;
             float r = Radius;
             Vector2 p = finger == NoFinger ? Screen.safeArea.min + Vector2.one * (r * 1.6f) : origin;
             p.y = Screen.height - p.y;

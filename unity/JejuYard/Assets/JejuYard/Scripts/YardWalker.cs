@@ -17,6 +17,7 @@ namespace Jeju.Yard
 
         void Update()
         {
+            if (YardCollectionPanel.BlocksYardInput) { Step(Vector2.zero, Time.deltaTime); return; }
             Vector2 input = new Vector2(
                 (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1 : 0) -
                 (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1 : 0),

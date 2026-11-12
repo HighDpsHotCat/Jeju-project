@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 const paper = Color(0xFFFBF6EF);
@@ -18,7 +19,11 @@ ThemeData explorerTheme() {
     outline: line,
     secondaryContainer: sage,
   );
-  final theme = ThemeData(useMaterial3: true, colorScheme: colors);
+  final theme = ThemeData(
+    useMaterial3: true,
+    colorScheme: colors,
+    fontFamily: kIsWeb ? 'Jeju Guide Sans' : null,
+  );
   return theme.copyWith(
     scaffoldBackgroundColor: paper,
     textTheme: theme.textTheme.apply(bodyColor: ink, displayColor: ink),

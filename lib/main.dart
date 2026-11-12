@@ -13,16 +13,23 @@ import 'explore/home.dart';
 import 'explore/navigation.dart';
 import 'explore/profile.dart';
 import 'explore/style.dart';
+import 'explore/yard_file.dart';
+import 'explore/yard_snapshot.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    await (FontLoader(
+      'Jeju Guide Sans',
+    )..addFont(rootBundle.load('assets/web_fonts/JejuGuideSans.woff2'))).load();
+  }
   SharedPreferences? preferences;
   try {
     preferences = await SharedPreferences.getInstance();
   } catch (error) {
     debugPrint('Could not load explorer preferences: $error');
   }
-  runApp(MyApp(preferences: preferences));
+  runApp(MyApp(preferences: preferences, publishYard: writeYardSnapshot));
 }
 
 class MyApp extends StatelessWidget {
@@ -30,11 +37,13 @@ class MyApp extends StatelessWidget {
     super.key,
     this.preferences,
     this.loadAnimals = loadGuideCatalog,
-    this.loadDiscoveries = readDiscoveredSpecies,
+    this.loadRecords = readGuideRecords,
+    this.publishYard,
   });
   final SharedPreferences? preferences;
   final Future<List<Animal>> Function() loadAnimals;
-  final Future<Set<String>> Function(String?) loadDiscoveries;
+  final Future<GuideRecords> Function(String?) loadRecords;
+  final Future<void> Function(String)? publishYard;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -61,6 +70,11 @@ class _FieldJournalState extends State<_FieldJournal>
   late bool _examples =
       widget.app.preferences?.getBool('explorer.examples') ?? false;
   Set<String> _registered = {};
+  String _profile = 'local';
+  bool _recordsReady = false;
+  String? _snapshotForCopy;
+  int _exportGeneration = 0;
+  Future<void> _writes = Future.value();
   Future<List<Animal>>? _catalog;
   bool _inGuide = false;
   bool _cameraOpen = false;
@@ -90,22 +104,120 @@ class _FieldJournalState extends State<_FieldJournal>
     if (state == AppLifecycleState.resumed) _refreshRecords();
   }
 
+  Future<List<Animal>> _animals() => _catalog ??= widget.app.loadAnimals();
+
   Future<void> _refreshRecords() async {
     final generation = ++_readGeneration;
+    _exportGeneration++;
+    if (_recordsReady) {
+      setState(() {
+        _recordsReady = false;
+        _snapshotForCopy = null;
+      });
+    }
     try {
-      final ids = await widget.app.loadDiscoveries(
+      final records = await widget.app.loadRecords(
         widget.app.preferences?.getString('device_profile.user_id'),
       );
-      if (mounted &&
-          generation == _readGeneration &&
-          !setEquals(ids, _registered)) {
-        setState(() => _registered = ids);
+      final ids = {
+        ...records.species,
+        ...?widget.app.preferences?.getStringList(
+          'guide.manual.${records.profile}',
+        ),
+      }..remove('');
+      if (ids.isNotEmpty) {
+        final catalog = await _animals();
+        // A field card can use a national ID while a hand-entered card uses a Jeju ID.
+        for (final a in catalog) {
+          if (a.jejuId.isNotEmpty &&
+              a.nationalId.isNotEmpty &&
+              ids.remove(a.nationalId)) {
+            ids.add(a.jejuId);
+          }
+        }
       }
+      if (!mounted || generation != _readGeneration) return;
+      setState(() {
+        _profile = records.profile;
+        _registered = ids;
+        _recordsReady = true;
+      });
+      await _publishYard();
     } catch (_) {
       if (mounted && generation == _readGeneration) {
         _message('기기에서 발견 기록을 읽지 못했어요.');
       }
     }
+  }
+
+  Future<String> _yardSnapshot() async {
+    final ids = _examples ? exampleSpeciesIds : _registered;
+    final profile = _profile;
+    final examples = _examples;
+    return encodeYardSnapshot(
+      profile: profile,
+      examples: examples,
+      discoveries: ids,
+      catalog: ids.isEmpty ? const [] : await _animals(),
+    );
+  }
+
+  Future<void> _publishYard() async {
+    final write = widget.app.publishYard;
+    if (!_recordsReady) return;
+    final generation = ++_exportGeneration;
+    try {
+      final json = await _yardSnapshot();
+      if (!mounted || generation != _exportGeneration || !_recordsReady) return;
+      setState(() => _snapshotForCopy = json);
+      if (write == null) return;
+      _writes = _writes
+          .then((_) async {
+            if (mounted && generation == _exportGeneration) await write(json);
+          })
+          .catchError((Object error) {
+            debugPrint('Could not update local yard collection: $error');
+            if (mounted && generation == _exportGeneration) {
+              _message('마당 자동 연결에 실패했어요. 도감에서 마당으로 보내기를 이용하세요.');
+            }
+          });
+      await _writes;
+    } catch (error) {
+      if (mounted && generation == _exportGeneration) {
+        _message('마당 목록을 준비하지 못했어요.');
+      }
+    }
+  }
+
+  Future<void> _copyToYard() async {
+    final data = _snapshotForCopy;
+    if (data == null) return;
+    try {
+      // Safari requires the clipboard call to run within this button gesture.
+      await Clipboard.setData(ClipboardData(text: data));
+      if (mounted) _message('목록을 복사했어요. 마당 발바닥 메뉴에서 도감 불러오기를 누르세요.');
+    } catch (_) {
+      if (mounted) _message('등록 목록을 복사하지 못했어요.');
+    }
+  }
+
+  Future<void> _register(Animal animal) async {
+    if (_examples || !_recordsReady || _registered.contains(animal.id)) return;
+    final prefs = widget.app.preferences;
+    final key = 'guide.manual.$_profile';
+    try {
+      if (prefs == null) throw StateError('Missing local preferences');
+      final ids = {...?prefs.getStringList(key), animal.id}.toList()..sort();
+      if (!await prefs.setStringList(key, ids)) {
+        throw StateError('Could not save registration');
+      }
+    } catch (_) {
+      if (mounted) _message('이 기기에 등록 기록을 저장하지 못했어요.');
+      return;
+    }
+    if (!mounted) return;
+    await _refreshRecords();
+    if (mounted && _recordsReady) _message('${animal.name} 등록 완료');
   }
 
   void _message(String message) =>
@@ -163,8 +275,13 @@ class _FieldJournalState extends State<_FieldJournal>
       SettingsSheet(examples: _examples),
     );
     if (value == null || !mounted || value == _examples) return;
-    setState(() => _examples = value);
+    _exportGeneration++;
+    setState(() {
+      _examples = value;
+      _snapshotForCopy = null;
+    });
     await _store(widget.app.preferences?.setBool('explorer.examples', value));
+    if (mounted) await _publishYard();
   }
 
   Future<void> _character() async {
@@ -224,9 +341,16 @@ class _FieldJournalState extends State<_FieldJournal>
                           discovered: ids,
                           examples: _examples,
                           onBack: _openHome,
-                          onRetry: () => setState(
-                            () => _catalog = widget.app.loadAnimals(),
-                          ),
+                          onRegister: _recordsReady && !_examples
+                              ? _register
+                              : null,
+                          onSendToYard: _snapshotForCopy == null
+                              ? null
+                              : _copyToYard,
+                          onRetry: () {
+                            setState(() => _catalog = widget.app.loadAnimals());
+                            _refreshRecords();
+                          },
                         ),
                     ],
                   ),

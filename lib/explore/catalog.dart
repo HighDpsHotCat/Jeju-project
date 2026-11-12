@@ -31,6 +31,16 @@ const _featured = {
   'JJ-004729': ('dolphin', '제주 바다에서 만나는 동물'),
 };
 
+// Domestic breeds share their species-level discovery with the local yard model.
+const _yardModels = {
+  'JJ-000821': ('corgi', '웰시코기'),
+  'JJ-001834': ('tabby', '노란 고양이'),
+  'JJ-002426': ('gull', '갈매기'),
+  'JJ-003483': ('sparrow', '참새'),
+  'JJ-003382': ('swallowtail', '호랑나비'),
+  'JJ-004729': ('dolphin', '남방큰돌고래'),
+};
+
 // Used only when the explorer explicitly turns on the example in Settings.
 const exampleSpeciesIds = {
   'JJ-000837',
@@ -62,7 +72,14 @@ class Animal {
   final String scientific;
   final String taxon;
 
-  String get name => korean.isEmpty ? scientific : korean;
+  String get id => jejuId.isEmpty ? nationalId : jejuId;
+  String get name => switch (jejuId) {
+    'JJ-000821' => '개',
+    'JJ-001834' => '고양이',
+    _ => korean.isEmpty ? scientific : korean,
+  };
+  String get modelKey => _yardModels[jejuId]?.$1 ?? '';
+  String get yardName => _yardModels[jejuId]?.$2 ?? name;
   String? get photo {
     final feature = _featured[jejuId];
     return feature == null ? null : 'assets/art/${feature.$1}.jpg';
@@ -85,7 +102,8 @@ class Animal {
     if (region == GuideRegion.national && nationalId.isEmpty) return false;
     if (group != AnimalGroup.all && group.taxon != taxon) return false;
     return query.isEmpty ||
-        korean.contains(query) ||
+        name.contains(query) ||
+        yardName.contains(query) ||
         scientific.toLowerCase().contains(query) ||
         jejuId.toLowerCase().contains(query) ||
         nationalId.contains(query);

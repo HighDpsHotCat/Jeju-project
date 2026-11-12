@@ -23,6 +23,7 @@ namespace Jeju.Yard.EditorArt
             var courtyard = Landscape.Build();
             Dolphin.Build(courtyard.transform);
             YardAnimals.Build();
+            new GameObject("YardCollection").AddComponent<YardCollectionController>();
             var house = Cottage.Build();
             PrefabUtility.SaveAsPrefabAssetAndConnect(house,"Assets/JejuYard/Art/JejuChoga.prefab",InteractionMode.AutomatedAction);
             house.transform.position = new Vector3(-5.4f,0,5.6f);

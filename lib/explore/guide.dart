@@ -11,12 +11,16 @@ class AnimalGuide extends StatefulWidget {
     required this.examples,
     required this.onBack,
     required this.onRetry,
+    required this.onRegister,
+    required this.onSendToYard,
   });
   final Future<List<Animal>> catalog;
   final Set<String> discovered;
   final bool examples;
   final VoidCallback onBack;
   final VoidCallback onRetry;
+  final ValueChanged<Animal>? onRegister;
+  final VoidCallback? onSendToYard;
 
   @override
   State<AnimalGuide> createState() => _AnimalGuideState();
@@ -200,7 +204,14 @@ class _AnimalGuideState extends State<AnimalGuide> {
                         total: widget.discovered.length,
                         examples: widget.examples,
                       ),
-                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.ios_share_rounded, size: 17),
+                          onPressed: widget.onSendToYard,
+                          label: const Text('마당으로 보내기'),
+                        ),
+                      ),
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1EBE0),
@@ -301,6 +312,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                           examples: widget.examples,
                           photoWidth: photoWidth,
                           badgeWidth: badgeWidth,
+                          onRegister: widget.onRegister,
                         );
                       },
                     ),
@@ -440,12 +452,14 @@ class _AnimalRow extends StatelessWidget {
     required this.examples,
     required this.photoWidth,
     required this.badgeWidth,
+    required this.onRegister,
   });
   final Animal animal;
   final bool found;
   final bool examples;
   final double photoWidth;
   final double badgeWidth;
+  final ValueChanged<Animal>? onRegister;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -453,10 +467,18 @@ class _AnimalRow extends StatelessWidget {
       Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => showFieldSheet<void>(
-            context,
-            _AnimalDetail(animal: animal, found: found, examples: examples),
-          ),
+          onTap: () async {
+            final register = await showFieldSheet<bool>(
+              context,
+              _AnimalDetail(
+                animal: animal,
+                found: found,
+                examples: examples,
+                canRegister: !found && onRegister != null,
+              ),
+            );
+            if (register == true) onRegister?.call(animal);
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
             child: Row(
@@ -519,10 +541,12 @@ class _AnimalDetail extends StatelessWidget {
     required this.animal,
     required this.found,
     required this.examples,
+    required this.canRegister,
   });
   final Animal animal;
   final bool found;
   final bool examples;
+  final bool canRegister;
   @override
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
@@ -573,6 +597,14 @@ class _AnimalDetail extends StatelessWidget {
           _Registration(found),
         ],
       ),
+      if (canRegister) ...[
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          onPressed: () => Navigator.pop(context, true),
+          icon: const Icon(Icons.add_rounded),
+          label: const Text('직접 관찰한 동물로 등록'),
+        ),
+      ],
     ],
   );
 }
