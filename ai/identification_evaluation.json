@@ -1,0 +1,114 @@
+{
+  "version": "jeju-5-5d8ac780b1",
+  "split": {
+    "train": 931,
+    "val": 251,
+    "test": 471
+  },
+  "suggested_correct": 119,
+  "suggested_total": 129,
+  "supported_test": 207,
+  "other_test": 264,
+  "other_false_suggestions": 10,
+  "macro_f1": 0.7020014358723681,
+  "groups": {
+    "roe": {
+      "total": 37,
+      "suggested": 19,
+      "correct_suggestions": 19,
+      "top1_among_five": 37
+    },
+    "sparrow": {
+      "total": 50,
+      "suggested": 35,
+      "correct_suggestions": 35,
+      "top1_among_five": 48
+    },
+    "ladybird": {
+      "total": 50,
+      "suggested": 44,
+      "correct_suggestions": 44,
+      "top1_among_five": 50
+    },
+    "slider": {
+      "total": 50,
+      "suggested": 10,
+      "correct_suggestions": 10,
+      "top1_among_five": 49
+    },
+    "frog": {
+      "total": 20,
+      "suggested": 11,
+      "correct_suggestions": 11,
+      "top1_among_five": 20
+    },
+    "fallow": {
+      "total": 16,
+      "suggested": 0
+    },
+    "deer": {
+      "total": 16,
+      "suggested": 0
+    },
+    "house_sparrow": {
+      "total": 16,
+      "suggested": 4
+    },
+    "swallow": {
+      "total": 16,
+      "suggested": 0
+    },
+    "asian_ladybird": {
+      "total": 16,
+      "suggested": 2
+    },
+    "butterfly": {
+      "total": 16,
+      "suggested": 0
+    },
+    "pond_turtle": {
+      "total": 16,
+      "suggested": 0
+    },
+    "painted_turtle": {
+      "total": 16,
+      "suggested": 0
+    },
+    "water_frog": {
+      "total": 16,
+      "suggested": 1
+    },
+    "toad": {
+      "total": 16,
+      "suggested": 0
+    },
+    "pine": {
+      "total": 8,
+      "suggested": 0
+    },
+    "daisy": {
+      "total": 16,
+      "suggested": 0
+    },
+    "duck": {
+      "total": 16,
+      "suggested": 0
+    },
+    "squirrel": {
+      "total": 16,
+      "suggested": 0
+    },
+    "european_roe": {
+      "total": 16,
+      "suggested": 2
+    },
+    "american_treefrog": {
+      "total": 16,
+      "suggested": 1
+    },
+    "yellow_slider": {
+      "total": 16,
+      "suggested": 0
+    }
+  }
+}

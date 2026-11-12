@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -6,6 +8,9 @@ import 'package:image_picker/image_picker.dart';
 import 'style.dart';
 import 'field_record.dart';
 import 'field_shutter.dart';
+import 'catalog.dart';
+import 'guide.dart';
+import 'identification.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key, this.recovered});
@@ -21,6 +26,11 @@ class _CameraScreenState extends State<CameraScreen> {
   bool _busy = false;
   FieldShot? _shot;
   bool _saved = false;
+  PhotoIdentification? _result;
+  bool _classifying = false;
+  bool _identifyError = false;
+  int _request = 0;
+  late final _catalog = loadGuideCatalog();
 
   bool get _fieldCamera =>
       !kIsWeb &&
@@ -39,7 +49,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (widget.recovered != null) _pick(recovered: widget.recovered);
   }
 
-  Future<void> _pick({XFile? recovered}) async {
+  Future<void> _pick({XFile? recovered, bool gallery = false}) async {
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -48,7 +58,7 @@ class _CameraScreenState extends State<CameraScreen> {
     try {
       FieldShot? shot;
       XFile? file = recovered;
-      if (file == null && _fieldCamera) {
+      if (file == null && _fieldCamera && !gallery) {
         shot = await Navigator.push<FieldShot>(
           context,
           MaterialPageRoute(builder: (_) => const FieldShutter()),
@@ -56,7 +66,9 @@ class _CameraScreenState extends State<CameraScreen> {
         file = shot?.photo;
       } else {
         file ??= await _picker.pickImage(
-          source: _hasCamera ? ImageSource.camera : ImageSource.gallery,
+          source: !gallery && _hasCamera
+              ? ImageSource.camera
+              : ImageSource.gallery,
           maxWidth: 1800,
           maxHeight: 1800,
           requestFullMetadata: false,
@@ -69,7 +81,9 @@ class _CameraScreenState extends State<CameraScreen> {
           _photo = bytes;
           _shot = shot;
           _saved = false;
+          _result = null;
         });
+        unawaited(_identify(bytes));
       }
     } on PlatformException catch (error) {
       if (mounted) {
@@ -87,17 +101,65 @@ class _CameraScreenState extends State<CameraScreen> {
     }
   }
 
+  Future<void> _identify(Uint8List photo) async {
+    final token = ++_request;
+    setState(() {
+      _classifying = true;
+      _identifyError = false;
+    });
+    try {
+      final result = await SpeciesIdentifier.instance.identify(photo);
+      if (mounted && token == _request) setState(() => _result = result);
+    } catch (e) {
+      debugPrint('Species identification failed: $e');
+      if (mounted && token == _request) setState(() => _identifyError = true);
+    } finally {
+      if (mounted && token == _request) setState(() => _classifying = false);
+    }
+  }
+
+  Future<void> _details(SpeciesCandidate candidate) async {
+    final entries = await _catalog;
+    if (!mounted) return;
+    final entry = entries.where((a) => a.jejuId == candidate.id).firstOrNull;
+    if (entry == null) return;
+    await showFieldSheet<void>(
+      context,
+      AnimalDetail(
+        animal: Animal(
+          entry.jejuId,
+          entry.nationalId,
+          candidate.name,
+          candidate.scientific,
+          entry.taxon,
+        ),
+      ),
+    );
+  }
+
   Future<void> _save() async {
     final shot = _shot;
-    if (shot == null || _busy || _saved) return;
+    final result = _result;
+    if (shot == null ||
+        _busy ||
+        (_saved && identical(shot.identification, result))) {
+      return;
+    }
     setState(() {
       _busy = true;
       _error = null;
     });
     try {
       final archive = await FieldArchive.open();
-      await archive.save(shot);
-      if (mounted) setState(() => _saved = true);
+      final stored = _saved
+          ? await archive.updateResult(shot, result!)
+          : await archive.save(shot, identification: result);
+      if (mounted) {
+        setState(() {
+          _shot = stored;
+          _saved = true;
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _error = '기기에 기록을 저장하지 못했어요. 다시 시도해 주세요.');
     } finally {
@@ -145,6 +207,10 @@ class _CameraScreenState extends State<CameraScreen> {
           _shot = chosen;
           _photo = bytes;
           _saved = true;
+          _request++;
+          _result = chosen.identification;
+          _classifying = false;
+          _identifyError = false;
         });
       }
     } catch (_) {
@@ -157,6 +223,8 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     final photo = _photo;
+    final result = _result;
+    final upToDate = _saved && identical(_shot?.identification, result);
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -205,10 +273,68 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '여기서 사진을 미리 보고 도감에서 닮은 동물을 찾아보세요.',
-                  style: TextStyle(color: muted, height: 1.5),
-                ),
+                if (photo == null)
+                  const Text(
+                    '노루·참새·칠성무당벌레·붉은귀거북·청개구리를 식별할 수 있어요. 동물 한 마리가 크게 보이게 촬영해 주세요.',
+                    style: TextStyle(color: muted, height: 1.5),
+                  ),
+                if (photo != null) ...[
+                  if (_classifying) ...[
+                    const LinearProgressIndicator(),
+                    const Text('기기에서 동물을 식별하고 있어요…'),
+                  ] else ...[
+                    if (_identifyError)
+                      const Text('사진을 식별하지 못했어요. 다시 시도하거나 다른 사진을 골라 주세요.'),
+                    if (result != null) ...[
+                      Text(
+                        result.confirmedId != null
+                            ? '직접 확인한 동물'
+                            : result.dismissed
+                            ? '미확인으로 남긴 사진'
+                            : switch (result.decision) {
+                                'suggested' => 'AI가 제안한 동물',
+                                'review' => '사진을 보고 후보를 확인해 주세요',
+                                _ => '미확인 · 지원하는 종으로 식별하기 어려워요.',
+                              },
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      for (final c in result.visibleCandidates)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('${c.groupName} · ${c.name}'),
+                          subtitle: Text(c.scientific),
+                          onTap: () => _details(c),
+                          trailing: result.confirmedId == c.id
+                              ? const Icon(
+                                  Icons.check_circle,
+                                  semanticLabel: '확인됨',
+                                )
+                              : TextButton(
+                                  onPressed: _busy
+                                      ? null
+                                      : () => setState(
+                                          () => _result = result.choose(c.id),
+                                        ),
+                                  child: const Text('이 종으로 확인'),
+                                ),
+                        ),
+                      if (result.visibleCandidates.isNotEmpty)
+                        TextButton(
+                          onPressed: _busy
+                              ? null
+                              : () => setState(
+                                  () => _result = result.choose(null),
+                                ),
+                          child: const Text('미확인으로 두기'),
+                        ),
+                    ],
+                    TextButton.icon(
+                      onPressed: _busy ? null : () => _identify(photo),
+                      icon: const Icon(Icons.search),
+                      label: Text(result == null ? '동물 식별' : '다시 식별'),
+                    ),
+                  ],
+                ],
                 if (_shot case final shot?) ...[
                   const SizedBox(height: 14),
                   Text('촬영 시각  ${_localTime(shot.stamp.capturedAt)}'),
@@ -222,9 +348,15 @@ class _CameraScreenState extends State<CameraScreen> {
                   ],
                   const SizedBox(height: 10),
                   FilledButton.tonalIcon(
-                    onPressed: _busy || _saved ? null : _save,
-                    icon: Icon(_saved ? Icons.check : Icons.save_outlined),
-                    label: Text(_saved ? '기기에 저장됨' : '현장 기록 저장'),
+                    onPressed: _busy || upToDate ? null : _save,
+                    icon: Icon(upToDate ? Icons.check : Icons.save_outlined),
+                    label: Text(
+                      upToDate
+                          ? '기기에 저장됨'
+                          : _saved
+                          ? '식별 결과 저장'
+                          : '현장 기록 저장',
+                    ),
                   ),
                 ],
                 if (_error != null)
@@ -251,6 +383,12 @@ class _CameraScreenState extends State<CameraScreen> {
                         : '사진 열기',
                   ),
                 ),
+                if (_fieldCamera)
+                  TextButton.icon(
+                    onPressed: _busy ? null : () => _pick(gallery: true),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('갤러리 사진으로 식별'),
+                  ),
                 if (_fieldCamera)
                   TextButton(
                     onPressed: _busy ? null : _history,

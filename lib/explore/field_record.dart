@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
+import 'identification.dart';
+
 class GpsFix {
   const GpsFix(this.at, this.latitude, this.longitude, this.accuracy);
   final DateTime at;
@@ -60,9 +62,10 @@ class FieldStamp {
 }
 
 class FieldShot {
-  const FieldShot(this.photo, this.stamp);
+  const FieldShot(this.photo, this.stamp, {this.identification});
   final XFile photo;
   final FieldStamp stamp;
+  final PhotoIdentification? identification;
 }
 
 class FieldArchive {
@@ -76,7 +79,10 @@ class FieldArchive {
   );
 
   // Publish both files together. Readers ignore incomplete staging directories.
-  Future<void> save(FieldShot shot) async {
+  Future<FieldShot> save(
+    FieldShot shot, {
+    PhotoIdentification? identification,
+  }) async {
     await directory.create(recursive: true);
     final stage = await directory.createTemp('.pending-');
     try {
@@ -92,10 +98,46 @@ class FieldArchive {
         }),
         flush: true,
       );
-      await stage.rename(p.join(directory.path, id));
+      if (identification != null) {
+        await _writeResult(stage, identification);
+      }
+      final published = await stage.rename(p.join(directory.path, id));
+      return FieldShot(
+        XFile(p.join(published.path, photoName)),
+        shot.stamp,
+        identification: identification,
+      );
     } finally {
       if (await stage.exists()) await stage.delete(recursive: true);
     }
+  }
+
+  Future<void> _writeResult(
+    Directory record,
+    PhotoIdentification result,
+  ) async {
+    final target = File(p.join(record.path, 'identification.json'));
+    final scratch = await record.createTemp('.identifying-');
+    try {
+      final file = File(p.join(scratch.path, 'result'));
+      await file.writeAsString(jsonEncode(result.toJson()), flush: true);
+      await file.rename(target.path);
+    } finally {
+      if (await scratch.exists()) await scratch.delete(recursive: true);
+    }
+  }
+
+  Future<FieldShot> updateResult(
+    FieldShot saved,
+    PhotoIdentification result,
+  ) async {
+    final record = File(saved.photo.path).parent;
+    if (!p.equals(record.parent.path, directory.path) ||
+        !await File(p.join(record.path, 'record.json')).exists()) {
+      throw StateError('Unknown field record.');
+    }
+    await _writeResult(record, result);
+    return FieldShot(saved.photo, saved.stamp, identification: result);
   }
 
   Future<List<FieldShot>> list() async {
@@ -107,10 +149,24 @@ class FieldArchive {
         await File(p.join(item.path, 'record.json')).readAsString(),
       ) as Map<String, dynamic>;
       final photoName = p.posix.basename(json['photo_ref'] as String);
+      final resultFile = File(p.join(item.path, 'identification.json'));
+      PhotoIdentification? result;
+      if (await resultFile.exists()) {
+        try {
+          result = PhotoIdentification.fromJson(
+            jsonDecode(await resultFile.readAsString()),
+          );
+        } on FormatException {
+          // A damaged AI sidecar must not hide the original photograph.
+        } on TypeError {
+          // An older or unknown result format can be classified again.
+        }
+      }
       records.add(
         FieldShot(
           XFile(p.join(item.path, photoName)),
           FieldStamp.fromJson(json),
+          identification: result,
         ),
       );
     }
