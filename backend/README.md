@@ -1,5 +1,26 @@
 # 제주 종 조회 API
 
+## UI 연결 전 관찰 저장 계약
+
+공모전 앱은 기기 DB를 사용합니다. 개발 단계에서는 아래 경로로 가상 사용자와 관찰을 생성해 홈·목록의 변화를 확인할 수 있습니다. 저장 요청은 로컬 서버의 `--demo-catalog` 옵션에서만 활성화됩니다. 요청 본문은 JSON입니다.
+
+| HTTP | 경로 | 동작 |
+|---|---|---|
+| PUT | /guide/profiles/demo | 빈 객체 `{}`로 기기 ID 초기화. 최초 201, 재실행 200 |
+| PUT | /guide/profiles/demo/observations/o1 | 촬영 정보 등록. 최초 201, 동일 요청 200, 기존 ID와 충돌하면 409 |
+| GET | /guide/profiles/demo/observations/o1 | 해당 사용자의 관찰 상세 |
+| GET | /guide/profiles/demo/observations | 일반 관찰 이력. species_id, limit(1~100), offset 지원 |
+| PATCH | /guide/profiles/demo/observations/o1 | identification, species_id 두 필드로 종 정정 |
+| DELETE | /guide/profiles/demo/observations/o1 | 관찰 행 삭제. 존재하지 않으면 404 |
+
+등록할 가상 기록 예시:
+
+    {"photo_id":"p1","photo_ref":"photos/p1.jpg","captured_at":"2026-11-12T09:00:00+09:00","gps_at":"2026-11-12T09:00:00+09:00","latitude":33.4,"longitude":126.6,"accuracy_m":5,"boundary_version":"fixture","capture_source":"camera","location_verdict":"inside","mode":"general","identification":"unknown","species_id":null}
+
+등록 후 `{"identification":"confirmed","species_id":"JJ-000837"}`로 PATCH하고 `/guide/home?user_id=demo` 및 `/guide/entries?user_id=demo&q=노루`를 조회하세요. 종 수와 등록 여부는 관찰 행에서 계산됩니다. research_only 관찰은 일반 이력과 진행도에서 제외됩니다. photo_ref는 기기 파일 참조입니다. 이 모의 API는 파일을 전송·삭제하거나 GPS로 제주 경계를 직접 계산하지 않습니다.
+
+저장소 최상위에서 `python -m unittest discover -s backend -p test_observations.py`로 실제 HTTP 경로를 통한 회귀 테스트를 실행할 수 있습니다.
+
 ## 종별 관찰 지역과 생태·자연도 등급
 
 `GET /species/JJ-000837/region-grades`는 노루의 지역·등급별 관찰 건수(groups)와 근거 기록(records)을 반환합니다. `/guide/entries`와 기기용 `guide_entries.sql`에도 region_grades가 포함됩니다(HTTP 배열, SQLite JSON 문자열). 자료가 없는 종은 빈 배열입니다. grade=9의 표시명은 별도관리지역입니다. 공개 관찰 자료는 개인 발견 수와 등록 상태에 포함되지 않습니다.

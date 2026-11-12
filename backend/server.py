@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, urlsplit
 import ecology
 import guide
 import region_grades
+import observations
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "species.sqlite3"
@@ -43,6 +44,29 @@ def import_species(database=None):
 
 
 class Handler(BaseHTTPRequestHandler):
+    def device_request(self):
+        url = urlsplit(self.path)
+        database = getattr(self.server, "demo_catalog", None)
+        if not database or not url.path.startswith("/guide/profiles/"):
+            return self.reply(404, {"error": "없는 개발용 경로입니다."})
+        try:
+            data = {}
+            if self.command in ("PUT", "PATCH"):
+                if self.headers.get_content_type() != "application/json":
+                    return self.reply(415, {"error": "application/json 요청이 필요합니다."})
+                size = int(self.headers.get("Content-Length", "0"))
+                if not 0 < size <= 65536:
+                    return self.reply(400, {"error": "요청 본문 크기를 확인하세요."})
+                data = json.loads(self.rfile.read(size))
+                if not isinstance(data, dict):
+                    raise ValueError("JSON 객체를 입력하세요.")
+            status, result = observations.dispatch(database, self.command, url, data)
+        except (ValueError, OverflowError) as error:
+            return self.reply(400, {"error": str(error)})
+        return self.reply(status, result)
+
+    do_PUT = do_PATCH = do_DELETE = device_request
+
     def reply(self, status, body, mime="application/json"):
         data = body if isinstance(body, bytes) else json.dumps(body, ensure_ascii=False).encode()
         self.send_response(status)
@@ -53,6 +77,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlsplit(self.path)
+        if url.path.startswith("/guide/profiles/"):
+            return self.device_request()
         if url.path.startswith("/guide/") and getattr(self.server, "demo_catalog", None):
             status, body = guide.read(self.server.demo_catalog, url.path, parse_qs(url.query))
             return self.reply(status, body)
