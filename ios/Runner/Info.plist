@@ -7,7 +7,11 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Jeju Project</string>
+	<string>제주 동물 도감</string>
+	<key>NSCameraUsageDescription</key>
+	<string>탐험 중 만난 동물의 사진을 촬영할 때 카메라를 사용합니다.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>관찰 사진을 미리 볼 때 사진을 사용합니다.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
