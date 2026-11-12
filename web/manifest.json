@@ -1,11 +1,11 @@
 {
-    "name": "jeju_project",
-    "short_name": "jeju_project",
+    "name": "제주 동물 도감",
+    "short_name": "동물 도감",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FBF6EF",
+    "theme_color": "#22652F",
+    "description": "제주 탐험가의 동물 도감",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [
