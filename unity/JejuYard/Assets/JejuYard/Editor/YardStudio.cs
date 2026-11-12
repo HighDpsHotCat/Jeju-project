@@ -12,7 +12,7 @@ namespace Jeju.Yard.EditorArt
 {
     public static class YardStudio
     {
-        const string ScenePath = "Assets/Scenes/JejuYard.unity";
+        internal const string ScenePath = "Assets/Scenes/JejuYard.unity";
         static readonly string Output = Path.GetFullPath("Builds");
 
         [MenuItem("Jeju Yard/Rebuild courtyard from authored models")]
@@ -22,6 +22,7 @@ namespace Jeju.Yard.EditorArt
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var courtyard = Landscape.Build();
             Dolphin.Build(courtyard.transform);
+            YardAnimals.Build();
             var house = Cottage.Build();
             PrefabUtility.SaveAsPrefabAssetAndConnect(house,"Assets/JejuYard/Art/JejuChoga.prefab",InteractionMode.AutomatedAction);
             house.transform.position = new Vector3(-5.4f,0,5.6f);
