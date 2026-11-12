@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'explore/camera.dart';
 import 'explore/catalog.dart';
@@ -125,6 +126,19 @@ class _FieldJournalState extends State<_FieldJournal>
     setState(() => _inGuide = false);
   }
 
+  Future<void> _openMap() async {
+    final url = Uri.https(
+      'jeju-wildlife-field-guide.gimhoyeon.chatgpt.site',
+      '/map',
+    );
+    try {
+      if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+    } on PlatformException {
+      // Some devices have no browser configured.
+    }
+    if (mounted) _message('관찰 지도를 열 수 없어요. 브라우저 설정을 확인해주세요.');
+  }
+
   Future<void> _openCamera([XFile? recovered]) async {
     if (_cameraOpen) return;
     _cameraOpen = true;
@@ -217,6 +231,7 @@ class _FieldJournalState extends State<_FieldJournal>
                         openSettings: _settings,
                         openCharacter: _character,
                         openGuide: _openGuide,
+                        openMap: _openMap,
                       ),
                       if (_catalog != null)
                         AnimalGuide(

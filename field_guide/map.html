@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#faf7ef" />
+    <title>관찰 지도 · 제주 탐험</title>
+    <link rel="stylesheet" href="/field.css" />
+    <link rel="stylesheet" href="/map.css" />
+    <script type="module" src="/map.js"></script>
+  </head>
+  <body>
+    <header class="mast">
+      <div class="mast-inner">
+        <a class="brand" href="/?view=home"
+          ><span class="brand-icon" data-icon="sprout"></span>제주 탐험</a
+        >
+        <nav aria-label="주 메뉴">
+          <a href="/"><i data-icon="book"></i>도감</a
+          ><a class="current" aria-current="page" href="/map"
+            ><i data-icon="map"></i>관찰 지도</a
+          ><a class="source-link" href="/ecology">생태자연도</a>
+        </nav>
+      </div>
+    </header>
+    <main class="atlas">
+      <div class="map-title">
+        <div>
+          <h1>제주 관찰 지도</h1>
+          <p>장소를 골라 만날 수 있는 동물과 생태·자연도 등급을 살펴보세요.</p>
+        </div>
+        <a class="guide-link" href="/"><i data-icon="book"></i>동물 도감</a>
+      </div>
+      <div class="atlas-layout">
+        <section class="map-card paper" aria-label="추천 장소 지도">
+          <div class="map-card-head">
+            <h2><i data-icon="map"></i>탐방 장소</h2>
+            <span id="place-count"></span>
+          </div>
+          <div
+            class="filter-row"
+            id="filters"
+            role="group"
+            aria-label="관찰 유형"
+          ></div>
+          <figure>
+            <div class="map-frame">
+              <div
+                class="map-viewport"
+                id="viewport"
+                tabindex="0"
+                aria-label="제주 지도 영역"
+              >
+                <div
+                  class="map-stage"
+                  id="stage"
+                  role="group"
+                  aria-label="제주 생태·자연도와 장소 핀"
+                >
+                  <span class="north"><b>↑</b>북</span>
+                  <span class="geo jeju-city">제주시</span
+                  ><span class="geo mountain">한라산</span
+                  ><span class="geo south">서귀포시</span
+                  ><span class="scale">10 km</span>
+                </div>
+              </div>
+              <button id="zoom" aria-pressed="false" aria-label="지도 확대">
+                ＋ 확대
+              </button>
+            </div>
+            <figcaption class="legend" aria-label="생태자연도 범례">
+              <b>생태·자연도</b
+              ><span><i style="--swatch: #508464"></i>1등급</span
+              ><span><i style="--swatch: #9cb899"></i>2등급</span
+              ><span><i style="--swatch: #dbe4c9"></i>3등급</span
+              ><span><i style="--swatch: #9690ac"></i>별도관리</span
+              ><span><i style="--swatch: #f3f0df"></i>도형 없음</span>
+            </figcaption>
+          </figure>
+          <div
+            id="places"
+            class="place-options"
+            role="group"
+            aria-label="추천 장소 목록"
+          ></div>
+        </section>
+        <article
+          id="detail"
+          class="detail paper"
+          aria-live="polite"
+          aria-atomic="true"
+        ></article>
+      </div>
+      <details class="source-note">
+        <summary>지도 자료와 등급 기준</summary>
+        <p>
+          생태·자연도는 대표 좌표와 반경 500m의 생태적 가치를 보여줍니다.
+          등급만으로 동물 발견 확률을 계산할 수 없습니다. 해안선은 Natural Earth
+          자료를 사용했습니다.
+        </p>
+        <p>
+          국립생태원 에코뱅크 제주특별자치도 자료 · 기후에너지환경부 고시
+          제2026-128호 배포본 (2026.05.26)
+        </p>
+        <p>
+          <a
+            href="https://www.nie-ecobank.kr/opn/file/list.do?svcId=101&amp;unitCode=U004&amp;unitSeRealCode=50&amp;unit=U004&amp;unitSeCode=50"
+            >공식 공간자료 ↗</a
+          >　<a href="/ecology">생태자연도 원자료 →</a>
+        </p>
+      </details>
+    </main>
+  </body>
+</html>

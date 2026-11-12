@@ -13,6 +13,7 @@ class ExplorerHome extends StatelessWidget {
     required this.openSettings,
     required this.openCharacter,
     required this.openGuide,
+    required this.openMap,
   });
 
   final String name;
@@ -21,6 +22,7 @@ class ExplorerHome extends StatelessWidget {
   final VoidCallback openSettings;
   final VoidCallback openCharacter;
   final VoidCallback openGuide;
+  final VoidCallback openMap;
 
   @override
   Widget build(BuildContext context) {
@@ -121,20 +123,32 @@ class ExplorerHome extends StatelessWidget {
                         ),
                       ),
                     ),
-                    FilledButton.tonal(
-                      onPressed: openCharacter,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFE3ECCB),
-                        foregroundColor: ink,
-                        minimumSize: const Size(136, 38),
-                      ),
-                      child: const Text(
-                        '나의 캐릭터',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                    Wrap(
+                      alignment: WrapAlignment.center,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      children: [
+                        FilledButton.tonal(
+                          onPressed: openCharacter,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: const Color(0xFFE3ECCB),
+                            foregroundColor: ink,
+                            minimumSize: const Size(136, 38),
+                          ),
+                          child: const Text(
+                            '나의 캐릭터',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                         ),
-                      ),
+                        TextButton.icon(
+                          onPressed: openMap,
+                          icon: const Icon(Icons.map_outlined),
+                          label: const Text('관찰 지도'),
+                        ),
+                      ],
                     ),
                   ],
                 ),
