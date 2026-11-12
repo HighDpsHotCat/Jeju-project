@@ -2,6 +2,8 @@
 import sqlite3
 from contextlib import closing
 from pathlib import Path
+import json
+from region_grades import load_records
 
 HERE = Path(__file__).resolve().parent
 ENTRIES = (HERE / "guide_entries.sql").read_text(encoding="utf-8")
@@ -11,6 +13,9 @@ def upgrade(database):
     # Never create a new empty file when the supplied path is incorrect.
     with closing(sqlite3.connect(database.resolve().as_uri() + "?mode=rw", uri=True)) as db:
         db.executescript((HERE / "guide_schema.sql").read_text(encoding="utf-8"))
+        with db:
+            db.execute("BEGIN IMMEDIATE")
+            load_records(db)
 
 
 def read(database, route, params):
@@ -38,4 +43,5 @@ def read(database, route, params):
             return 400, {"error": "region(jeju/national), limit(1~100), offset을 확인하세요."}
         rows = db.execute(ENTRIES, dict(user_id=user_id, region=region, taxon=taxon,
                           q=params.get("q", [""])[0].strip(), limit=limit, offset=offset))
-        return 200, [{**row, "registered": bool(row["registered"])} for row in rows]
+        return 200, [{**row, "registered": bool(row["registered"]),
+                      "region_grades": json.loads(row["region_grades"])} for row in rows]

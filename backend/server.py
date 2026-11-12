@@ -9,6 +9,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 import ecology
 import guide
+import region_grades
 
 HERE = Path(__file__).resolve().parent
 DB = HERE / "species.sqlite3"
@@ -38,6 +39,7 @@ def import_species(database=None):
                        tuple(row[k] for k in FIELDS))
         if not db.execute("SELECT 1 FROM species LIMIT 1").fetchone():
             raise ValueError("CSV에 종 데이터가 없습니다.")
+        region_grades.load_records(db)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -92,6 +94,15 @@ class Handler(BaseHTTPRequestHandler):
                     ORDER BY species_id LIMIT ? OFFSET ?""", (query, query, query, limit, offset))
                 return self.reply(200, [dict(row) for row in rows])
             if url.path.startswith("/species/"):
+                parts = url.path.split("/")
+                if len(parts) == 4 and parts[3] == "region-grades":
+                    sid = parts[2]
+                    if not db.execute("SELECT 1 FROM species WHERE species_id=?", (sid,)).fetchone():
+                        return self.reply(404, {"error": "없는 제주 종 ID입니다."})
+                    groups = db.execute("SELECT * FROM species_region_grade WHERE species_id=? ORDER BY area,grade", (sid,))
+                    records = db.execute("SELECT * FROM region_grade_record WHERE species_id=? ORDER BY gbif_id", (sid,))
+                    return self.reply(200, {"species_id": sid, "groups": [dict(r) for r in groups],
+                                            "records": [dict(r) for r in records]})
                 row = db.execute("SELECT * FROM species WHERE species_id=?",
                                  (url.path[9:],)).fetchone()
                 if row:

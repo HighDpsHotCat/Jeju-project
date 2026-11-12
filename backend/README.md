@@ -1,5 +1,19 @@
 # 제주 종 조회 API
 
+## 종별 관찰 지역과 생태·자연도 등급
+
+`GET /species/JJ-000837/region-grades`는 노루의 지역·등급별 관찰 건수(groups)와 근거 기록(records)을 반환합니다. `/guide/entries`와 기기용 `guide_entries.sql`에도 region_grades가 포함됩니다(HTTP 배열, SQLite JSON 문자열). 자료가 없는 종은 빈 배열입니다. grade=9의 표시명은 별도관리지역입니다. 공개 관찰 자료는 개인 발견 수와 등록 상태에 포함되지 않습니다.
+
+2026-11-12 작성한 `data/region_grade_records.csv`는 제주 종 기준표 4,875종 가운데 학명이 유일하게 일치하고 좌표를 판정할 수 있었던 36종, GBIF 기록 98건입니다. GBIF Occurrence Search v1에서 country=KR, kingdomKey=1, basisOfRecord=HUMAN_OBSERVATION, occurrenceStatus=PRESENT, hasCoordinate=true, hasGeospatialIssue=false, coordinateUncertaintyInMeters=1,100, 경도 125.95~127.05·위도 33.05~34.05로 검색하고 CC0 및 CC BY 4.0 결과의 gbifID를 중복 제거했습니다. 관찰일이 예전인 기록에도 아래 동일 고시본을 대조했습니다. 등급은 그 종의 서식 확률이나 관찰 당시 등급을 나타내지 않습니다.
+
+관찰 좌표를 EPSG:5186으로 변환한 뒤, 보고된 수평 오차 반경이 하나의 등급 도형과 하나의 시 경계 내부에 들어오는 기록만 채택했습니다. 시 경계·등급 경계에 걸치거나 자료가 겹치는 경우는 제외했습니다. 정확한 좌표 대신 행정시, 등급, 등급 도형 식별자, 출처 정보를 배포합니다.
+
+- 등급 도형: 국립생태원 에코뱅크, 제주특별자치도 정기고시 자료(기후에너지환경부 고시 제2026-128호). [SHP 원본](https://www.nie-ecobank.kr/ecoapi/opn/file/download.do?extrcId=1086426)
+- 행정시 경계: geoBoundaries / citypopulation.de, gbOpen KOR ADM2, 2020, CC BY 3.0. [사용한 경계 버전](https://github.com/wmgeolab/geoBoundaries/tree/9469f09/releaseData/gbOpen/KOR/ADM2)
+- 종별 관찰 기록: GBIF 원 제공자와 데이터셋 이름, 라이선스는 CSV 및 상세 API의 attribution, source_dataset, license_url에 보관합니다. 각 행의 gbif_id는 https://www.gbif.org/occurrence/{gbif_id}, dataset_key는 https://www.gbif.org/dataset/{dataset_key} 에 대응합니다. 공간 대조 결과는 프로젝트에서 산출했습니다.
+
+기존 기기 DB는 Python에서 `guide.upgrade(Path(...))`를 실행하면 개인 관찰을 유지한 채 참조 데이터를 갱신합니다. Flutter에서 기존 DB를 직접 마이그레이션할 때는 새로운 배포 DB에서 region_grade_record 테이블(내용 포함), grade_species_area 인덱스와 species_region_grade 뷰를 이식한 뒤 새 목록 쿼리를 사용합니다.
+
 ## 홈과 개인 도감 조회
 
 Flutter는 기기 SQLite에서 홈과 목록을 읽을 수 있습니다. 새 배포 DB에는 조회 구조가 포함됩니다. 기존 기기 DB(전국 목록 포함)는 앱 DB 업그레이드 단계에서 `guide_schema.sql`을 적용합니다. 외부 트랜잭션 안에서 적용할 때는 파일의 BEGIN/COMMIT을 제외하세요.

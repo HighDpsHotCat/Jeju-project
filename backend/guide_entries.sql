@@ -8,7 +8,11 @@ WITH page AS (
     ORDER BY species_id LIMIT :limit OFFSET :offset
 )
 SELECT p.*, COALESCE(NULLIF(p.korean_name,''),p.scientific_name) AS display_name,
-       (cover.observation_id IS NOT NULL) AS registered, cover.photo_ref AS photo_ref
+       (cover.observation_id IS NOT NULL) AS registered, cover.photo_ref AS photo_ref,
+       (SELECT json_group_array(json_object('area',area,'grade',grade,'grade_label',grade_label,
+                                            'record_count',record_count))
+        FROM (SELECT * FROM species_region_grade WHERE species_id=p.species_id ORDER BY area,grade)
+       ) AS region_grades
 FROM page p
 LEFT JOIN observation cover ON cover.observation_id=(
     SELECT o.observation_id FROM observation o
