@@ -31,10 +31,10 @@
       </div>
       <div class="atlas-layout" id="atlas-layout">
         <section id="map-panel" class="map-card paper" aria-label="관찰 지도와 지역 목록">
-          <div class="map-card-head"><h2 id="map-heading" tabindex="-1"><span id="layer-title">지역 선택</span></h2><span id="place-count"></span></div>
+          <div class="map-card-head"><h2 id="map-heading" tabindex="-1"><span id="layer-title">탐방 장소</span></h2><span id="place-count"></span></div>
           <p id="layer-note" class="layer-note"></p>
           <figure>
-            <div class="map-frame">
+            <div class="map-frame" id="map-frame">
               <div class="map-viewport" id="viewport" tabindex="0" aria-label="제주 본섬 지도">
                 <div class="map-stage" id="stage" role="group" aria-label="지도 위치 선택">
                   <svg id="districts" viewBox="0 0 1440 910" aria-hidden="true">
@@ -47,10 +47,13 @@
                   <div id="markers"></div>
                 </div>
               </div>
+              <div id="offshore"></div>
+              <div id="map-bubble" role="group" hidden></div>
               <button id="zoom" aria-pressed="false" aria-label="지도 확대">＋ 확대</button>
             </div>
-            <div id="offshore"></div>
-            <figcaption><details id="map-options"><summary>지도 설정</summary>
+            <figcaption>
+              <div id="pin-key" hidden><span>생태공원·수목원</span><span>관광지</span></div>
+              <details id="map-options"><summary>지도 설정</summary>
               <label class="grade-toggle"><input type="checkbox" id="grades" />생태·자연도 겹쳐 보기</label>
               <div class="legend" id="grade-legend" hidden>
                 <span><i style="--swatch:#508464"></i>1등급</span>
@@ -59,6 +62,10 @@
                 <span><i style="--swatch:#9690ac"></i>별도관리</span>
                 <span><i style="--swatch:#f3f0df"></i>도형 없음</span>
               </div>
+              <nav id="zone-lists" aria-label="지역별 관광지 목록" hidden>
+                <a href="/map?layer=visit&amp;zone=jeju" data-trip="open">제주시 목록 ›</a>
+                <a href="/map?layer=visit&amp;zone=seogwipo" data-trip="open">서귀포시 목록 ›</a>
+              </nav>
             </details></figcaption>
           </figure>
           <div id="places" class="place-options" role="group" aria-label="모든 지도 항목"></div>

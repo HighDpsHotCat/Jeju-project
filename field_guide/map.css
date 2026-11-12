@@ -159,56 +159,6 @@
   font-size: 12px;
   font-weight: 700;
 }
-.pin {
-  position: absolute;
-  z-index: 1;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  color: white;
-}
-.pin:before {
-  content: "";
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  background: #4a6951;
-  border: 2px solid white;
-  border-radius: 50% 50% 50% 3px;
-  transform: rotate(-45deg);
-  box-shadow: 0 2px 4px #15391e44;
-}
-.pin span {
-  position: relative;
-  font-weight: 800;
-  font-size: 13px;
-}
-.pin[aria-pressed="true"] {
-  z-index: 2;
-}
-.pin[aria-pressed="true"]:before {
-  background: #245e2c;
-  box-shadow:
-    0 0 0 5px #f8fcdf80,
-    0 3px 7px #26442955;
-}
-.pin[aria-pressed="true"]:after {
-  content: attr(aria-label);
-  position: absolute;
-  right: 85%;
-  top: 5px;
-  background: #193e2a;
-  color: white;
-  border-radius: 9px;
-  padding: 4px 8px;
-  white-space: nowrap;
-  font-size: 11px;
-  font-weight: 700;
-  pointer-events: none;
-}
 .legend {
   flex-wrap: wrap;
   gap: 7px 11px;
@@ -413,16 +363,12 @@
 .map-stage { background-image: url("/jeju-map.png"); }
 .map-stage.show-grades { background-image: url("/jeju-grades.png"); }
 .map-stage[data-layer="records"] .jeju-city, .map-stage[data-layer="records"] .south { display: none; }
-.pin.label-right[aria-pressed="true"]:after { right: auto; left: 85%; }
-.map-stage[data-layer="habitat"] .pin:before { border-radius: 50%; background: #715f86; transform: none; }
 .city-marker {
   position: absolute; transform: translate(-50%,-50%); border: 2px solid white;
   border-radius: 18px; padding: 6px 10px; background: #fffef6; box-shadow: 0 2px 6px #253c3540;
   color: #345342; font-size: 13px; font-weight: 750; white-space: nowrap;
 }
 .city-marker[aria-pressed="true"] { background: #285d42; color: white; }
-.offshore-button { border: 1px dashed #8e829a; background: #f3eff6; padding: 8px 12px; margin-top: 9px; color: #534661; border-radius: 12px; }
-.offshore-button[aria-pressed="true"] { background: #705b83; color: white; }
 .layer-note { margin: 6px 0 12px; line-height: 1.5; color: var(--muted); font-size: 14px; }
 .filter-row { margin: 0 0 17px; }
 .grade-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 10px 0; color: #425644; font-size: 13px; cursor: pointer; }
@@ -462,19 +408,10 @@
 .visit-layout .map-viewport { background: #d6e9e9; }
 .visit-layout #viewport:not(:has(.zoomed)) { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; }
 #districts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-#districts path { pointer-events: visiblePainted; fill: #45785417; cursor: pointer; }
+#districts path { fill: #45785417; }
 #districts path[data-zone="seogwipo"] { fill: #c8a65b15; }
-#districts path:hover { fill: #39765038; stroke: #638666; stroke-width: 3; }
 .show-grades #districts path { fill: transparent; }
-#stage[data-layer="visit"] .jeju-city, #stage[data-layer="visit"] .south { display: none; }
-.district-label, .mini-dot { position: absolute; transform: translate(-50%,-50%); }
-.district-label {
-  display: grid; place-items: center; gap: 1px; min-height: 46px; padding: 6px 13px;
-  color: #fff; background: #214e3b; border: 2px solid #fff; border-radius: 14px;
-  box-shadow: 0 2px 7px #26452c40; white-space: nowrap;
-}
-.district-label:hover { background: #163a2b; }
-.district-label strong { font-size: 15px; }.district-label small { font-size: 11px; color: #e3f2dc; }
+.mini-dot { position: absolute; transform: translate(-50%,-50%); }
 .layer-note { margin: 5px 0 10px; font-size: 14px; color: var(--muted); }
 #map-options { font-size: 13px; color: #506350; padding-top: 9px; }
 #map-options summary, .cover-credits summary, .trip-disclosure summary { cursor: pointer; }
@@ -536,4 +473,77 @@
 }
 @media(max-height:460px) {
   .visit-layout > .paper { max-height: max(165px, calc(100dvh - 145px)); }
+}
+/* Visitor and habitat markers share the same anchored, two-step popup. */
+.map-point {
+  --pin-color: #705989;
+  position: absolute; transform: translate(-50%, -50%); z-index: 1;
+  display: grid; place-items: center; width: 36px; height: 36px;
+  text-decoration: none; color: white; -webkit-tap-highlight-color: transparent;
+}
+.map-point[data-kind="park"] { --pin-color: #39744e; }
+.map-point > span {
+  display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%;
+  border: 2px solid #fff; background: var(--pin-color); color: #fff;
+  font-size: 13px; line-height: 1; font-weight: 750; box-shadow: 0 2px 5px #25432b55;
+}
+.map-point[aria-expanded="true"] { z-index: 2; }
+.map-point[aria-expanded="true"] > span {
+  box-shadow: 0 0 0 4px #ffffffe0, 0 2px 7px 4px #25432b38;
+}
+.map-point:focus-visible { outline: 2px solid #193e2a; outline-offset: 1px; border-radius: 50%; }
+.island-point {
+  top: 9px; right: 9px; width: auto; height: auto; transform: none; display: flex;
+  gap: 4px; padding: 3px 6px 3px 3px; background: #fffdf5; border: 1px dashed #9687a2; border-radius: 18px;
+}
+.island-point small { color: #4e425b; font-size: 11px; }
+#map-bubble {
+  --bubble-tone: #204631; position: absolute; z-index: 5; display: flex; align-items: center;
+  max-width: calc(100% - 14px); border-radius: 13px; background: var(--bubble-tone); color: #fff;
+  box-shadow: 0 3px 14px #1e372d42; isolation: isolate;
+}
+#map-bubble::before {
+  content: ""; position: absolute; z-index: -1; width: 11px; height: 11px; left: var(--tail-x);
+  background: var(--bubble-tone); transform: translateX(-50%) rotate(45deg);
+}
+#map-bubble[data-side="above"]::before { bottom: -4px; }
+#map-bubble[data-side="below"]::before { top: -4px; }
+#map-bubble[data-side="left"]::before, #map-bubble[data-side="right"]::before {
+  top: var(--tail-y); left: auto; transform: translateY(-50%) rotate(45deg);
+}
+#map-bubble[data-side="left"]::before { right: -4px; }
+#map-bubble[data-side="right"]::before { left: -4px; }
+.bubble-name { display: flex; gap: 8px; align-items: center; min-height: 42px; padding: 6px 6px 6px 12px; font-size: 14px; color: white; }
+.bubble-name > span { font-size: 20px; line-height: 1; color: #e3eddc; }
+.bubble-close { flex: none; width: 34px; height: 40px; display: grid; place-items: center; border-radius: 12px; font-size: 20px; color: inherit; }
+#map-bubble[data-view="animals"] {
+  --bubble-tone: #fffdf5; display: block; width: 215px; padding: 9px 11px;
+  border: 1px solid #bac7b3; color: #224530;
+}
+.bubble-head { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+.bubble-head strong { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
+.bubble-head .bubble-close { width: 30px; height: 30px; color: #536a55; background: #eef2e8; }
+.bubble-content { overflow-y: auto; max-height: var(--content-limit, 180px); overscroll-behavior: contain; }
+.bubble-count { color: #5c6b58; font-size: 12px; margin: 2px 0 5px; }
+.bubble-animals { list-style: none; padding: 0; margin: 0; }
+.bubble-animals a { display: flex; justify-content: space-between; align-items: center; min-height: 35px; padding: 4px 8px; border-top: 1px solid #dce4d4; font-weight: 700; font-size: 14px; }
+.bubble-animals a:hover, .bubble-animals a:focus-visible { background: #e9f1df; }
+.bubble-animals a span { color: #597650; }
+.bubble-info { display: block; width: fit-content; padding: 6px 2px 3px; font-size: 12px; text-decoration: underline; text-underline-offset: 2px; }
+#pin-key { display: flex; gap: 12px; color: #52634f; font-size: 12px; margin-top: 9px; }
+#pin-key span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #39744e; margin-right: 4px; }
+#pin-key span + span::before { background: #705989; }
+.map-stage:not([data-layer="records"]) .south { left: 43%; top: 88%; }
+#zone-lists { display: flex; gap: 14px; padding: 5px 0; }
+#zone-lists a, .back-to-pins { color: #345d40; text-decoration: underline; text-underline-offset: 3px; font-size: 13px; }
+.back-to-pins { display: block; margin-bottom: 10px; }
+@media(max-width:480px) {
+  .map-point:not(.island-point) { width: 30px; height: 30px; }
+  .map-point > span { width: 24px; height: 24px; font-size: 11px; }
+  .map-point[data-id="hado"] { margin-top: -3px; }
+  .map-point[data-id="gwangchigi"] { margin-top: 3px; }
+}
+@media(prefers-reduced-motion:no-preference) {
+  #map-bubble:not([hidden]) { animation: bubble-in .16s ease-out; }
+  @keyframes bubble-in { from { opacity: .4; transform: translateY(2px) scale(.96); } to { opacity: 1; transform: none; } }
 }

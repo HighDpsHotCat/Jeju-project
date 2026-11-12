@@ -2,9 +2,11 @@ import { byId as $, node, icon } from "./ui.js";
 import { visits, habitats, speciesIds, guideUrl, mapUrl, loadRecords } from "./map-data.js";
 import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 
+import { clearPinMap, pinUrl, positionBubble, renderPinMap } from "./pin-map.js";
+
 const layers = {
-  visit: ["지역 선택", "지도를 눌러 여행할 지역을 선택하세요."],
-  habitat: ["서식 기록", "자료에 동물이 기록된 습지·해안·섬의 대략적인 위치입니다."],
+  visit: ["탐방 장소", "핀을 누른 뒤 장소 이름을 누르면 동물이 보여요."],
+  habitat: ["서식 기록", "핀을 누른 뒤 권역 이름을 누르면 기록된 동물이 보여요."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
 const cities = [
@@ -12,17 +14,21 @@ const cities = [
   { id: "seogwipo", name: "서귀포시", pixel: [722, 666] },
 ];
 let records, recordError = false;
-let layer, selected, filterSpecies, trip;
+let layer, selected, filterSpecies, trip, pinMode, pinPlace, expanded;
 
 function readSelection() {
   const params = new URLSearchParams(location.search);
   layer = Object.hasOwn(layers, params.get("layer")) ? params.get("layer") : "visit";
   trip = readVisit(params);
-  selected = layer === "visit" ? trip.place || trip.zone : items().find((p) => p.id === params.get("place")) || items()[0];
+  const entries = layer === "visit" ? visits : layer === "habitat" ? habitats : cities;
+  const place = entries.find((p) => p.id === params.get("place"));
+  const pin = entries.find((p) => p.id === params.get("pin"));
+  const regionList = layer === "visit" && trip.zone && !place && !pin;
+  pinMode = layer !== "records" && !regionList && !(place && params.get("view") === "details");
+  pinPlace = pinMode ? pin || place : null;
+  expanded = Boolean(pinPlace) && (pin ? params.get("show") === "animals" : true);
+  selected = pinMode ? pinPlace : place || trip.zone || entries[0];
   filterSpecies = layer === "records" ? params.get("species") || "" : "";
-}
-function items() {
-  return layer === "habitat" ? habitats : cities;
 }
 function anchor(label, url, cls) {
   const a = node("a", label, cls);
@@ -48,7 +54,8 @@ function placeDetail(p) {
   address.append(icon("pin"), p.area);
   const animals = node("div", null, "animals-here");
   for (const name of p.species) animals.append(anchor(name + " ↗", guideUrl(speciesIds[name], name)));
-  const parts = [node("span", p.type, "tag"), node("h2", p.name),
+  const back = anchor("‹ 지도로", pinUrl("habitat", p.id, true), "back-to-pins");
+  const parts = [back, node("span", p.type, "tag"), node("h2", p.name),
     address, node("p", p.description), section("관련 동물 도감", animals)];
   const actions = node("div", null, "actions");
   const visit = visits.find((v) => v.habitat === p.id);
@@ -101,50 +108,44 @@ function cityDetail(city) {
   detail.append(label, section("날짜순 기록 " + filtered.length + "건", list));
 }
 function render() {
-  const listing = items();
+  clearPinMap();
   $("layer-title").textContent = layers[layer][0];
   $("layer-note").textContent = layers[layer][1];
-  $("place-count").textContent = layer === "records" ? (records ? Object.values(records).flat().length + "건" : "2개 행정시") : listing.length + "곳";
   $("layer-select").value = layer;
   $("markers").replaceChildren();
   $("offshore").replaceChildren();
   $("places").replaceChildren();
   $("stage").dataset.layer = layer;
-  const visiting = layer === "visit";
-  $("atlas-layout").classList.toggle("visit-layout", visiting);
-  $("map-panel").hidden = false;
-  $("districts").style.display = visiting ? "block" : "none";
-  $("places").hidden = visiting;
-  $("detail").hidden = false;
-  if (visiting) { renderVisits(trip); return; }
-  for (const [i, p] of listing.entries()) {
-    const active = String(p.id === selected.id);
-    const number = i + 1;
-    const region = layer === "records";
-    const count = region && records ? records[p.name].length + "건" : "";
-    const marker = node("button", null, p.offshore ? "offshore-button" : region ? "city-marker" : "pin");
-    marker.setAttribute("aria-label", p.name);
-    marker.setAttribute("aria-pressed", active);
-    marker.onclick = () => choose(layer, p.id, true);
-    if (p.offshore) {
-      marker.textContent = "본섬 밖 · " + p.name;
-      $("offshore").append(marker);
-    } else {
-      marker.style.left = p.pixel[0] / 1440 * 100 + "%";
-      marker.style.top = p.pixel[1] / 910 * 100 + "%";
-      if (p.pixel[0] < 350) marker.classList.add("label-right");
-      marker.append(node("span", region ? [p.name, count].filter(Boolean).join(" ") : number));
-      $("markers").append(marker);
-    }
-    const b = node("button", null, "place-option");
-    b.setAttribute("aria-pressed", active);
-    b.append(node("span", number, "place-number"), node("b", p.name),
-      node("small", region ? count : p.type));
-    b.onclick = marker.onclick;
-    $("places").append(b);
+  $("atlas-layout").classList.toggle("visit-layout", layer !== "records");
+  $("districts").style.display = layer === "visit" ? "block" : "none";
+  $("map-panel").hidden = !pinMode && layer !== "records";
+  $("detail").hidden = pinMode;
+  $("places").hidden = layer !== "records";
+  $("pin-key").hidden = !pinMode || layer !== "visit";
+  $("zone-lists").hidden = layer !== "visit";
+  if (pinMode) {
+    renderPinMap(layer, layer === "visit" ? visits : habitats, pinPlace, expanded);
+    return;
   }
-  if (layer === "records") cityDetail(selected);
-  else placeDetail(selected);
+  if (layer === "visit") { renderVisits(trip); return; }
+  if (layer === "habitat") { placeDetail(selected); return; }
+  $("place-count").textContent = records ? Object.values(records).flat().length + "건" : "2개 행정시";
+  for (const [i, city] of cities.entries()) {
+    const count = records ? records[city.name].length + "건" : "";
+    const marker = node("button", [city.name, count].filter(Boolean).join(" "), "city-marker");
+    marker.style.left = city.pixel[0] / 1440 * 100 + "%";
+    marker.style.top = city.pixel[1] / 910 * 100 + "%";
+    marker.setAttribute("aria-label", city.name);
+    const option = node("button", null, "place-option");
+    option.append(node("span", i + 1, "place-number"), node("b", city.name), node("small", count));
+    for (const button of [marker, option]) {
+      button.setAttribute("aria-pressed", String(city === selected));
+      button.onclick = () => choose("records", city.id, true);
+    }
+    $("markers").append(marker);
+    $("places").append(option);
+  }
+  cityDetail(selected);
 }
 async function fetchRecords() {
   recordError = false;
@@ -156,9 +157,9 @@ $("layer-select").onchange = (event) => {
   const id = event.target.value;
   if (id === layer) return;
   const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected?.habitat) :
-    id === "visit" && layer === "habitat" ? visits.find((p) => p.habitat === selected.id) : null;
-  if (id === "visit" && !equivalent) openTrip("/map");
-  else choose(id, (equivalent || (id === "habitat" ? habitats[0] : cities[0])).id);
+    id === "visit" && layer === "habitat" && selected ? visits.find((p) => p.habitat === selected.id) : null;
+  if (id === "records") choose(id, cities[0].id);
+  else openTrip(pinUrl(id, equivalent?.id));
 };
 $("grades").onchange = () => {
   $("stage").classList.toggle("show-grades", $("grades").checked);
@@ -174,15 +175,22 @@ $("zoom").onclick = () => {
   const [x, y] = selected?.pixel || [720,455];
   view.scrollTo(active ? stage.offsetWidth * x / 1440 - view.clientWidth / 2 : 0,
     active ? stage.offsetHeight * y / 910 - view.clientHeight / 2 : 0);
+  positionBubble();
 };
 function depth() {
   return trip.place ? 2 : trip.zone ? 1 : 0;
 }
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 function navigate() {
-  const oldDepth = depth(), oldLayer = layer, oldTrip = trip;
+  const oldDepth = depth(), oldLayer = layer, oldTrip = trip, lastPin = pinPlace;
   readSelection();
   render();
+  if (pinMode) {
+    const focus = $("map-bubble").querySelector(".bubble-name, .bubble-head strong") ||
+      (lastPin && $("map-frame").querySelector('.map-point[data-id="' + lastPin.id + '"]')) || $("map-heading");
+    focus.focus({preventScroll: true});
+    return;
+  }
   if (layer !== "visit") return;
   const step = depth() - oldDepth;
   const screen = trip.zone ? $("detail") : $("map-panel");
@@ -201,7 +209,7 @@ function navigate() {
     {opacity: 0.25, transform: "translateX(" + offset + "px) scale(.985)"},
     {opacity: 1, transform: "translateX(0) scale(1)"}
   ], {duration: 235, easing: "cubic-bezier(.2,.75,.25,1)"});
-  const rows = screen.querySelectorAll(".trip-card, .animal-entry, .district-label");
+  const rows = screen.querySelectorAll(".trip-card, .animal-entry");
   Array.from(rows).slice(0, 5).forEach((row, index) => {
     row.animate([{opacity: 0}, {opacity: 1}], {
       duration: 170, delay: 24 + index * 22, fill: "backwards"
@@ -237,10 +245,45 @@ $("detail").addEventListener("change", (event) => {
 });
 $("atlas-layout").addEventListener("click", (event) => {
   if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
-  const target = event.target.closest("[data-trip], #districts path[data-zone]");
+  const hit = event.target.closest("[data-pin-action]");
+  if (hit) {
+    event.preventDefault();
+    const samePin = hit.dataset.pinAction === "name" && hit.dataset.id === pinPlace?.id;
+    if (hit.dataset.pinAction === "close" || (samePin && expanded)) dismissPin();
+    else {
+      const steps = history.state?.pinSteps;
+      if (hit.dataset.pinAction === "name" && !samePin && pinPlace) {
+        history.replaceState(history.state, "", hit.href);
+      } else {
+        const nextSteps = steps ? steps + 1 : pinPlace ? 0 : 1;
+        const href = samePin ? pinUrl(layer, pinPlace.id, true) : hit.href;
+        history.pushState({pinSteps: nextSteps}, "", href);
+      }
+      navigate();
+    }
+    return;
+  }
+  if (pinPlace && event.target.closest("#viewport")) {
+    dismissPin();
+    return;
+  }
+  const target = event.target.closest("[data-trip]");
   if (!target) return;
   event.preventDefault();
-  openTrip(target.dataset.zone ? "/map?layer=visit&zone=" + target.dataset.zone : target.href, target.dataset.trip);
+  openTrip(target.href, target.dataset.trip);
+});
+function dismissPin() {
+  if (history.state?.pinSteps) history.go(-history.state.pinSteps);
+  else {
+    history.replaceState(null, "", pinUrl(layer));
+    navigate();
+  }
+}
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && pinPlace) {
+    event.preventDefault();
+    dismissPin();
+  }
 });
 readSelection();
 render();

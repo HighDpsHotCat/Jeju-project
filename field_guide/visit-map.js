@@ -1,9 +1,10 @@
 import { byId as $, node, icon } from "./ui.js";
 import { visits, habitats, speciesIds, guideUrl, mapUrl } from "./map-data.js";
+import { pinUrl } from "./pin-map.js";
 
 const zones = [
-  { id: "jeju", name: "제주시", pixel: [720, 255] },
-  { id: "seogwipo", name: "서귀포시", pixel: [740, 651] },
+  { id: "jeju", name: "제주시" },
+  { id: "seogwipo", name: "서귀포시" },
 ];
 const kinds = { all: "전체", sight: "관광지", park: "생태공원·수목원" };
 const photoCredits = {
@@ -66,16 +67,6 @@ function thumbnail(place) {
   tile.append(dot);
   return tile;
 }
-function renderOverview() {
-  $("place-count").textContent = "2개 지역";
-  for (const zone of zones) {
-    const label = route(null, tripUrl(zone.id), "district-label");
-    label.dataset.returnTo = zone.id;
-    label.append(node("strong", zone.name), node("small", "관광지 " + inZone(zone).length + "곳 ›"));
-    position(label, zone.pixel);
-    $("markers").append(label);
-  }
-}
 function screenHeader(title, backLabel, backUrl) {
   const head = node("header", null, "trip-header");
   const back = route("‹", backUrl, "trip-back");
@@ -126,8 +117,8 @@ function direction(place) {
     "https://map.kakao.com/link/to/" + encodeURIComponent(place.destinationName || place.name) + "," + place.destination.join(",");
   return link(place.search ? place.search + " 찾기 ↗" : "탐방 출발점 길찾기 ↗", url);
 }
-function renderPlace({place, zone, kind}) {
-  const head = screenHeader(place.name, zone.name + " 관광지로 돌아가기", tripUrl(zone.id, null, kind));
+function renderPlace({place}) {
+  const head = screenHeader(place.name, "지도 말풍선으로 돌아가기", pinUrl("visit", place.id, true));
   const body = node("div", null, "trip-scroll");
   const managed = place.id === "park";
   const habitat = habitats.find((h) => h.id === place.habitat);
@@ -174,8 +165,7 @@ export function renderVisits(state) {
   $("map-panel").hidden = Boolean(state.zone);
   $("detail").hidden = !state.zone;
   if (state.place) renderPlace(state);
-  else if (state.zone) regionList(state);
-  else renderOverview();
+  else regionList(state);
 }
 export function filterUrl(state, kind) {
   return tripUrl(state.zone.id, null, kind);
