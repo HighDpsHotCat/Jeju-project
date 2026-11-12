@@ -9,10 +9,58 @@ export const speciesIds = {
   "노루": "JJ-000837", "독수리": "JJ-000122", "반달가슴곰": "KTSN-120000212858",
   "맹꽁이": "JJ-002364", "물장군": "KTSN-120000525839", "팔색조": "JJ-003706",
   "매": "JJ-001827", "벌매": "JJ-003537", "섬개개비": "JJ-002572",
+  "원앙": "JJ-000160", "무태장어": "JJ-000284", "큰오색딱다구리": "JJ-001338",
+  "동박새": "JJ-004873", "뿔논병아리": "JJ-003777",
 };
 
 export const visits = [
   {
+    id: "arboretum", name: "한라수목원", type: "수목원", zone: "jeju", kind: "park",
+    area: "제주시 연동 · 수목원길 72", pixel: [604.7, 282.8], search: "제주 한라수목원 주차장",
+    csvName: "한라수목원", species: ["노루", "큰오색딱다구리"],
+    description: "제주시 연동에서 나무가 우거진 수목원 산책로를 걷는 코스입니다. 숲 가장자리와 나무줄기를 차례로 살펴보세요.",
+    access: "수목원길 72의 한라수목원 주차장에서 산책을 시작하세요.",
+    sources: [["비짓제주 수목원 안내", visitJeju("CONT_000000000500689")]],
+    evidence: {
+      "노루": ["사진 관찰", "2026년 3월 1일, 수목원 숲에서 촬영된 야생 노루 기록입니다.", "https://www.inaturalist.org/observations/340699023"],
+      "큰오색딱다구리": ["사진 관찰", "같은 날 수목원에서 사진이 남은 딱다구리입니다. 산책로에서 나무줄기를 살펴보세요.", "https://www.inaturalist.org/observations/340699038"],
+    },
+  },
+  {
+    id: "cheonjiyeon", name: "천지연폭포", type: "폭포 산책", zone: "seogwipo", kind: "sight",
+    area: "서귀포시 · 남성중로 2-15", pixel: [717.8, 736.8], search: "서귀포 천지연폭포 매표소",
+    csvName: "천지연폭포", species: ["원앙", "무태장어"],
+    description: "매표소에서 난대림 산책로를 따라 걸으면 폭포 아래 깊은 연못에 닿습니다. 가는 길에는 계곡의 수면도 살펴보세요.",
+    access: "길찾기에서 천지연폭포 매표소를 선택하세요. 지도 핀은 관광지 대표 위치를 가리킵니다.",
+    sources: [["서귀포시 관람 안내", "https://eticket.seogwipo.go.kr/contents?bmcode=cheonjiyeon"], ["비짓제주 폭포 안내", visitJeju("CONT_000000000500618")]],
+    evidence: {
+      "원앙": ["현장 취재", "한국관광공사 여행기에 천지연 계곡에서 헤엄치는 원앙이 소개됐습니다.", "https://korean.visitkorea.or.kr/detail/rem_detail.do?cotid=e070d872-0f55-491a-af79-2ba1e83e6ad0"],
+      "무태장어": ["서식 확인", "폭포 아래 연못은 무태장어 서식지입니다. 낮에는 깊은 곳에 숨어 산책로에서 보기 어렵습니다.", visitJeju("CONT_000000000500618")],
+    },
+  },
+  {
+    id: "gotjawal", name: "제주곶자왈도립공원", type: "도립공원", zone: "seogwipo", kind: "park",
+    area: "서귀포시 대정읍 · 에듀시티로 178", pixel: [229.8, 656.9], search: "제주곶자왈도립공원 탐방안내소",
+    csvName: "제주곶자왈도립공원", species: ["동박새", "노루"],
+    description: "대정읍의 용암 숲을 걷는 도립공원입니다. 탐방안내소에서 코스를 고른 뒤 나뭇가지 사이로 움직이는 새를 찾아보세요.",
+    access: "탐방안내소와 방문객 주차장은 에듀시티로 178에 있습니다. 일부 숲길은 돌이 드러난 비포장 구간입니다.",
+    sources: [["공원 오시는 길", "https://www.jejugotjawal.or.kr/kor/index.php?page_id=8"], ["비짓제주 도립공원 안내", visitJeju("CNTS_000000000021111")]],
+    evidence: {
+      "동박새": ["현장 조사", "2023년 5월 24일 국립중앙과학관 조사 자료에 이곳의 동박새가 기록됐습니다.", "https://www.gbif.org/occurrence/4938771589"],
+      "노루": ["공원 서식 자료", "공원 운영기관이 곶자왈에 서식하는 포유류로 소개합니다.", "https://www.jejugotjawal.or.kr/kor/index.php?page_id=6"],
+    },
+  },
+  {
+    id: "gwangchigi", name: "광치기해변", type: "해안 산책", zone: "seogwipo", kind: "sight",
+    area: "서귀포시 성산읍 · 섭지코지로 63", pixel: [1336.1, 319.4], search: "성산 광치기해변 주차장",
+    csvName: "광치기해변", species: ["뿔논병아리"],
+    description: "성산일출봉을 바라보는 동쪽 해변입니다. 모래사장에서 앞바다의 수면을 쌍안경으로 살펴보기 좋습니다.",
+    access: "해변 주차장을 찾아 해안으로 걸어가세요. 제주올레 1코스와 2코스가 이어지는 지점입니다.",
+    sources: [["비짓제주 해변 안내", visitJeju("CNTS_000000000018413")]],
+    evidence: {"뿔논병아리": ["날짜가 있는 관찰", "2023년 3월 3일, 탐조자가 광치기해변 앞바다에서 무리를 관찰하고 사진을 남겼습니다.", "https://www.birdskoreablog.org/?p=26888"]},
+  },
+  {
+    zone: "jeju", kind: "sight",
     id: "dongbaek", name: "동백동산 습지센터", type: "안내센터", area: "제주시 조천읍 · 동백로 77",
     pixel: [982.6, 203.7], destination: [33.5095241, 126.7152691],
     species: ["제주도롱뇽"], habitat: "dongbaek",
@@ -21,6 +69,7 @@ export const visits = [
     sources: [["습지센터 안내", hub(471)], ["센터 위치", visitJeju("CNTS_300000000014390")]],
   },
   {
+    zone: "seogwipo", kind: "sight", csvName: "신도포구",
     id: "sindo", name: "신도포구 돌고래소공원", type: "해안 전망", area: "서귀포시 대정읍 · 신도리 해안",
     pixel: [59.2, 669.5], destination: [33.27611896, 126.170891], destinationName: "신도포구 돌고래소공원 주차장",
     species: ["남방큰돌고래"], habitat: "sindo",
@@ -29,6 +78,7 @@ export const visits = [
     sources: [["접근로·주차장", hub(694)], ["비짓제주 돌고래 관찰 안내", visitJeju("CNTS_300000000013099")]],
   },
   {
+    zone: "seogwipo", kind: "sight", csvName: "천백고지 휴게소",
     id: "highland", name: "1100고지습지 탐방로", type: "탐방 데크", area: "한라산 1100도로 · 고산습지",
     pixel: [554.9, 508.3], destination: [33.35762241, 126.4629887],
     species: ["제주도롱뇽", "황조롱이"], habitat: "highland",
@@ -37,6 +87,7 @@ export const visits = [
     sources: [["탐방로 조사", hub(649)], ["람사르 습지 정보", ramsar(1893)]],
   },
   {
+    zone: "jeju", kind: "sight",
     id: "hado", name: "하도리 철새도래지", type: "철새 관찰", area: "제주시 구좌읍 · 하도리 해안습지",
     pixel: [1288.4, 202.9], search: "하도리 철새도래지 탐조대",
     grade: "대표 지점은 1등급이며 반경 500m에는 1·2등급 구역이 있습니다.",
@@ -46,6 +97,7 @@ export const visits = [
     sources: [["비짓제주 철새도래지", visitJeju("CNTS_000000000022753")], ["철새 자료", visitJeju("CONT_000000000500610")]],
   },
   {
+    zone: "seogwipo", kind: "park",
     id: "park", name: "제주자연생태공원", type: "보호·사육 관찰장", area: "서귀포시 성산읍 · 금백조로 446",
     pixel: [1165.4, 344.8], destination: [33.43972902, 126.823609], destinationName: "제주자연생태공원 주출입구",
     grade: "주출입구에는 등급 도형이 없습니다. 반경 500m에는 2·3등급 구역이 있습니다.",
@@ -55,6 +107,7 @@ export const visits = [
     sources: [["제주도 무장애여행 안내", hub(740)]],
   },
   {
+    zone: "seogwipo", kind: "sight",
     id: "oreum", name: "물영아리오름", type: "오름 탐방", area: "서귀포시 남원읍 · 수망리",
     pixel: [942.9, 487.7], search: "물영아리오름 주차장",
     species: ["맹꽁이", "물장군"], habitat: "oreum",

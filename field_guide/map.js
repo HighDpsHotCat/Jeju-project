@@ -1,8 +1,9 @@
 import { byId as $, node, icon } from "./ui.js";
 import { visits, habitats, speciesIds, guideUrl, mapUrl, loadRecords } from "./map-data.js";
+import { readVisit, renderVisits } from "./visit-map.js";
 
 const layers = {
-  visit: ["탐방 장소", "안내센터·주차장·탐방로처럼 찾아가기 쉬운 출발점을 골라보세요."],
+  visit: ["탐방 장소", "지도에서 제주시 또는 서귀포시를 누르면 아래에 관광지와 생태공원이 열립니다."],
   habitat: ["서식 기록", "자료에 동물이 기록된 습지·해안·섬의 대략적인 위치입니다."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
@@ -11,16 +12,17 @@ const cities = [
   { id: "seogwipo", name: "서귀포시", pixel: [722, 666] },
 ];
 let records, recordError = false;
-let layer, selected, filterSpecies;
+let layer, selected, filterSpecies, trip;
 
 function readSelection() {
   const params = new URLSearchParams(location.search);
   layer = Object.hasOwn(layers, params.get("layer")) ? params.get("layer") : "visit";
-  selected = items().find((p) => p.id === params.get("place")) || items()[0];
+  trip = readVisit(params);
+  selected = layer === "visit" ? trip.place || trip.zone : items().find((p) => p.id === params.get("place")) || items()[0];
   filterSpecies = layer === "records" ? params.get("species") || "" : "";
 }
 function items() {
-  return layer === "visit" ? visits : layer === "habitat" ? habitats : cities;
+  return layer === "habitat" ? habitats : cities;
 }
 function anchor(label, url, cls) {
   const a = node("a", label, cls);
@@ -42,24 +44,15 @@ function choose(nextLayer, id, scroll = false, species = "") {
     $("detail").scrollIntoView({ block: "start" });
 }
 function placeDetail(p) {
-  const visiting = layer === "visit";
   const address = node("p", null, "area");
   address.append(icon("pin"), p.area);
   const animals = node("div", null, "animals-here");
   for (const name of p.species) animals.append(anchor(name + " ↗", guideUrl(speciesIds[name], name)));
-  const parts = [node("span", p.type, p.id === "park" ? "tag managed" : "tag"), node("h2", p.name),
-    address, node("p", p.description), section(p.id === "park" ? "보호·사육 동물 도감" : "관련 동물 도감", animals)];
+  const parts = [node("span", p.type, "tag"), node("h2", p.name),
+    address, node("p", p.description), section("관련 동물 도감", animals)];
   const actions = node("div", null, "actions");
-  if (visiting) {
-    parts.push(section("탐방 출발점", node("p", p.access)));
-    const url = p.search ? "https://map.kakao.com/?" + new URLSearchParams({q: p.search})
-      : "https://map.kakao.com/link/to/" + encodeURIComponent(p.destinationName || p.name) + "," + p.destination.join(",");
-    actions.append(anchor(p.search ? p.search + " 찾기 ↗" : "출발점 길찾기 ↗", url));
-    if (p.habitat) actions.append(anchor("이곳의 서식 기록", mapUrl("habitat", p.habitat)));
-  } else {
-    const visit = visits.find((v) => v.habitat === p.id);
-    if (visit) actions.append(anchor("탐방 출발점 보기", mapUrl("visit", visit.id)));
-  }
+  const visit = visits.find((v) => v.habitat === p.id);
+  if (visit) actions.append(anchor("탐방 출발점 보기", mapUrl("visit", visit.id)));
   const sources = node("div", null, "source-links");
   for (const [label,url] of p.sources) sources.append(anchor(label + " ↗", url));
   if (actions.childElementCount) parts.push(actions);
@@ -117,6 +110,13 @@ function render() {
   $("offshore").replaceChildren();
   $("places").replaceChildren();
   $("stage").dataset.layer = layer;
+  const visiting = layer === "visit";
+  $("atlas-layout").classList.toggle("visit-layout", visiting);
+  $("region-picker").hidden = !visiting;
+  $("districts").style.display = visiting ? "block" : "none";
+  $("places").hidden = visiting;
+  $("detail").hidden = false;
+  if (visiting) { renderVisits(trip); return; }
   for (const [i, p] of listing.entries()) {
     const active = String(p.id === selected.id);
     const number = i + 1;
@@ -157,10 +157,10 @@ for (const [id, [label]] of Object.entries(layers)) {
   b.dataset.layer = id;
   b.onclick = () => {
     if (id === layer) return;
-    const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected.habitat) :
-      id === "visit" ? visits.find((p) => p.habitat === selected.id) : null;
-    const first = id === "visit" ? visits[0] : id === "habitat" ? habitats[0] : cities[0];
-    choose(id, (equivalent || first).id);
+    const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected?.habitat) :
+      id === "visit" && layer === "habitat" ? visits.find((p) => p.habitat === selected.id) : null;
+    if (id === "visit" && !equivalent) openTrip("/map", false);
+    else choose(id, (equivalent || (id === "habitat" ? habitats[0] : cities[0])).id);
   };
   $("filters").append(b);
 }
@@ -175,11 +175,31 @@ $("zoom").onclick = () => {
   $("zoom").setAttribute("aria-pressed", String(active));
   $("zoom").textContent = active ? "− 축소" : "＋ 확대";
   $("zoom").setAttribute("aria-label", active ? "지도 축소" : "지도 확대");
-  const [x, y] = selected.pixel || [720,455];
+  const [x, y] = selected?.pixel || [720,455];
   view.scrollTo(active ? stage.offsetWidth * x / 1440 - view.clientWidth / 2 : 0,
     active ? stage.offsetHeight * y / 910 - view.clientHeight / 2 : 0);
 };
 window.addEventListener("popstate", () => { readSelection(); render(); });
+function openTrip(href, focus = true) {
+  const url = new URL(href, location.origin);
+  if (url.href !== location.href) history.pushState(null, "", url);
+  readSelection();
+  render();
+  if (focus && !$("detail").hidden) {
+    $("detail").focus({preventScroll: true});
+    $("detail").scrollIntoView({block: "start"});
+  }
+}
+$("atlas-layout").addEventListener("click", (event) => {
+  if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  const target = event.target.closest("[data-trip], [data-trip-zone]");
+  if (!target) return;
+  event.preventDefault();
+  openTrip(target.dataset.tripZone ? "/map?layer=visit&zone=" + target.dataset.tripZone : target.href);
+});
 readSelection();
 render();
+if (layer === "visit" && trip.zone && new URLSearchParams(location.search).has("place")) {
+  requestAnimationFrame(() => $("detail").scrollIntoView({block: "start"}));
+}
 fetchRecords();

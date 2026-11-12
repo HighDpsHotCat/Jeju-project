@@ -440,3 +440,91 @@
 .record-title time, .record-list small { color: var(--muted); font-size: 12px; }
 .record-list small { display: block; margin: 5px 0; overflow-wrap: anywhere; }
 @media(max-width:460px) { .city-marker { font-size: 11px; padding: 4px 7px; } }
+.atlas { max-width: 1120px; }
+.atlas [hidden] { display: none !important; }
+.filter-row { gap: 5px; margin-bottom: 18px; }
+.filter-row button { padding: 9px 16px; }
+#districts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#districts path { pointer-events: visiblePainted; fill: #50794b10; stroke: transparent; cursor: pointer; }
+#districts path:hover, #districts path.current-zone { fill: #39765027; stroke: #638666; stroke-width: 3; }
+.show-grades #districts path { fill: transparent; }
+.show-grades #districts path:hover, .show-grades #districts path.current-zone { stroke: #244e34; }
+#stage[data-layer="visit"] .jeju-city, #stage[data-layer="visit"] .south { display: none; }
+.overview-point, .district-label, .mini-dot { position: absolute; transform: translate(-50%,-50%); }
+.overview-point { width: 24px; height: 24px; display: grid; place-items: center; }
+.overview-point::before { content: ""; }
+.overview-point::before, .mini-dot { width: 8px; height: 8px; background: #307158; border: 1.5px solid #fff; border-radius: 50%; pointer-events: none; }
+.district-label { display: block; padding: 7px 13px; background: #214e3b; color: #fff; font-size: 14px; font-weight: 750; border-radius: 18px; border: 2px solid white; white-space: nowrap; box-shadow: 0 2px 7px #26452c40; }
+.district-label:hover { background: #153c29; }
+.visit-layout { grid-template-columns: minmax(0,1.48fr) minmax(285px,0.88fr); }
+.visit-layout #detail { grid-column: 1/-1; scroll-margin: 12px; }
+.detail:focus:not(:focus-visible) { outline: none; }
+#region-picker { padding: 22px; }
+#region-picker h2 { font-size: 21px; margin: 0 0 14px; }
+.zone-choice { display: grid; overflow: hidden; position: relative; min-height: 128px; border-radius: 15px; margin: 10px 0; color: white; isolation: isolate; }
+.zone-choice img { position: absolute; z-index: -2; inset: 0; height: 100%; }
+.zone-choice::after { content: ""; background: linear-gradient(0deg,#102b23eb 0%,#132f2290 46%,#14372e00 95%); position: absolute; inset: 0; z-index: -1; }
+.zone-choice[aria-current] { outline: 3px solid #35744a; outline-offset: 2px; }
+.zone-copy { align-self: end; padding: 9px 55px 12px 14px; display: grid; gap: 3px; }
+.zone-copy strong { font-size: 21px; }.zone-copy small { font-size: 12px; }
+.zone-count { position: absolute; bottom: 15px; right: 13px; font-size: 13px; font-weight: 700; }
+.location-photo { width: 100%; height: 100%; display: block; object-fit: cover; }
+.location-photo[data-site="cheonjiyeon"] { object-position: 82% center; }
+.location-photo[data-site="arboretum"] { object-position: center 58%; }
+.cover-credits, .place-sources { padding-top: 10px; color: var(--muted); font-size: 12px; }
+.cover-credits summary, .place-sources summary { cursor: pointer; }
+.photo-credit { display: block; font-size: 10px; color: var(--muted); margin-top: 5px; }
+.photo-credit a, .place-sources a, .evidence-link { text-decoration: underline; text-underline-offset: 3px; }
+.trip-heading { display: flex; align-items: baseline; gap: 12px; }
+.trip-heading span { color: var(--muted); font-weight: 650; font-size: 14px; }
+.kind-tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0 16px; }
+.kind-tab, .trip-back { font-size: 13px; font-weight: 700; }
+.kind-tab { padding: 7px 13px; border-radius: 20px; border: 1px solid var(--line); background: #fffdf6; }
+.kind-tab[aria-current] { border-color: #86a687; background: #e4eddc; color: #214e30; }
+.trip-grid, .animal-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
+.trip-card { display: grid; grid-template-columns: 88px 1fr 10px; align-items: center; gap: 12px; border-radius: 14px; border: 1px solid var(--line); padding: 9px 12px 9px 9px; background: #fffdf7; transition: background .15s; }
+.trip-card:hover, .animal-entry:hover { background: #eef3e7; }
+.trip-card > .location-photo, .mini-map { width: 88px; height: 77px; border-radius: 9px; }
+.mini-map { position: relative; display: block; background: #d6e9e9 url("/jeju-map.png") center / 100% 100% no-repeat; }
+.trip-copy { display: grid; gap: 3px; }
+.trip-copy small, .trip-description > small { color: #42634b; font-size: 12px; font-weight: 700; }
+.trip-copy strong { font-size: 17px; }
+.trip-copy > span { font-size: 13px; line-height: 1.5; color: var(--muted); display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.trip-arrow { color: #51795e; font-size: 23px; }
+.trip-back { display: inline-block; color: #3f6848; margin-bottom: 14px; padding: 4px 0; }
+.trip-overview { display: flex; align-items: center; gap: clamp(15px,2.5vw,32px); }
+.place-photo { width: 34%; flex-shrink: 0; }
+.place-photo img { aspect-ratio: 1.65; border-radius: 14px; }
+.trip-description { max-width: 72ch; }
+.trip-description h2 { margin: 3px 0; }
+.detail .trip-address { color: #546a58; font-size: 13px; margin: 0 0 8px; }
+.detail .visit-access { margin-top: 5px; }
+.trip-description .actions { margin-top: 10px; }
+.wildlife-block { margin: 22px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+.wildlife-block h3 { font-size: 19px; margin: 0 0 12px; }
+.wildlife-card { border: 1px solid #d7e1ce; border-radius: 13px; background: #f5f7ed; padding: 13px; }
+.animal-entry { display: flex; gap: 9px; align-items: center; border-radius: 7px; }
+.animal-entry strong, .animal-entry small { display: block; }
+.animal-entry small { font-size: 11px; color: #53694d; }
+.animal-entry strong { font-size: 17px; }
+.animal-mark { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; background: #dfebd3; color: #487046; overflow: hidden; }
+.animal-mark img { width: 100%; height: 100%; object-fit: cover; }
+.guide-arrow { margin-left: auto; font-size: 12px; color: #426946; font-weight: 700; }
+.wildlife-card p { margin: 9px 0 5px; }.evidence-link { display: inline-block; color: #406849; font-size: 12px; }
+.place-sources a { display: inline-block; margin: 6px 12px 0 0; }
+@media(max-width:820px) {
+  .visit-layout { grid-template-columns: 1fr; gap: 10px; }
+  #region-picker { padding: 12px 15px; }
+  #region-picker h2 { font-size: 16px; margin-bottom: 7px; }
+  #region-picker { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 5px 9px; }
+  #region-picker h2, #region-picker .cover-credits { grid-column: 1/-1; }
+  #region-picker .cover-credits { padding-top: 3px; }
+  .zone-choice { min-height: 74px; margin: 0; }
+  .zone-copy { padding: 8px 32px 9px 9px; }.zone-copy strong { font-size: 15px; }.zone-copy small { display:none; }.zone-count { right:8px; bottom:11px; font-size:11px; }
+  .trip-grid { grid-template-columns: 1fr; }
+  .trip-overview { display: block; }.place-photo { width: 100%; margin-bottom: 12px; }.place-photo img { aspect-ratio: 2.5; }
+}
+@media(max-width:520px) {
+  .animal-grid { grid-template-columns: 1fr; }.district-label { font-size: 12px; padding: 5px 9px; }
+  .trip-card { grid-template-columns: 70px 1fr 9px; gap: 8px; }.trip-card > .location-photo, .mini-map { width:70px; height:67px; }
+}
