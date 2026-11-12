@@ -2,7 +2,7 @@
     flex-grow: 1;
     color: rgb(44, 61, 41);
 }
-.paw-button, .close-button, .detail-action, .animal-tile, .source-button, .nearby-interact, .house-exit-bubble {
+.paw-button, .close-button, .detail-action, .animal-tile, .source-button, .nearby-interact {
     background-image: none;
     border-width: 0;
     margin: 0;
@@ -43,17 +43,6 @@
 .nearby-interact:active .nearby-disc { background-color: rgb(119, 207, 217); }
 .yard-root .nearby-interact:focus { border-color: rgb(48, 79, 73); }
 .interaction-tick { width: 37px; height: 40px; color: rgb(26, 41, 39); }
-.house-exit-bubble {
-    position: absolute; overflow: visible;
-    border-radius: 15px; border-width: 2px;
-    border-color: rgb(125, 134, 99); background-color: rgb(255, 252, 235);
-    color: rgb(55, 73, 48); font-size: 15px; -unity-font-style: bold;
-}
-.yard-root .house-exit-bubble:focus { border-color: rgb(84, 99, 64); }
-.house-bubble-tail {
-    position: absolute; width: 16px; height: 11px;
-    color: rgb(125, 134, 99);
-}
 .collection-overlay, .detail-backdrop {
     position: absolute;
     left: 0; right: 0; top: 0; bottom: 0;

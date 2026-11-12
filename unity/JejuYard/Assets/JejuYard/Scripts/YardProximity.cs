@@ -62,7 +62,6 @@ namespace Jeju.Yard
                         reach = model.Key == "dolphin" ? ShoreReach : LandReach });
             }
             panel.InteractRequested += Interact;
-            panel.HouseExitRequested += ExitAtCottage;
             panel.AnimalActionRequested += PerformAction;
             panel.HouseActionRequested += PerformHouseAction;
             panel.AnimalAccessoryRequested += ToggleAccessory;
@@ -245,9 +244,9 @@ namespace Jeju.Yard
 
         void PerformHouseAction(YardCollectionPanel.HouseAction action)
         {
-            if (panel.IsOpen || player == null) return;
+            if (!panel.HouseMenuOpen || panel.IsOpen || player == null) return;
             Resolve();
-            if (!nearCottage) return;
+            if (!panel.HouseMenuOpen || !nearCottage) return;
             if (action == YardCollectionPanel.HouseAction.Exit) YardExit.Leave();
             else if (action == YardCollectionPanel.HouseAction.Wardrobe && outfit != null)
             {
@@ -281,13 +280,6 @@ namespace Jeju.Yard
             panel.SetWardrobePreview(portraits.GetExplorerPreview(explorer.visual));
         }
 
-        void ExitAtCottage()
-        {
-            if (panel.IsOpen || player == null) return;
-            Resolve();
-            if (nearCottage) YardExit.Leave();
-        }
-
         void OnDisable() => ResetNearby();
 
         void ResetNearby()
@@ -311,7 +303,6 @@ namespace Jeju.Yard
         {
             if (panel == null) return;
             panel.InteractRequested -= Interact;
-            panel.HouseExitRequested -= ExitAtCottage;
             panel.AnimalActionRequested -= PerformAction;
             panel.HouseActionRequested -= PerformHouseAction;
             panel.AnimalAccessoryRequested -= ToggleAccessory;

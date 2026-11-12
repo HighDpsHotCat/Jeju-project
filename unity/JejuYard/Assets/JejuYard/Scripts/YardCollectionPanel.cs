@@ -26,7 +26,6 @@ namespace Jeju.Yard
         public bool IsResidentOpen { get; private set; }
         public event Action Opening;
         public event Action InteractRequested;
-        public event Action HouseExitRequested;
 
         IReadOnlyList<Entry> entries = Empty;
         readonly List<int> rows = new List<int>();
@@ -55,11 +54,9 @@ namespace Jeju.Yard
         string selectedId;
         ListView grid;
         Button launcher, closeButton, importButton, demoButton;
-        Button interactButton, houseBubble;
-        BubbleTail bubbleTail;
+        Button interactButton;
         bool nearbyAvailable, targetIsHouse, hasHouseAnchor;
         Vector2 houseAnchor;
-        const float BubbleWidth = 110f, BubbleHeight = 38f;
         Label title, counts, notice, emptyTitle;
         const int RowHeight = 151;
         int columns = 2, screenW, screenH;
@@ -72,7 +69,7 @@ namespace Jeju.Yard
             if (active == null || active.root?.panel == null) return false;
             var p = RuntimePanelUtils.ScreenToPanel(active.root.panel, new Vector2(screenPoint.x, Screen.height - screenPoint.y));
             bool Over(Button button) => button != null && button.resolvedStyle.display != DisplayStyle.None && button.worldBound.Contains(p);
-            return Over(active.interactButton) || Over(active.houseBubble) || Over(active.launcher) || active.ActionMenuConsumes(p);
+            return Over(active.interactButton) || Over(active.launcher) || active.ActionMenuConsumes(p);
         }
 
         public void SetNearby(bool available, bool atHouse, Vector2 houseScreenPoint)
@@ -315,17 +312,7 @@ namespace Jeju.Yard
             interactButton.Add(disc);
             root.Add(interactButton);
 
-            houseBubble = MakeButton("마당 나가기", "house-exit-bubble", "house-exit-bubble", () =>
-            {
-                if (!IsOpen && hasHouseAnchor && closedFrame != Time.frameCount) HouseExitRequested?.Invoke();
-            });
-            houseBubble.style.width = BubbleWidth;
-            houseBubble.style.height = BubbleHeight;
-            bubbleTail = new BubbleTail();
-            houseBubble.Add(bubbleTail);
-            root.Add(houseBubble);
             Show(interactButton, false);
-            Show(houseBubble, false);
             BuildAnimalMenu();
         }
 
@@ -336,29 +323,6 @@ namespace Jeju.Yard
             interactButton.tooltip = targetIsHouse ? "초가집 메뉴" : "동물 만나기";
             RefreshAnimalMenu();
             RefreshHouseMenu();
-            bool showBubble = !IsOpen && !HouseMenuOpen && hasHouseAnchor;
-            Show(houseBubble, showBubble);
-            Show(houseWardrobeBubble, showBubble);
-            if (!showBubble) return;
-            var safe = SafeRect;
-            float px = settings.scale;
-            Vector2 anchor = new Vector2(Mathf.Clamp(houseAnchor.x, safe.xMin, safe.xMax),
-                Mathf.Clamp(houseAnchor.y, safe.yMin + px * 5f, safe.yMax - px * 5f));
-            var tip = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(anchor.x, Screen.height - anchor.y));
-            float safeTop = (Screen.height - safe.yMax) / px;
-            bool tailOnTop = tip.y < safeTop + BubbleHeight + 10f;
-            float rowTop = tailOnTop ? tip.y + 8f : tip.y - BubbleHeight - 8f;
-            float rightEdge = safe.xMax / px - 6f;
-            float checkTop = safeTop + safe.height / px * .70f - 32f;
-            if (rowTop < safeTop + 76f || (rowTop < checkTop + 70f && rowTop + BubbleHeight > checkTop - 6f))
-                rightEdge -= 80f;
-            float leftEdge = safe.xMin / px + 4f;
-            float left = Mathf.Clamp(tip.x - BubbleWidth * .5f, leftEdge, Mathf.Max(leftEdge, rightEdge - BubbleWidth * 2f - 4f));
-            houseBubble.style.left = left;
-            houseBubble.style.top = rowTop;
-            bubbleTail.Point(tailOnTop, Mathf.Clamp(tip.x - left, 16f, BubbleWidth - 16f));
-            houseWardrobeBubble.style.left = left + BubbleWidth + 4f;
-            houseWardrobeBubble.style.top = houseBubble.style.top;
         }
 
         Rect SafeRect => safeArea.width > 0 && safeArea.height > 0 ? safeArea : new Rect(0, 0, Screen.width, Screen.height);
@@ -760,41 +724,6 @@ namespace Jeju.Yard
                     p.ClosePath();
                     p.Fill();
                 };
-            }
-        }
-
-        sealed class BubbleTail : VisualElement
-        {
-            bool onTop;
-
-            public BubbleTail()
-            {
-                AddToClassList("house-bubble-tail");
-                pickingMode = PickingMode.Ignore;
-                generateVisualContent += ctx =>
-                {
-                    var p = ctx.painter2D;
-                    float w = contentRect.width, h = contentRect.height;
-                    if (w <= 0 || h <= 0) return;
-                    var a = new Vector2(1f, onTop ? h : 0f);
-                    var b = new Vector2(w * .5f, onTop ? 1f : h - 1f);
-                    var c = new Vector2(w - 1f, a.y);
-                    p.fillColor = parent.resolvedStyle.backgroundColor;
-                    p.strokeColor = resolvedStyle.color;
-                    p.lineWidth = 1.5f;
-                    p.BeginPath(); p.MoveTo(a); p.LineTo(b); p.LineTo(c); p.ClosePath(); p.Fill();
-                    p.BeginPath(); p.MoveTo(a); p.LineTo(b); p.LineTo(c); p.Stroke();
-                };
-            }
-
-            public void Point(bool top, float center)
-            {
-                // The button's border takes two units on each edge.
-                style.left = center - 10f;
-                style.top = top ? -10f : BubbleHeight - 5f;
-                if (top == onTop) return;
-                onTop = top;
-                MarkDirtyRepaint();
             }
         }
 

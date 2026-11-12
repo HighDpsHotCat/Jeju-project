@@ -151,7 +151,7 @@ namespace Jeju.Yard
                 Show(nextAction, false);
             }
             Show(petFeedback, false);
-            if (interactButton != null) interactButton.tooltip = targetIsHouse ? "마당 나가기" : "동물 만나기";
+            if (interactButton != null) interactButton.tooltip = targetIsHouse ? "초가집 메뉴" : "동물 만나기";
         }
 
         void RefreshAnimalMenu()
@@ -268,7 +268,6 @@ namespace Jeju.Yard
 
         bool ActionMenuConsumes(Vector2 p)
         {
-            if (houseWardrobeBubble != null && houseWardrobeBubble.resolvedStyle.display != DisplayStyle.None && houseWardrobeBubble.worldBound.Contains(p)) return true;
             if (!AnimalMenuOpen && !HouseMenuOpen) return false;
             return (AnimalMenuOpen ? actionMenu : houseMenu).worldBound.Contains(p) ||
                 previousAction.worldBound.Contains(p) || nextAction.worldBound.Contains(p);

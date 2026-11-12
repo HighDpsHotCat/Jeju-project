@@ -18,12 +18,12 @@ namespace Jeju.Yard
         readonly Button[] accessoryOptions = new Button[2], homeOptions = new Button[2], outfitOptions = new Button[3];
         readonly Label[] accessoryStates = new Label[2], wornTags = new Label[3];
         readonly WearableGlyph[] outfitSwatches = new WearableGlyph[3];
-        VisualElement houseMenu, wardrobe, wardrobeSheet;
-        Button houseWardrobeBubble, wardrobeClose, topsTab, hatsTab;
+        VisualElement houseMenu, housePointer, wardrobe, wardrobeSheet;
+        Button wardrobeClose, topsTab, hatsTab;
         Image wardrobePreview;
         bool hatsSelected;
         int currentTop, currentHat;
-        bool CottageAvailable => nearbyAvailable && (targetIsHouse || hasHouseAnchor);
+        bool CottageAvailable => nearbyAvailable && targetIsHouse;
 
         void BuildAccessoryOptions()
         {
@@ -64,19 +64,13 @@ namespace Jeju.Yard
 
         void BuildHouseWardrobe()
         {
-            houseWardrobeBubble = MakeButton("옷 꾸미기", "house-wardrobe-bubble", "house-exit-bubble", () =>
-            {
-                if (!IsOpen && hasHouseAnchor && closedFrame != Time.frameCount)
-                    HouseActionRequested?.Invoke(HouseAction.Wardrobe);
-            });
-            houseWardrobeBubble.style.width = BubbleWidth;
-            houseWardrobeBubble.style.height = BubbleHeight;
-            root.Add(houseWardrobeBubble);
-            Show(houseWardrobeBubble, false);
             houseMenu = Element("house-action-menu");
             houseMenu.name = "house-action-menu";
             BuildHouseOption(HouseAction.Wardrobe, "옷 꾸미기", "house-action-wardrobe");
             BuildHouseOption(HouseAction.Exit, "마당 나가기", "house-action-exit");
+            housePointer = new ActionGlyph(ActionGlyph.Kind.Arrow);
+            housePointer.AddToClassList("animal-menu-pointer");
+            houseMenu.Add(housePointer);
             root.Add(houseMenu);
             Show(houseMenu, false);
 
@@ -187,9 +181,17 @@ namespace Jeju.Yard
             Vector2 point = hasHouseAnchor
                 ? RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(houseAnchor.x, Screen.height - houseAnchor.y))
                 : new Vector2(safe.center.x / px, (Screen.height - safe.center.y) / px);
-            float left = safe.xMin / px + 6f;
-            houseMenu.style.left = Mathf.Clamp(point.x - 66f, left, Mathf.Max(left, safe.xMax / px - 222f));
-            houseMenu.style.top = Mathf.Clamp(point.y - 100f >= top ? point.y - 100f : point.y + 8f, top, Mathf.Max(top, bottom - 92f));
+            const float width = 132f, height = 92f;
+            float leftEdge = safe.xMin / px + 6f;
+            float rightEdge = safe.xMax / px - 90f;
+            float left = Mathf.Clamp(point.x - width * .5f, leftEdge, Mathf.Max(leftEdge, rightEdge - width));
+            bool above = point.y - height - 8f >= top;
+            houseMenu.style.left = left;
+            houseMenu.style.top = Mathf.Clamp(above ? point.y - height - 8f : point.y + 8f, top, Mathf.Max(top, bottom - height));
+            Show(housePointer, hasHouseAnchor);
+            housePointer.style.left = Mathf.Clamp(point.x - left - 8f, 15f, width - 31f);
+            housePointer.style.top = above ? height - 4f : -7f;
+            housePointer.EnableInClassList("point-down", above);
             PositionActionArrows(safe, px, top, bottom);
         }
 
