@@ -49,7 +49,12 @@ namespace Jeju.Yard.EditorArt
             for (int pair = 0; pair < 2; pair++)
             {
                 bool front = pair == 0;
-                float height = cat ? .35f : .31f;
+                float height = cat ? .35f : QuadrupedRoamer.CorgiHipHeight;
+                if (cat && !front)
+                {
+                    CatHindLegs(animal, height);
+                    continue;
+                }
                 var leg = new Draft();
                 Leg(leg, cat, front, height);
                 var left = leg.Bake(prefix + (front ? "_Foreleg" : "_Hindleg"), animal.transform);
@@ -65,6 +70,37 @@ namespace Jeju.Yard.EditorArt
                 }
             }
             animal.PoseAt(0);
+        }
+
+        static void CatHindLegs(QuadrupedRoamer cat, float height)
+        {
+            var knee = new Vector3(0, -.14f, .086f);
+            var hock = new Vector3(0, -.135f, -.135f);
+            var thigh = new Draft();
+            thigh.Ball(V(0, -.036f, .028f), V(.102f, .141f, .108f), Gold, 10, 5);
+            thigh.Rod(V(0,.024f,0), knee, .089f, .061f, Gold, 8);
+            var shin = new Draft();
+            shin.Rod(Vector3.zero, hock, .061f, .035f, Gold, 8);
+            shin.Rod(hock * .32f, hock * .52f, .055f, .052f, Ginger, 8);
+            var foot = new Draft();
+            foot.Rod(Vector3.zero, V(0,-.035f,.052f), .035f, .050f, Gold, 8);
+            foot.Ball(V(0,-.026f,.057f), V(.062f,.049f,.093f), Cream, 9, 4);
+
+            Transform left = thigh.Bake("YellowTabby_Hindleg", cat.transform).transform;
+            Transform lower = shin.Bake("YellowTabby_Hock", left).transform;
+            lower.localPosition = knee;
+            Transform paw = foot.Bake("YellowTabby_BackPaw", lower).transform;
+            paw.localPosition = hock;
+            Transform right = UnityEngine.Object.Instantiate(left, cat.transform, false);
+            left.name = "Hindleg left";
+            right.name = "Hindleg right";
+            cat.hocks = new[] { lower, right.GetChild(0) };
+            cat.hindPaws = new[] { paw, cat.hocks[1].GetChild(0) };
+            for (int side = 0; side < 2; side++)
+            {
+                cat.legs[side + 2] = side == 0 ? left : right;
+                cat.hipPositions[side + 2] = V(side == 0 ? -.125f : .125f, height, -.245f);
+            }
         }
 
         // Successive elliptical sections join into a continuous silhouette from rump to chest or muzzle.

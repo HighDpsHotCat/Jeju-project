@@ -17,28 +17,26 @@ namespace Jeju.Yard.EditorArt
         {
             string name = gull ? "Seagull" : "Tree sparrow";
             string asset = gull ? "Seagull" : "TreeSparrow";
-            var anchor = Joint(name, parent, gull ? V(2.8f, 0, -12.25f) : V(.55f, 0, 2.45f));
+            Vector3 perch = gull ? V(3.35f, 0, -11.65f) : V(.55f, 0, 2.45f);
+            if (gull) perch.y = Coast.SandHeight(perch);
+            var anchor = Joint(name, parent, perch);
             var bird = anchor.gameObject.AddComponent<YardBird>();
             bird.species = gull ? YardBird.Species.Seagull : YardBird.Species.Sparrow;
+            if (gull)
+            {
+                const float span = .12f;
+                float dx = Coast.SandHeight(perch + Vector3.right*span) - Coast.SandHeight(perch - Vector3.right*span);
+                float dz = Coast.SandHeight(perch + Vector3.forward*span) - Coast.SandHeight(perch - Vector3.forward*span);
+                bird.perchNormal = V(-dx, 2f*span, -dz).normalized;
+            }
             bird.flightFrame = Joint("Flight path", anchor, Vector3.zero);
-            bird.torso = Joint("Breast", bird.flightFrame, gull ? Vector3.zero : V(0,.235f,0));
+            bird.torso = Joint("Breast", bird.flightFrame, Vector3.zero);
 
             var plumage = new Draft();
             Ellipsoid(plumage, Vector3.zero,
                 gull ? V(.175f,.187f,.415f) : V(.153f,.155f,.222f),
                 gull ? 0xFBF6E7 : 0xE7C9A1, gull ? 0xBCBEC3 : 0x947051, .39f);
             Tail(plumage, gull);
-            if (gull)
-            {
-                for (int side=-1; side<=1; side+=2)
-                {
-                    var heel = V(side*.071f,-.123f,-.13f);
-                    var toes = V(side*.083f,-.112f,-.35f);
-                    plumage.Rod(heel, toes, .020f, .012f, C(0xB68A58), 5);
-                    plumage.Tri(toes, toes+V(-.035f,-.005f,-.073f), toes+V(.035f,-.005f,-.073f),
-                        C(0xDAA45C), Vector3.down);
-                }
-            }
             plumage.Bake(asset+"Body", bird.torso);
             bird.head = Joint("Head pivot", bird.torso, gull ? V(0,.075f,.233f) : V(0,.087f,.107f));
             Head(gull).Bake(asset+"Head", bird.head);
@@ -48,10 +46,22 @@ namespace Jeju.Yard.EditorArt
                 Vector3 socket = gull ? V(side*.105f,.079f,.035f) : V(side*.093f,.063f,.047f);
                 BuildWing(bird, asset, socket, side, gull);
             }
-            if (!gull)
+            var legs = new Draft();
+            for (int side=-1; side<=1; side+=2)
             {
-                var legs = new Draft();
-                for (int side=-1; side<=1; side+=2)
+                if (gull)
+                {
+                    var heel = V(side*.073f,-.075f,-.042f);
+                    var ankle = V(side*.080f,-.178f,.015f);
+                    legs.Rod(V(side*.069f,0,0), heel, .021f,.016f,C(0xB3895C),6);
+                    legs.Rod(heel, ankle, .016f,.010f,C(0xCC975D),6);
+                    var outer = ankle + V(side*.045f,-.005f,.065f);
+                    var middle = ankle + V(0,-.006f,.10f);
+                    var inner = ankle + V(-side*.037f,-.005f,.067f);
+                    legs.Quad(ankle, outer, middle, inner, C(0xE3AB66), Vector3.up);
+                    legs.Quad(ankle, outer, middle, inner, C(0xC4915B), Vector3.down);
+                }
+                else
                 {
                     var ankle = V(side*.058f,-.130f,.024f);
                     legs.Rod(V(side*.056f,0,-.010f), ankle, .013f, .009f, C(0xAB7965), 5);
@@ -60,9 +70,8 @@ namespace Jeju.Yard.EditorArt
                             .007f,.002f,C(0x9D6F5F),4);
                     legs.Rod(ankle, ankle+V(0,-.003f,-.033f),.006f,.002f,C(0x9D6F5F),4);
                 }
-                bird.feet = legs.Bake(asset+"Feet", bird.flightFrame).transform;
-                bird.feet.localPosition = V(0,.14f,-.025f);
             }
+            bird.feet = legs.Bake(asset+"Feet", bird.flightFrame).transform;
             bird.PoseAt(0);
         }
 
