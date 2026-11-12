@@ -11,13 +11,13 @@ namespace Jeju.Yard
         public AnimalAction SelectedAnimalAction { get; private set; }
         public event Action<AnimalAction> AnimalActionRequested;
 
-        const float MenuWidth = 122f, MenuHeight = 140f, DecorationWidth = 174f;
+        const float MenuWidth = 122f, MenuHeight = 140f, DecorationWidth = 207f, DecorationHeight = 194f;
         readonly Button[] actionOptions = new Button[3];
         VisualElement actionMenu, optionList, menuPointer, decoration, petFeedback;
         Button previousAction, nextAction, decorationClose;
         Label gainLabel;
         Vector2 animalAnchor;
-        bool decorationOpen, petting;
+        bool decorationOpen, petting, canDecorate;
         float petStarted;
 
         void BuildAnimalMenu()
@@ -38,10 +38,7 @@ namespace Jeju.Yard
 
             decoration = Element("decoration-preview");
             decoration.name = "decoration-preview";
-            var slot = Element("accessory-slot");
-            slot.Add(new ActionGlyph(ActionGlyph.Kind.Hanger));
-            decoration.Add(slot);
-            decoration.Add(MakeLabel("아직 장식품이 없어요", "accessory-empty"));
+            BuildAccessoryOptions();
             decorationClose = MakeButton("돌아가기", "decoration-close", "accessory-back", () => SetDecoration(false));
             decoration.Add(decorationClose);
             actionMenu.Add(decoration);
@@ -63,13 +60,14 @@ namespace Jeju.Yard
             petFeedback.Add(gainLabel);
             root.Add(petFeedback);
             CloseAnimalMenu();
+            BuildHouseWardrobe();
         }
 
         void AddAnimalOption(AnimalAction action, string label, string id)
         {
             var button = MakeButton(label, id, "animal-option", () =>
             {
-                if (!AnimalMenuOpen || IsOpen) return;
+                if (!AnimalMenuOpen || IsOpen || (action == AnimalAction.Decorate && !canDecorate)) return;
                 SelectAction(action);
                 AnimalActionRequested?.Invoke(action);
             });
@@ -84,9 +82,15 @@ namespace Jeju.Yard
         {
             var button = MakeButton("", previous ? "animal-action-up" : "animal-action-down", "animal-action-nav", () =>
             {
+                if (HouseMenuOpen && !IsOpen)
+                {
+                    SelectHouseAction(SelectedHouseAction == HouseAction.Wardrobe ? HouseAction.Exit : HouseAction.Wardrobe);
+                    interactButton.Focus();
+                    return;
+                }
                 if (!AnimalMenuOpen || IsOpen) return;
                 if (decorationOpen) SetDecoration(false);
-                int count = actionOptions.Length;
+                int count = canDecorate ? actionOptions.Length : actionOptions.Length - 1;
                 SelectAction((AnimalAction)(((int)SelectedAnimalAction + (previous ? count - 1 : 1)) % count));
                 interactButton.Focus();
             });
@@ -99,9 +103,12 @@ namespace Jeju.Yard
             return button;
         }
 
-        public void ShowAnimalMenu(Vector2 animalScreenPoint)
+        public void ShowAnimalMenu(Vector2 animalScreenPoint, bool canDecorate = true)
         {
             if (actionMenu == null || !nearbyAvailable || targetIsHouse || IsOpen) return;
+            CloseHouseMenu();
+            this.canDecorate = canDecorate;
+            Show(actionOptions[(int)AnimalAction.Decorate], canDecorate);
             bool opening = !AnimalMenuOpen;
             AnimalMenuOpen = true;
             if (opening)
@@ -112,7 +119,13 @@ namespace Jeju.Yard
                 SetDecoration(false);
                 SelectAction(AnimalAction.Info);
             }
+            if (!canDecorate && SelectedAnimalAction == AnimalAction.Decorate)
+            {
+                SetDecoration(false);
+                SelectAction(AnimalAction.Info);
+            }
             MoveAnimalMenu(animalScreenPoint);
+            UpdateNearbyHud();
         }
 
         public void MoveAnimalMenu(Vector2 animalScreenPoint)
@@ -132,8 +145,11 @@ namespace Jeju.Yard
             AnimalMenuOpen = decorationOpen = petting = false;
             if (actionMenu == null) return;
             Show(actionMenu, false);
-            Show(previousAction, false);
-            Show(nextAction, false);
+            if (!HouseMenuOpen)
+            {
+                Show(previousAction, false);
+                Show(nextAction, false);
+            }
             Show(petFeedback, false);
             if (interactButton != null) interactButton.tooltip = targetIsHouse ? "마당 나가기" : "동물 만나기";
         }
@@ -154,9 +170,11 @@ namespace Jeju.Yard
             interactButton.tooltip = actionOptions[(int)action].text;
         }
 
-        public void ShowDecorationPreview()
+        public void ShowDecorationPreview(bool headband = false, bool cape = false)
         {
-            if (AnimalMenuOpen && !IsOpen) SetDecoration(!decorationOpen);
+            if (!AnimalMenuOpen || IsOpen || !canDecorate) return;
+            UpdateAnimalAccessories(headband, cape);
+            SetDecoration(!decorationOpen);
         }
 
         void SetDecoration(bool open)
@@ -205,17 +223,25 @@ namespace Jeju.Yard
             float bottomEdge = (Screen.height - safe.yMin) / scale - 6f;
             float rightEdge = safe.xMax / scale - 90f; // Reserve the check and its two arrows.
             float width = decorationOpen ? DecorationWidth : MenuWidth;
+            float height = decorationOpen ? DecorationHeight : canDecorate ? MenuHeight : 92f;
             Vector2 point = AnimalPanelPoint;
             float left = Mathf.Clamp(point.x - width * .5f, leftEdge, Mathf.Max(leftEdge, rightEdge - width));
-            bool below = point.y + 14f + MenuHeight <= bottomEdge;
-            float top = below ? point.y + 14f : point.y - MenuHeight - 28f;
+            bool below = point.y + 14f + height <= bottomEdge;
+            float top = below ? point.y + 14f : point.y - height - 54f;
             actionMenu.style.left = left;
-            actionMenu.style.top = Mathf.Clamp(top, topEdge, Mathf.Max(topEdge, bottomEdge - MenuHeight));
+            actionMenu.style.top = Mathf.Clamp(top, topEdge, Mathf.Max(topEdge, bottomEdge - height));
             actionMenu.style.width = width;
+            actionMenu.style.height = height;
+            optionList.style.height = height;
             menuPointer.style.left = Mathf.Clamp(point.x - left - 8f, 15f, width - 31f);
-            menuPointer.style.top = below ? -7f : MenuHeight - 4f;
+            menuPointer.style.top = below ? -7f : height - 4f;
             menuPointer.EnableInClassList("point-down", !below);
 
+            PositionActionArrows(safe, scale, topEdge, bottomEdge);
+        }
+
+        void PositionActionArrows(Rect safe, float scale, float topEdge, float bottomEdge)
+        {
             float checkY = (Screen.height - safe.yMax + safe.height * .70f) / scale;
             float right = (Screen.width - safe.xMax) / scale + 24f;
             previousAction.style.right = nextAction.style.right = right;
@@ -242,13 +268,15 @@ namespace Jeju.Yard
 
         bool ActionMenuConsumes(Vector2 p)
         {
-            if (!AnimalMenuOpen) return false;
-            return actionMenu.worldBound.Contains(p) || previousAction.worldBound.Contains(p) || nextAction.worldBound.Contains(p);
+            if (houseWardrobeBubble != null && houseWardrobeBubble.resolvedStyle.display != DisplayStyle.None && houseWardrobeBubble.worldBound.Contains(p)) return true;
+            if (!AnimalMenuOpen && !HouseMenuOpen) return false;
+            return (AnimalMenuOpen ? actionMenu : houseMenu).worldBound.Contains(p) ||
+                previousAction.worldBound.Contains(p) || nextAction.worldBound.Contains(p);
         }
 
         sealed class ActionGlyph : VisualElement
         {
-            public enum Kind { Arrow, Heart, Hanger }
+            public enum Kind { Arrow, Heart }
             readonly Kind kind;
 
             public ActionGlyph(Kind kind)
@@ -281,16 +309,6 @@ namespace Jeju.Yard
                     p.BezierCurveTo(P(.93f,.53f),P(.73f,.73f),P(.5f,.91f));
                     p.ClosePath(); p.Fill();
                     p.lineWidth = 1.4f; p.strokeColor = new Color32(255, 244, 224, 255); p.Stroke();
-                }
-                else
-                {
-                    p.lineWidth = 1.8f; p.lineCap = LineCap.Round; p.lineJoin = LineJoin.Round;
-                    p.MoveTo(P(.40f,.32f));
-                    p.BezierCurveTo(P(.41f,.08f),P(.74f,.17f),P(.58f,.36f));
-                    p.LineTo(P(.50f,.44f)); p.LineTo(P(.50f,.50f));
-                    p.LineTo(P(.12f,.74f)); p.QuadraticCurveTo(P(.06f,.81f),P(.17f,.82f));
-                    p.LineTo(P(.84f,.82f)); p.QuadraticCurveTo(P(.92f,.81f),P(.86f,.74f));
-                    p.LineTo(P(.50f,.50f)); p.Stroke();
                 }
             }
         }

@@ -15,12 +15,15 @@ namespace Jeju.Yard
         const string DemoOptIn = "jeju.yard.standaloneDemo";
 
         readonly Dictionary<string, GameObject> models = new Dictionary<string, GameObject>(StringComparer.Ordinal);
+        readonly Dictionary<string, YardAnimalAccessories.Mount> accessoryMounts = new Dictionary<string, YardAnimalAccessories.Mount>();
+        readonly Dictionary<string, string> residents = new Dictionary<string, string>(StringComparer.Ordinal);
         readonly Dictionary<string, YardGuideSnapshot.Animal> registered = new Dictionary<string, YardGuideSnapshot.Animal>(StringComparer.Ordinal);
         readonly HashSet<string> placed = new HashSet<string>(StringComparer.Ordinal);
         readonly List<YardCollectionPanel.Entry> cards = new List<YardCollectionPanel.Entry>();
 
         YardCollectionPanel panel;
         YardModelPortraits portraits;
+        YardProximity proximity;
         YardGuideSnapshot collection;
         Source source;
         string activeJson, placementKey;
@@ -51,7 +54,8 @@ namespace Jeju.Yard
             portraits = GetComponent<YardModelPortraits>();
             if (portraits == null) portraits = gameObject.AddComponent<YardModelPortraits>();
             BindSceneModels();
-            gameObject.AddComponent<YardProximity>().Initialize(this, panel, models);
+            proximity = gameObject.AddComponent<YardProximity>();
+            proximity.Initialize(this, panel, models);
             panel.Opening += OpenCollection;
             Reload();
         }
@@ -68,7 +72,7 @@ namespace Jeju.Yard
                 if (card.supported && card.preview == null)
                 {
                     string key = registered[card.id].modelKey;
-                    card.preview = portraits.Get(key, models[key]);
+                    card.preview = Preview(key, card.id);
                 }
         }
 
@@ -96,7 +100,13 @@ namespace Jeju.Yard
 
         void AddModel(string key, Transform anchor)
         {
-            if (anchor != null) models[key] = anchor.gameObject;
+            if (anchor == null) return;
+            models[key] = anchor.gameObject;
+            if (YardAnimalAccessories.Supports(key))
+            {
+                var mount = new YardAnimalAccessories.Mount(key,anchor.gameObject,portraits.AccessoryArt,false);
+                if (mount.Available) accessoryMounts[key] = mount;
+            }
         }
 
         // Called when the app regains focus and immediately before showing the collection.
@@ -202,6 +212,8 @@ namespace Jeju.Yard
                 RestorePlacement();
             }
             UpdateWorld();
+            portraits.KeepRegistered(registered);
+            proximity.SetWardrobeScope(placementKey);
             BindPanel();
         }
 
@@ -239,10 +251,34 @@ namespace Jeju.Yard
         {
             if (string.IsNullOrEmpty(modelKey) || !models.TryGetValue(modelKey, out var model) ||
                 !model.activeInHierarchy) return null;
-            // Older guides can share one model between species. Use the first placed card in guide order.
-            foreach (var card in cards)
-                if (card.placed && registered[card.id].modelKey == modelKey) return card.id;
-            return null;
+            return residents.TryGetValue(modelKey, out string id) ? id : null;
+        }
+
+        public bool TryGetAccessories(string modelKey, string expectedSpeciesId, string expectedCollectionKey, out YardAccessories equipped)
+        {
+            equipped = YardAccessories.None;
+            Reload();
+            if (string.IsNullOrEmpty(modelKey) || !accessoryMounts.ContainsKey(modelKey) || string.IsNullOrEmpty(expectedSpeciesId) ||
+                placementKey != expectedCollectionKey || PlacedSpeciesId(modelKey) != expectedSpeciesId) return false;
+            equipped = YardAnimalAccessories.Read(placementKey, expectedSpeciesId);
+            return true;
+        }
+
+        public bool TrySetAccessories(string modelKey, string expectedSpeciesId, string expectedCollectionKey, YardAccessories equipped)
+        {
+            if ((equipped & ~YardAnimalAccessories.All) != 0 ||
+                !TryGetAccessories(modelKey,expectedSpeciesId,expectedCollectionKey,out var previous)) return false;
+            if (previous == equipped) return true;
+            YardAnimalAccessories.Save(placementKey,expectedSpeciesId,equipped);
+            accessoryMounts[modelKey].Wear(equipped);
+            portraits.UpdateOutfit(modelKey,expectedSpeciesId,equipped);
+            return true;
+        }
+
+        Texture Preview(string modelKey, string id)
+        {
+            var outfit = YardAnimalAccessories.Supports(modelKey) ? YardAnimalAccessories.Read(placementKey,id) : YardAccessories.None;
+            return portraits.Get(modelKey, models[modelKey], id, outfit);
         }
 
         public void OpenResident(string modelKey, string expectedSpeciesId = null, string expectedCollectionKey = null)
@@ -254,7 +290,7 @@ namespace Jeju.Yard
             foreach (var card in cards)
                 if (card.id == id)
                 {
-                    card.preview = portraits.Get(modelKey, models[modelKey]);
+                    card.preview = Preview(modelKey,id);
                     panel.OpenResident(id);
                     return;
                 }
@@ -285,11 +321,18 @@ namespace Jeju.Yard
 
         void UpdateWorld()
         {
+            residents.Clear();
+            // Legacy records can share a model. Its visible occupant is always the first
+            // placed species in guide order, and it wears only that species' saved pieces.
+            if (collection != null)
+                foreach (var animal in collection.animals)
+                    if (placed.Contains(animal.id) && !residents.ContainsKey(animal.modelKey))
+                        residents.Add(animal.modelKey,animal.id);
             foreach (var model in models)
             {
-                bool inYard = false;
-                foreach (string id in placed)
-                    if (registered[id].modelKey == model.Key) { inYard = true; break; }
+                bool inYard = residents.TryGetValue(model.Key,out var id);
+                if (accessoryMounts.TryGetValue(model.Key,out var mount))
+                    mount.Wear(inYard ? YardAnimalAccessories.Read(placementKey,id) : YardAccessories.None);
                 model.Value.SetActive(inYard);
             }
         }
@@ -307,7 +350,7 @@ namespace Jeju.Yard
                         id = animal.id, name = animal.name, placed = placed.Contains(animal.id),
                         firstMetDate = animal.DisplayDate, firstMetLocation = animal.firstMetLocation,
                         supported = supported,
-                        preview = panel.IsOpen && supported ? portraits.Get(animal.modelKey,models[animal.modelKey]) : null
+                        preview = panel.IsOpen && !panel.WardrobeOpen && supported ? Preview(animal.modelKey,animal.id) : null
                     });
                 }
             }

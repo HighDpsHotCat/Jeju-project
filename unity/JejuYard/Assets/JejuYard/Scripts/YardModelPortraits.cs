@@ -5,11 +5,13 @@ using UnityEngine.Rendering;
 namespace Jeju.Yard
 {
     // One offstage camera serves the collection. The yard keeps its own actors and animations.
-    public sealed class YardModelPortraits : MonoBehaviour
+    public sealed partial class YardModelPortraits : MonoBehaviour
     {
         const int PreviewLayer = 31;
         const int Width = 256, Height = 208;
-        readonly Dictionary<string, Portrait> byKey = new Dictionary<string, Portrait>();
+        readonly Dictionary<(string model, string id), Portrait> byKey = new Dictionary<(string, string), Portrait>();
+        internal readonly YardAccessoryMeshes AccessoryArt = new YardAccessoryMeshes();
+        YardCollectionPanel panel;
         readonly List<Portrait> portraits = new List<Portrait>();
         Camera lens;
         Portrait inspected;
@@ -19,39 +21,53 @@ namespace Jeju.Yard
 
         sealed class Portrait
         {
+            public string modelKey, speciesId;
+            public YardAnimalAccessories.Mount accessories;
+            public YardAccessories outfit;
             public GameObject pivot;
             public RenderTexture texture;
             public Bounds bounds;
             public float elevation;
         }
 
-        public Texture Get(string modelKey, GameObject source)
+        void EnsureCamera()
+        {
+            if (lens != null) return;
+            var studio = new GameObject("Collection portrait camera");
+            studio.transform.SetParent(transform, false);
+            lens = studio.AddComponent<Camera>();
+            lens.enabled = false;
+            lens.orthographic = true;
+            lens.clearFlags = CameraClearFlags.SolidColor;
+            lens.backgroundColor = Color.clear;
+            lens.cullingMask = 1 << PreviewLayer;
+            lens.nearClipPlane = .05f;
+            lens.farClipPlane = 25f;
+            lens.allowHDR = false;
+            lens.useOcclusionCulling = false;
+            panel = GetComponent<YardCollectionPanel>();
+        }
+
+        public Texture Get(string modelKey, GameObject source) => Get(modelKey, source, modelKey, YardAccessories.None);
+
+        public Texture Get(string modelKey, GameObject source, string speciesId, YardAccessories outfit)
         {
             if (string.IsNullOrEmpty(modelKey) || source == null) return null;
-            if (byKey.TryGetValue(modelKey, out var existing)) return existing.texture;
-
-            if (lens == null)
+            if (byKey.TryGetValue((modelKey, speciesId), out var existing))
             {
-                var studio = new GameObject("Collection portrait camera");
-                studio.transform.SetParent(transform, false);
-                lens = studio.AddComponent<Camera>();
-                lens.enabled = false;
-                lens.orthographic = true;
-                lens.clearFlags = CameraClearFlags.SolidColor;
-                lens.backgroundColor = Color.clear;
-                lens.cullingMask = 1 << PreviewLayer;
-                lens.nearClipPlane = .05f;
-                lens.farClipPlane = 25f;
-                lens.allowHDR = false;
-                lens.useOcclusionCulling = false;
+                SetOutfit(existing, outfit);
+                return existing.texture;
             }
-
+            EnsureCamera();
             var pivot = new GameObject(modelKey + " portrait");
             pivot.transform.SetParent(transform, false);
             pivot.transform.position = new Vector3(500f, 100f, 500f);
             pivot.SetActive(false);
             var copy = Instantiate(source, pivot.transform, false);
             copy.SetActive(true);
+            var accessories = YardAnimalAccessories.Supports(modelKey)
+                ? new YardAnimalAccessories.Mount(modelKey, copy, AccessoryArt, true) : null;
+            accessories?.Wear(outfit);
             var frame = SetPose(copy);
             if (frame == null) { Destroy(pivot); return null; }
             foreach (var script in copy.GetComponentsInChildren<MonoBehaviour>(true)) script.enabled = false;
@@ -65,29 +81,66 @@ namespace Jeju.Yard
                 Destroy(copy);
             }
 
-            var renderers = frame.GetComponentsInChildren<MeshRenderer>(true);
-            if (renderers.Length == 0) { Destroy(pivot); return null; }
-            pivot.SetActive(true);
-            Bounds bounds = renderers[0].bounds;
-            foreach (var renderer in renderers)
+            var portrait = new Portrait
+            {
+                pivot = pivot, modelKey = modelKey, speciesId = speciesId,
+                accessories = accessories, outfit = outfit, elevation = modelKey == "swallowtail" ? 43f : 17f
+            };
+            if (!Reframe(portrait)) { Destroy(pivot); return null; }
+            var target = portrait.texture = CreateTarget(Width, Height, modelKey + " portrait");
+            byKey.Add((modelKey,speciesId), portrait);
+            portraits.Add(portrait);
+            Draw(portrait, target, 52f);
+            return target;
+        }
+
+        public void UpdateOutfit(string modelKey, string speciesId, YardAccessories outfit)
+        {
+            if (byKey.TryGetValue((modelKey,speciesId), out var portrait)) SetOutfit(portrait, outfit);
+        }
+
+        void SetOutfit(Portrait portrait, YardAccessories outfit)
+        {
+            if (portrait.outfit == outfit) return;
+            portrait.accessories?.Wear(outfit);
+            portrait.outfit = outfit;
+            Reframe(portrait);
+            Draw(portrait,portrait.texture,52f);
+            if (inspected == portrait) Draw(portrait,closeUp,41f);
+        }
+
+        static bool Reframe(Portrait portrait)
+        {
+            // Frame active pieces only; an unequipped band must not enlarge the shot.
+            portrait.pivot.SetActive(true);
+            bool started = false;
+            foreach (var renderer in portrait.pivot.GetComponentsInChildren<MeshRenderer>(true))
             {
                 renderer.gameObject.layer = PreviewLayer;
                 renderer.shadowCastingMode = ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
-                bounds.Encapsulate(renderer.bounds);
+                if (!renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                if (!started) { portrait.bounds = renderer.bounds; started = true; }
+                else portrait.bounds.Encapsulate(renderer.bounds);
             }
-            pivot.SetActive(false);
+            portrait.pivot.SetActive(false);
+            return started;
+        }
 
-            var target = CreateTarget(Width, Height, modelKey + " portrait");
-            var portrait = new Portrait
+        public void KeepRegistered(IReadOnlyDictionary<string,YardGuideSnapshot.Animal> registrations)
+        {
+            for (int i = portraits.Count - 1; i >= 0; i--)
             {
-                pivot = pivot, texture = target, bounds = bounds,
-                elevation = modelKey == "swallowtail" ? 43f : 17f
-            };
-            byKey.Add(modelKey, portrait);
-            portraits.Add(portrait);
-            Draw(portrait, target, 52f);
-            return target;
+                var p = portraits[i];
+                if (registrations.TryGetValue(p.speciesId, out var animal) && animal.modelKey == p.modelKey) continue;
+                if (inspected == p) Inspect(null);
+                portraits.RemoveAt(i);
+                byKey.Remove((p.modelKey,p.speciesId));
+                p.texture.Release();
+                Destroy(p.texture);
+                Destroy(p.pivot);
+            }
+            nextPortrait = 0;
         }
 
         static RenderTexture CreateTarget(int width, int height, string name)
@@ -134,7 +187,8 @@ namespace Jeju.Yard
 
         void LateUpdate()
         {
-            if (!YardCollectionPanel.BlocksYardInput || portraits.Count == 0 || Time.unscaledTime < nextDraw) return;
+            if (!YardCollectionPanel.BlocksYardInput || portraits.Count == 0 || Time.unscaledTime < nextDraw ||
+                (panel != null && panel.WardrobeOpen)) return;
             if (inspected != null)
             {
                 Draw(inspected, closeUp, 41f + 13f * Mathf.Sin(Time.unscaledTime * .5f));
@@ -172,9 +226,13 @@ namespace Jeju.Yard
             }
         }
 
+        partial void DisposeExplorerPreview();
+
         void OnDestroy()
         {
+            DisposeExplorerPreview();
             Inspect(null);
+            AccessoryArt.Dispose();
             foreach (var portrait in portraits)
             {
                 portrait.texture.Release();

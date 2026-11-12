@@ -25,6 +25,9 @@ namespace Jeju.Yard
         readonly List<Resident> residents = new List<Resident>();
         YardCollectionController collection;
         YardCollectionPanel panel;
+        YardModelPortraits portraits;
+        ExplorerAppearance outfit;
+        YardWalker explorer;
         Transform player;
         BoxCollider cottage;
         Camera lens;
@@ -38,9 +41,15 @@ namespace Jeju.Yard
         {
             collection = owner;
             panel = hud;
+            portraits = owner.GetComponent<YardModelPortraits>();
             foreach (var root in gameObject.scene.GetRootGameObjects())
             {
-                if (root.TryGetComponent<YardWalker>(out var walker)) player = walker.transform;
+                if (root.TryGetComponent<YardWalker>(out var walker))
+                {
+                    explorer = walker;
+                    player = walker.transform;
+                    outfit = walker.GetComponent<ExplorerAppearance>();
+                }
                 if (root.CompareTag("MainCamera")) lens = root.GetComponent<Camera>();
                 if (root.name == "Jeju choga" || root.name == "JejuChoga")
                     cottage = root.GetComponent<BoxCollider>();
@@ -55,6 +64,17 @@ namespace Jeju.Yard
             panel.InteractRequested += Interact;
             panel.HouseExitRequested += ExitAtCottage;
             panel.AnimalActionRequested += PerformAction;
+            panel.HouseActionRequested += PerformHouseAction;
+            panel.AnimalAccessoryRequested += ToggleAccessory;
+            panel.OutfitRequested += ChangeOutfit;
+            panel.WardrobeClosed += portraits.ReleaseExplorerPreview;
+        }
+
+        public void SetWardrobeScope(string scope)
+        {
+            if (outfit == null) return;
+            outfit.SetScope(scope);
+            if (panel.WardrobeOpen) RefreshOutfit();
         }
 
         static float GroundDistance(Vector3 a, Vector3 b)
@@ -135,6 +155,7 @@ namespace Jeju.Yard
                 }
                 else CloseMenu();
             }
+            if (nearCottage && (panel.HouseMenuOpen || panel.WardrobeOpen)) next = null;
             focused = next;
             focusCottage = focused == null && nearCottage;
             panel.SetNearby(focused != null || focusCottage, focusCottage, bubble);
@@ -164,6 +185,11 @@ namespace Jeju.Yard
                 PerformAction(panel.SelectedAnimalAction);
                 return;
             }
+            if (panel.HouseMenuOpen)
+            {
+                PerformHouseAction(panel.SelectedHouseAction);
+                return;
+            }
             Resolve();
             if (focused != null && TryAnchor(focused, out Vector2 anchor))
             {
@@ -172,9 +198,9 @@ namespace Jeju.Yard
                 menuResident = focused;
                 menuCollectionKey = collection.ActiveCollectionKey;
                 menuSpeciesId = species;
-                panel.ShowAnimalMenu(anchor);
+                panel.ShowAnimalMenu(anchor, YardAnimalAccessories.Supports(focused.modelKey));
             }
-            else if (focusCottage) YardExit.Leave();
+            else if (focusCottage) panel.ShowHouseMenu();
         }
 
         void PerformAction(YardCollectionPanel.AnimalAction action)
@@ -198,9 +224,61 @@ namespace Jeju.Yard
                     }
                     break;
                 case YardCollectionPanel.AnimalAction.Decorate:
-                    panel.ShowDecorationPreview();
+                    if (collection.TryGetAccessories(resident.modelKey, menuSpeciesId, menuCollectionKey, out var equipped))
+                        panel.ShowDecorationPreview((equipped & YardAccessories.StarHeadband) != 0,
+                            (equipped & YardAccessories.RedCape) != 0);
                     break;
             }
+        }
+
+        void ToggleAccessory(int slot)
+        {
+            if (panel.IsOpen || !panel.AnimalMenuOpen || menuResident == null || (slot != 0 && slot != 1)) return;
+            Resolve();
+            if (menuResident == null) return;
+            string model = menuResident.modelKey, species = menuSpeciesId, scope = menuCollectionKey;
+            if (!collection.TryGetAccessories(model, species, scope, out var equipped)) return;
+            var next = equipped ^ (slot == 0 ? YardAccessories.StarHeadband : YardAccessories.RedCape);
+            if (collection.TrySetAccessories(model, species, scope, next))
+                panel.UpdateAnimalAccessories((next & YardAccessories.StarHeadband) != 0, (next & YardAccessories.RedCape) != 0);
+        }
+
+        void PerformHouseAction(YardCollectionPanel.HouseAction action)
+        {
+            if (panel.IsOpen || player == null) return;
+            Resolve();
+            if (!nearCottage) return;
+            if (action == YardCollectionPanel.HouseAction.Exit) YardExit.Leave();
+            else if (action == YardCollectionPanel.HouseAction.Wardrobe && outfit != null)
+            {
+                if (menuResident != null) CloseMenu();
+                panel.ShowWardrobe(outfit.SelectedTop, outfit.SelectedHat);
+                RefreshOutfit();
+            }
+        }
+
+        void ChangeOutfit(bool hat, int index)
+        {
+            if (!panel.WardrobeOpen || outfit == null) return;
+            Resolve();
+            if (!nearCottage || !panel.WardrobeOpen) return;
+            if (hat)
+            {
+                if (index < 0 || index >= ExplorerAppearance.HatCount || index == outfit.SelectedHat) return;
+                outfit.SelectHat(index);
+            }
+            else
+            {
+                if (index < 0 || index >= ExplorerAppearance.TopCount || index == outfit.SelectedTop) return;
+                outfit.SelectTop(index);
+            }
+            RefreshOutfit();
+        }
+
+        void RefreshOutfit()
+        {
+            panel.UpdateOutfit(outfit.SelectedTop, outfit.SelectedHat);
+            panel.SetWardrobePreview(portraits.GetExplorerPreview(explorer.visual));
         }
 
         void ExitAtCottage()
@@ -235,6 +313,10 @@ namespace Jeju.Yard
             panel.InteractRequested -= Interact;
             panel.HouseExitRequested -= ExitAtCottage;
             panel.AnimalActionRequested -= PerformAction;
+            panel.HouseActionRequested -= PerformHouseAction;
+            panel.AnimalAccessoryRequested -= ToggleAccessory;
+            panel.OutfitRequested -= ChangeOutfit;
+            panel.WardrobeClosed -= portraits.ReleaseExplorerPreview;
         }
     }
 }

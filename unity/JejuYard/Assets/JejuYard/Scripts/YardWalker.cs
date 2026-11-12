@@ -5,10 +5,10 @@ namespace Jeju.Yard
     [RequireComponent(typeof(CharacterController))]
     public sealed class YardWalker : MonoBehaviour
     {
-        public const float WalkSpeed = 1.8f;
-        public const float WallWalkSeconds = 7f;
+        public const float WalkSpeed = 3.6f;
         public const float BodyRadius = 0.27f;
-        public const float CentreToWallContact = WalkSpeed * WallWalkSeconds;
+        public const float CentreToWallContact = 12.6f;
+        public const float WallWalkSeconds = CentreToWallContact / WalkSpeed;
 
         public Transform visual, torso, leftLeg, rightLeg, leftArm, rightArm;
         public YardJoystick joystick;
@@ -41,7 +41,7 @@ namespace Jeju.Yard
             if (heading.sqrMagnitude > 0.01f)
                 visual.rotation = Quaternion.RotateTowards(visual.rotation, Quaternion.LookRotation(heading), 650f * seconds);
             float travelled = moved.magnitude;
-            phase += travelled * 8f;
+            phase += travelled * 5.5f;
             stride = Mathf.MoveTowards(stride, Mathf.Clamp01(travelled / Mathf.Max(seconds * WalkSpeed, 0.0001f)), 8f * seconds);
             float swing = Mathf.Sin(phase) * stride;
             leftLeg.localRotation = Quaternion.Euler(25f * swing, 0, 0);

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Jeju.Yard.EditorArt
 {
-    public static class Explorer
+    public static partial class Explorer
     {
         static readonly Color Skin = Draft.C(0xFFCE9E);
         static readonly Color Hair = Draft.C(0x503931);
@@ -35,11 +35,7 @@ namespace Jeju.Yard.EditorArt
             walker.leftArm = Arm(walker.torso, -1);
             walker.rightArm = Arm(walker.torso, 1);
 
-            var body = new Draft();
-            Jacket(body);
-            Head(body);
-            SunHat(body);
-            body.Bake("Explorer_Coat_and_sunhat", walker.torso);
+            Dress(walker);
             return walker;
         }
 
@@ -82,11 +78,18 @@ namespace Jeju.Yard.EditorArt
 
         static void Jacket(Draft d)
         {
-            RingBody(d, new[] { V(.223f,.454f,.158f), V(.255f,.491f,.180f), V(.230f,.765f,.167f), V(.203f,.879f,.147f), V(.107f,.931f,.10f) }, Olive, 12);
-            d.Quad(V(-.065f,.477f,.174f),V(.065f,.477f,.174f),V(.068f,.870f,.150f),V(-.068f,.870f,.150f),Linen,Vector3.forward);
+            var rings = new[] { V(.223f,.454f,.158f), V(.255f,.491f,.180f), V(.230f,.765f,.167f), V(.203f,.879f,.147f), V(.107f,.931f,.10f) };
+            RingBody(d, rings, Olive, 12);
+            var placket = new[] { .477f, .491f, .765f, .870f };
+            for (int band=1; band<placket.Length; band++)
+                for (int side=-1; side<=1; side+=2)
+                {
+                    float lo=placket[band-1], hi=placket[band], edge=side*.065f;
+                    d.Quad(Chest(rings,0,lo),Chest(rings,edge,lo),Chest(rings,edge,hi),Chest(rings,0,hi),Linen,Vector3.forward);
+                }
             d.Rod(V(0,.884f,0),V(0,1.06f,0),.087f,.083f,Skin,9);
             // Folded neckerchief, twin pack straps, and a little stitched field pocket.
-            d.Tri(V(-.125f,.902f,.130f),V(.112f,.902f,.132f),V(.030f,.797f,.164f),Draft.C(0xECA64C),Vector3.forward);
+            d.Tri(V(-.125f,.902f,.144f),V(.112f,.902f,.144f),V(.030f,.797f,.179f),Draft.C(0xECA64C),Vector3.forward);
             d.Tri(V(-.169f,.892f,.102f),V(-.07f,.928f,.100f),V(-.081f,.833f,.163f),LeafShadow,Vector3.forward);
             d.Tri(V(.169f,.892f,.102f),V(.07f,.928f,.100f),V(.081f,.833f,.163f),LeafShadow,Vector3.forward);
             d.Ball(V(0,.709f,-.155f), V(.193f,.204f,.105f), Draft.C(0xB88956), 10, 5);
@@ -99,12 +102,12 @@ namespace Jeju.Yard.EditorArt
                 d.Rod(V(x,.881f,-.108f),V(x,.918f,.023f),.026f,.026f,Leather,6);
                 d.Rod(V(x,.918f,.023f),V(x,.863f,.125f),.026f,.026f,Leather,6);
                 d.Rod(V(x,.863f,.125f),V(x*1.19f,.655f,.129f),.026f,.021f,Leather,6);
-                d.Quad(V(x-.036f,.583f,.143f),V(x+.036f,.583f,.143f),V(x+.038f,.632f,.143f),V(x-.038f,.632f,.143f),LeafShadow,Vector3.forward);
+                d.Quad(Chest(rings,x-.036f,.583f),Chest(rings,x+.036f,.583f),Chest(rings,x+.038f,.632f),Chest(rings,x-.038f,.632f),LeafShadow,Vector3.forward);
             }
         }
 
         // Each ring stores horizontal radii in x/z and its height in y.
-        static void RingBody(Draft d, Vector3[] rings, Color color, int sides)
+        static void RingBody(Draft d, Vector3[] rings, Color color, int sides, Color[] bands = null)
         {
             for (int band=1; band<rings.Length; band++)
                 for(int i=0; i<sides; i++)
@@ -113,7 +116,7 @@ namespace Jeju.Yard.EditorArt
                     var low=rings[band-1]; var high=rings[band];
                     d.Quad(V(low.x*Mathf.Sin(a),low.y,low.z*Mathf.Cos(a)), V(low.x*Mathf.Sin(b),low.y,low.z*Mathf.Cos(b)),
                            V(high.x*Mathf.Sin(b),high.y,high.z*Mathf.Cos(b)), V(high.x*Mathf.Sin(a),high.y,high.z*Mathf.Cos(a)),
-                           color,V(Mathf.Sin((a+b)*.5f),0,Mathf.Cos((a+b)*.5f)));
+                           bands == null ? color : bands[band-1],V(Mathf.Sin((a+b)*.5f),0,Mathf.Cos((a+b)*.5f)));
                 }
         }
 

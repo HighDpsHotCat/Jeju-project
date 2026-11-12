@@ -114,6 +114,7 @@ namespace Jeju.Yard
 
         public void SetOpen(bool open)
         {
+            if (WardrobeOpen) { if (!open) CloseWardrobe(); return; }
             if (IsOpen == open || root == null) return;
             IsOpen = open;
             Show(overlay, open);
@@ -209,10 +210,12 @@ namespace Jeju.Yard
         void OnDisable()
         {
             if (active == this) active = null;
+            nearbyAvailable = targetIsHouse = hasHouseAnchor = false;
+            CloseWardrobe();
+            CloseHouseMenu();
             CloseAnimalMenu();
             CloseDetail(false);
             IsOpen = false;
-            nearbyAvailable = targetIsHouse = hasHouseAnchor = false;
             if (uiObject != null) Destroy(uiObject);
             if (settings != null) Destroy(settings);
             if (typeface != null) Destroy(typeface);
@@ -228,10 +231,12 @@ namespace Jeju.Yard
                 ApplyLayout();
             if (IsOpen && Input.GetKeyDown(KeyCode.Escape))
             {
-                if (IsDetailOpen) CloseDetail();
+                if (WardrobeOpen) CloseWardrobe();
+                else if (IsDetailOpen) CloseDetail();
                 else SetOpen(false);
             }
             else if (AnimalMenuOpen) UpdateAnimalMenu();
+            else if (HouseMenuOpen && Input.GetKeyDown(KeyCode.Escape)) CloseHouseMenu();
             if (affectionHelpOpen && IsOpen && IsDetailOpen && Time.unscaledTimeAsDouble >= nextCountdownRefresh)
                 RefreshCountdown();
         }
@@ -328,10 +333,12 @@ namespace Jeju.Yard
         {
             if (root?.panel == null || interactButton == null) return;
             Show(interactButton, nearbyAvailable && !IsOpen);
-            interactButton.tooltip = targetIsHouse ? "마당 나가기" : "동물 만나기";
+            interactButton.tooltip = targetIsHouse ? "초가집 메뉴" : "동물 만나기";
             RefreshAnimalMenu();
-            bool showBubble = !IsOpen && hasHouseAnchor;
+            RefreshHouseMenu();
+            bool showBubble = !IsOpen && !HouseMenuOpen && hasHouseAnchor;
             Show(houseBubble, showBubble);
+            Show(houseWardrobeBubble, showBubble);
             if (!showBubble) return;
             var safe = SafeRect;
             float px = settings.scale;
@@ -340,10 +347,18 @@ namespace Jeju.Yard
             var tip = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(anchor.x, Screen.height - anchor.y));
             float safeTop = (Screen.height - safe.yMax) / px;
             bool tailOnTop = tip.y < safeTop + BubbleHeight + 10f;
-            float left = Mathf.Clamp(tip.x - BubbleWidth * .5f, safe.xMin / px + 4f, safe.xMax / px - BubbleWidth - 4f);
+            float rowTop = tailOnTop ? tip.y + 8f : tip.y - BubbleHeight - 8f;
+            float rightEdge = safe.xMax / px - 6f;
+            float checkTop = safeTop + safe.height / px * .70f - 32f;
+            if (rowTop < safeTop + 76f || (rowTop < checkTop + 70f && rowTop + BubbleHeight > checkTop - 6f))
+                rightEdge -= 80f;
+            float leftEdge = safe.xMin / px + 4f;
+            float left = Mathf.Clamp(tip.x - BubbleWidth * .5f, leftEdge, Mathf.Max(leftEdge, rightEdge - BubbleWidth * 2f - 4f));
             houseBubble.style.left = left;
-            houseBubble.style.top = tailOnTop ? tip.y + 8f : tip.y - BubbleHeight - 8f;
+            houseBubble.style.top = rowTop;
             bubbleTail.Point(tailOnTop, Mathf.Clamp(tip.x - left, 16f, BubbleWidth - 16f));
+            houseWardrobeBubble.style.left = left + BubbleWidth + 4f;
+            houseWardrobeBubble.style.top = houseBubble.style.top;
         }
 
         Rect SafeRect => safeArea.width > 0 && safeArea.height > 0 ? safeArea : new Rect(0, 0, Screen.width, Screen.height);
@@ -601,7 +616,7 @@ namespace Jeju.Yard
             interactButton.style.right = right + 18f;
             interactButton.style.top = top + safe.height / px * .70f - 32f;
             UpdateNearbyHud();
-            foreach (var backdrop in new[] { overlay, detail })
+            foreach (var backdrop in new[] { overlay, detail, wardrobe })
             {
                 backdrop.style.paddingLeft = safe.xMin / px;
                 backdrop.style.paddingRight = right;
@@ -610,6 +625,7 @@ namespace Jeju.Yard
             }
             float sheetWidth = Mathf.Min(632f, width - 24f);
             sheet.style.width = sheetWidth;
+            SizeWardrobe(width, safe.height / px);
             detailSheet.style.width = Mathf.Min(410f, width - 32f);
             SizeDetail();
             int newColumns = sheetWidth < 485 ? 2 : 3;
