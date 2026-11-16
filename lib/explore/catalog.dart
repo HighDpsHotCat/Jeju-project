@@ -31,6 +31,48 @@ const _featured = {
   'JJ-004729': ('dolphin', '제주 바다에서 만나는 동물'),
 };
 
+// Everyday wildlife shown first in the national guide.
+const _commonWildlife = [
+  '참새',
+  '다람쥐',
+  '까치',
+  '청설모',
+  '직박구리',
+  '멧비둘기',
+  '고라니',
+  '박새',
+  '너구리',
+  '까마귀',
+  '흰뺨검둥오리',
+  '제비',
+];
+
+int _nationalRank(Animal animal) {
+  if (animal.taxon == 'Mammalia' || animal.taxon == 'Aves') {
+    final index = _commonWildlife.indexOf(animal.name);
+    if (index >= 0) return index;
+  }
+  return _commonWildlife.length +
+      switch (animal.taxon) {
+        'Mammalia' => 0,
+        'Aves' => 1,
+        'Insecta' => 2,
+        _ => 3,
+      };
+}
+
+int compareNationalAnimals(Animal a, Animal b) {
+  final rank = _nationalRank(a).compareTo(_nationalRank(b));
+  if (rank != 0) return rank;
+  final aUnnamed = a.name == a.scientific;
+  final bUnnamed = b.name == b.scientific;
+  if (aUnnamed != bUnnamed) return aUnnamed ? 1 : -1;
+  final name = a.name.compareTo(b.name);
+  if (name != 0) return name;
+  final scientific = a.scientific.compareTo(b.scientific);
+  return scientific != 0 ? scientific : a.nationalId.compareTo(b.nationalId);
+}
+
 // Domestic breeds share their species-level discovery with the local yard model.
 const _yardModels = {
   'JJ-000821': ('corgi', '웰시코기'),

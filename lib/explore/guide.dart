@@ -35,11 +35,27 @@ class _AnimalGuideState extends State<AnimalGuide> {
   GuideRegion _region = GuideRegion.combined;
   AnimalGroup _group = AnimalGroup.all;
 
+  List<Animal>? _nationalSource;
+  List<Animal> _national = const [];
+
+  List<Animal> _nationalAnimals(List<Animal> animals) {
+    if (!identical(animals, _nationalSource)) {
+      _national = animals.where((a) => a.nationalId.isNotEmpty).toList()
+        ..sort(compareNationalAnimals);
+      _nationalSource = animals;
+    }
+    return _national;
+  }
+
   @override
   void dispose() {
     _search.dispose();
     super.dispose();
   }
+
+  bool _isDiscovered(Animal animal) =>
+      widget.discovered.contains(animal.jejuId) ||
+      widget.discovered.contains(animal.nationalId);
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +67,15 @@ class _AnimalGuideState extends State<AnimalGuide> {
           future: widget.catalog,
           builder: (context, snapshot) {
             final animals = snapshot.data ?? const <Animal>[];
+            final regional = _region == GuideRegion.national
+                ? _nationalAnimals(animals)
+                : animals;
             final filtered =
                 _region == GuideRegion.combined &&
                     _group == AnimalGroup.all &&
                     _query.isEmpty
                 ? animals
-                : animals
+                : regional
                       .where((a) => a.matches(_region, _group, _query))
                       .toList(growable: false);
             return CustomScrollView(
@@ -207,7 +226,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       ),
                       const SizedBox(height: 14),
                       _DiscoveryBanner(
-                        total: widget.discovered.length,
+                        total: animals.where(_isDiscovered).length,
                         examples: widget.examples,
                       ),
                       Align(
@@ -309,9 +328,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       itemCount: filtered.length,
                       itemBuilder: (context, index) {
                         final animal = filtered[index];
-                        final found =
-                            widget.discovered.contains(animal.jejuId) ||
-                            widget.discovered.contains(animal.nationalId);
+                        final found = _isDiscovered(animal);
                         return _AnimalRow(
                           animal: animal,
                           found: found,

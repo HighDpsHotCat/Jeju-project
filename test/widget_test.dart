@@ -208,8 +208,25 @@ void main() {
       final national = catalog
           .where((animal) => animal.nationalId.isNotEmpty)
           .map((animal) => animal.nationalId);
-      expect(local.toSet(), hasLength(4875));
-      expect(national.toSet(), hasLength(34875));
+      expect(local.toSet(), hasLength(4797));
+      expect(national.toSet(), hasLength(32460));
+      expect(local, isNot(contains('JJ-000305'))); // 국명이 없는 응애
+      expect(catalog.any((animal) => animal.name.contains('회충')), isFalse);
+      expect(catalog.any((animal) => animal.name == '작은소피참진드기'), isFalse);
+      expect(catalog.any((animal) => animal.name == '무당거미'), isTrue);
+      expect(
+        catalog.any((animal) => animal.scientific == 'Bathypathes patula'),
+        isFalse,
+      );
+      expect(catalog.any((animal) => animal.name == '구멍의산호'), isFalse);
+      expect(catalog.any((animal) => animal.name == '산호랑나비'), isTrue);
+      final ordered = catalog.where((a) => a.nationalId.isNotEmpty).toList()
+        ..sort(compareNationalAnimals);
+      expect(ordered.take(4).map((a) => a.name), ['참새', '다람쥐', '까치', '청설모']);
+      final dolphin = ordered.indexWhere((a) => a.name == '남방큰돌고래');
+      expect(dolphin, greaterThanOrEqualTo(12));
+      expect(ordered[dolphin].taxon, 'Mammalia');
+      expect(dolphin, lessThan(ordered.indexWhere((a) => a.name == '가마우지')));
       expect(local.toSet().containsAll(exampleSpeciesIds), isTrue);
       expect(catalog.take(4).map((animal) => animal.name), [
         '노루',
@@ -275,7 +292,7 @@ void main() {
       expect(prefs.getBool('explorer.examples'), isTrue);
       expect(jsonDecode(snapshot!)['examples'], true);
       await tapText(tester, '도감');
-      expect(find.text('12종'), findsOneWidget);
+      expect(find.text('3종'), findsOneWidget);
       expect(find.text('발견한 동물 · 예시'), findsOneWidget);
       expect(find.text('등록 완료'), findsNWidgets(3));
       await tapText(tester, '마당');
