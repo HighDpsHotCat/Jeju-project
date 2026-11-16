@@ -17,7 +17,31 @@ ANIMAL_GROUPS = {
     "포유류", "조류", "양서류", "파충류", "어류", "미삭동물",
     "무척추동물류(곤충제외)", "곤충류",
 }
+# These source classes cover roundworms, flukes and tapeworms.
+EXCLUDED_CLASSES = {"Chromadorea", "Enoplea", "Adenophorea", "Trematoda", "Monogenea", "Cestoda"}
+MITE_ORDERS = {
+    "Acari", "Astigmata", "Ixodida", "Mesostigmata", "Oribatida",
+    "Prostigmata", "Sarcoptiformes", "Trombidiformes",
+}
+CORAL_ORDERS = {"Alcyonacea", "Pennatulacea", "Scleractinia", "Antipatharia"}
+HYDROCORAL_FAMILIES = {"Stylasteridae", "Milleporidae"}
 FEATURED = ["JJ-000837", "JJ-004873", "JJ-003382", "JJ-004729"]
+
+
+# Editorial first page for the nationwide guide. The remaining animals sort by name.
+COMMON_WILDLIFE = [
+    "참새", "다람쥐", "까치", "청설모", "직박구리", "멧비둘기",
+    "고라니", "박새", "너구리", "까마귀", "흰뺨검둥오리", "제비",
+]
+COMMON_RANK = {name: index for index, name in enumerate(COMMON_WILDLIFE)}
+GROUP_RANK = {"Mammalia": 1, "Aves": 2, "Insecta": 3}
+
+
+def national_order(row):
+    name, taxon = row[2], row[4]
+    if taxon in ("Mammalia", "Aves") and name in COMMON_RANK:
+        return 0, COMMON_RANK[name]
+    return GROUP_RANK.get(taxon, 4), not bool(name), name, row[3], row[1]
 
 
 def build():
@@ -35,10 +59,13 @@ def build():
                 jeju_rows.append([item["species_id"], "", item["korean_name"],
                                   item["scientific_name"], item["class"], "jeju"])
 
+    mite_genera = set()
+    # This black coral genus occurs in the Jeju source only.
+    coral_genera = {("Anthozoa", "Bathypathes")}
     with closing(load_workbook(next(ROOT.glob("*v1.0.xlsx")), read_only=True, data_only=True)) as book:
         sheet = book["62,604종"]
         headers = next(sheet.values)
-        col = {name: headers.index(name) for name in ("KTSN", "관리분류군", "대표국명", "학명", "Class")}
+        col = {name: headers.index(name) for name in ("KTSN", "관리분류군", "대표국명", "학명", "Class", "Order", "Genus", "Family")}
         national_rows = []
         name_counts = Counter()
         for item in sheet.iter_rows(min_row=3, values_only=True):
@@ -46,9 +73,25 @@ def build():
             name_counts[key] += 1
             if item[col["관리분류군"]] not in ANIMAL_GROUPS:
                 continue
+            if item[col["Class"]] == "Arachnida" and item[col["Order"]] in MITE_ORDERS:
+                mite_genera.add(item[col["Genus"]])
+                continue
+            taxon = item[col["Class"]]
+            if (taxon == "Anthozoa" and item[col["Order"]] in CORAL_ORDERS
+                    or taxon == "Hydrozoa" and item[col["Family"]] in HYDROCORAL_FAMILIES):
+                coral_genera.add((taxon, item[col["Genus"]]))
+                continue
+            if taxon == "Octocorallia" or taxon in EXCLUDED_CLASSES:
+                continue
             ktsn = str(item[col["KTSN"]])
             national_rows.append(["", ktsn, key[1] or "", key[0], item[col["Class"]] or "", "national"])
 
+    jeju_rows = [
+        row for row in jeju_rows if row[4] not in EXCLUDED_CLASSES
+        and row[4] != "Octocorallia"
+        and (row[4], row[3].split()[0]) not in coral_genera
+        and not (row[4] == "Arachnida" and row[3].split()[0] in mite_genera)
+    ]
     national_ids = {}
     for row in national_rows:
         key = (row[3], row[2])
@@ -63,7 +106,9 @@ def build():
         if row[2] == "[국명없음]":
             row[2] = ""
     priority = {species_id: i for i, species_id in enumerate(FEATURED)}
-    rows.sort(key=lambda r: (priority.get(r[0], len(FEATURED)), not bool(r[2]), r[2], r[3], r[0], r[1]))
+    jeju_rows.sort(key=lambda r: (priority.get(r[0], len(FEATURED)), not bool(r[2]), r[2], r[3], r[0], r[1]))
+    national_rows.sort(key=national_order)
+    rows = jeju_rows + national_rows
     result = ROOT / "assets/catalog/animals.tsv.gz"
     with result.open("wb") as out, gzip.GzipFile(fileobj=out, filename="", mode="wb", mtime=0) as zipped:
         for row in rows:

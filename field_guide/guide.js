@@ -299,7 +299,7 @@ async function load() {
       const data = await response.json();
       const catalog =
         scope === "jeju"
-          ? data.filter((r) => Number(r.source_occurrence_count) > 0)
+          ? data.filter((r) => r.in_guide !== false && Number(r.source_occurrence_count) > 0)
           : data.map(
               ([ktsn, korean_name, scientific_name, taxon, jeju_id]) => ({
                 species_id: "KTSN-" + ktsn,
@@ -309,11 +309,13 @@ async function load() {
                 jeju_id,
               }),
             );
-      const priority = new Map([...featured.keys()].map((id, i) => [id, i]));
-      catalog.sort(
-        (a, b) =>
-          (priority.get(animalId(a)) ?? 4) - (priority.get(animalId(b)) ?? 4),
-      );
+      if (scope === "jeju") {
+        const priority = new Map([...featured.keys()].map((id, i) => [id, i]));
+        catalog.sort(
+          (a, b) =>
+            (priority.get(animalId(a)) ?? 4) - (priority.get(animalId(b)) ?? 4),
+        );
+      }
       cache.set(scope, catalog);
     }
     if (version !== generation) return;
