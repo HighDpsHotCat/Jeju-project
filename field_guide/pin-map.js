@@ -86,9 +86,24 @@ export function clearPinMap() {
   bubble.hidden = true;
   bubble.replaceChildren();
 }
-export function renderPinMap(layer, entries, selected, expanded) {
+export function renderPinMap(layer, entries, selected, expanded, level, zoomTo) {
   $("place-count").textContent = entries.length + "곳";
+  if (level === 0) {
+    for (const [label, min, max] of [["서부", 0, 450], ["중부", 450, 850], ["동부", 850, 1441]]) {
+      const group = entries.filter(p => !p.offshore && p.pixel[0] >= min && p.pixel[0] < max);
+      if (!group.length) continue;
+      const center = [0, 1].map(axis => group.reduce((sum, p) => sum + p.pixel[axis], 0) / group.length);
+      const cluster = node("button", null, "region-cluster");
+      cluster.append(node("strong", label), node("small", group.length + "곳"));
+      cluster.setAttribute("aria-label", "제주 " + label + " " + group.length + "곳 확대");
+      cluster.style.left = center[0] / 1440 * 100 + "%";
+      cluster.style.top = center[1] / 910 * 100 + "%";
+      cluster.onclick = event => { event.stopPropagation(); zoomTo(1, center); };
+      $("markers").append(cluster);
+    }
+  }
   for (const [index,p] of entries.entries()) {
+    if (!level && !p.offshore) continue;
     const marker = action(null, pinUrl(layer, p.id, layer === "visit"), "map-point", layer === "visit" ? "animals" : "name");
     marker.dataset.id = p.id;
     marker.dataset.kind = p.kind || "habitat";
@@ -102,7 +117,17 @@ export function renderPinMap(layer, entries, selected, expanded) {
     } else {
       marker.style.left = "clamp(15px," + p.pixel[0] / 1440 * 100 + "%,calc(100% - 15px))";
       marker.style.top = p.pixel[1] / 910 * 100 + "%";
-      marker.append(node("span", index + 1));
+      marker.classList.add("place-label");
+      marker.append(node("b", p.name));
+      if (level === 2) {
+        const summary = node("small", layer === "visit" ? "관찰 기록 조회 중…" : p.species.slice(0, 2).join(" · "));
+        marker.append(summary);
+        if (layer === "visit") loadNearby().then(({places}) => {
+          const rows = places[p.id] || [];
+          summary.textContent = rows.length ? rows.slice(0, 2).map(r => r.name).join(" · ") + (rows.length > 2 ? " 외 " + (rows.length - 2) + "종" : "") : "주변 관찰 표본 없음";
+        }).catch(() => { summary.textContent = "관찰 기록 조회 실패"; });
+      }
+      marker.setAttribute("aria-label", p.name + " 동물 보기");
       $("markers").append(marker);
     }
     if (p === selected) currentMarker = marker;

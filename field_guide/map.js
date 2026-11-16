@@ -5,8 +5,8 @@ import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 import { clearPinMap, positionBubble, renderPinMap } from "./pin-map.js";
 
 const layers = {
-  visit: ["탐방 장소", "핀을 누르면 반경 2km에서 관찰된 동물이 보여요."],
-  habitat: ["서식 기록", "핀을 누른 뒤 권역 이름을 누르면 기록된 동물이 보여요."],
+  visit: ["탐방 장소", "권역을 눌러 장소를 보고, 한 번 더 확대하면 주변에서 관찰된 동물이 보여요."],
+  habitat: ["서식 기록", "권역을 확대해 서식 장소와 기록된 동물을 살펴보세요."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
 const cities = [
@@ -105,7 +105,7 @@ function render() {
   $("pin-key").hidden = !pinMode || layer !== "visit";
   $("zone-lists").hidden = layer !== "visit";
   if (pinMode) {
-    renderPinMap(layer, layer === "visit" ? visits : habitats, pinPlace, expanded);
+    renderPinMap(layer, layer === "visit" ? visits : habitats, pinPlace, expanded, level, zoomTo);
     return;
   }
   if (layer === "visit") { renderVisits(trip); return; }
@@ -146,17 +146,80 @@ $("grades").onchange = () => {
   $("grade-legend").hidden = !$("grades").checked;
   render();
 };
-$("zoom").onclick = () => {
-  const stage = $("stage"), view = $("viewport");
-  const active = stage.classList.toggle("zoomed");
-  $("zoom").setAttribute("aria-pressed", String(active));
-  $("zoom").textContent = active ? "− 축소" : "＋ 확대";
-  $("zoom").setAttribute("aria-label", active ? "지도 축소" : "지도 확대");
-  const [x, y] = selected?.pixel || [720,455];
-  view.scrollTo(active ? stage.offsetWidth * x / 1440 - view.clientWidth / 2 : 0,
-    active ? stage.offsetHeight * y / 910 - view.clientHeight / 2 : 0);
+const view = $("viewport"), stage = $("stage");
+const scales = [1, 2.5, 5];
+let level = 0;
+function mapPoint(x, y) {
+  const rect = stage.getBoundingClientRect();
+  return [(x - rect.left) / rect.width * 1440, (y - rect.top) / rect.height * 910];
+}
+function zoomTo(next, center, anchor) {
+  const rect = view.getBoundingClientRect();
+  anchor ??= [rect.width / 2, rect.height / 2];
+  center ??= pinPlace?.pixel || mapPoint(rect.left + anchor[0], rect.top + anchor[1]);
+  level = Math.max(0, Math.min(scales.length - 1, next));
+  if (!level && pinPlace) {
+    history.replaceState(null, "", pinUrl(layer));
+    readSelection();
+  }
+  stage.style.width = scales[level] * 100 + "%";
+  stage.classList.toggle("zoomed", level > 0);
+  $("zoom-level").textContent = ["제주 전체", "장소", "상세"][level];
+  $("zoom").disabled = level === scales.length - 1;
+  $("zoom-out").disabled = !level;
+  render();
+  view.scrollTo(stage.offsetWidth * center[0] / 1440 - anchor[0], stage.offsetHeight * center[1] / 910 - anchor[1]);
   positionBubble();
+}
+$("zoom").onclick = () => zoomTo(level + 1);
+$("zoom-out").onclick = () => zoomTo(level - 1);
+let wheelTime = 0;
+function zoomAt(step, x, y) {
+  const rect = view.getBoundingClientRect();
+  if (level + step >= 0 && level + step < scales.length)
+    zoomTo(level + step, mapPoint(x, y), [x - rect.left, y - rect.top]);
+}
+view.addEventListener("wheel", e => {
+  e.preventDefault();
+  if (!e.deltaY || Date.now() - wheelTime < 250) return;
+  wheelTime = Date.now();
+  zoomAt(e.deltaY < 0 ? 1 : -1, e.clientX, e.clientY);
+}, {passive:false});
+const pointers = new Map();
+let pinch = 0, dragged = false;
+const separation = () => {
+  const [a,b] = pointers.values();
+  return Math.hypot(a.x - b.x, a.y - b.y);
 };
+view.addEventListener("pointerdown", e => {
+  if (e.button !== 0) return;
+  if (!pointers.size) dragged = false;
+  pointers.set(e.pointerId, {x:e.clientX, y:e.clientY, startX:e.clientX, startY:e.clientY});
+  if (pointers.size === 2) { pinch = separation(); dragged = true; }
+});
+view.addEventListener("pointermove", e => {
+  const point = pointers.get(e.pointerId);
+  if (!point) return;
+  const dx = point.x - e.clientX, dy = point.y - e.clientY;
+  point.x = e.clientX; point.y = e.clientY;
+  if (pointers.size === 2) {
+    const distance = separation(), ratio = distance / Math.max(1, pinch);
+    if (ratio > 1.35 || ratio < 0.74) {
+      const [a,b] = pointers.values();
+      zoomAt(ratio > 1 ? 1 : -1, (a.x+b.x)/2, (a.y+b.y)/2);
+      pinch = distance;
+    }
+  } else if (level && (dragged || Math.hypot(point.x-point.startX, point.y-point.startY) > 5)) {
+    dragged = true;
+    view.setPointerCapture(e.pointerId);
+    view.scrollBy(dx, dy);
+  }
+});
+for (const type of ["pointerup","pointercancel"])
+  window.addEventListener(type, e => pointers.delete(e.pointerId));
+view.addEventListener("click", e => {
+  if (dragged && e.detail) { e.preventDefault(); e.stopPropagation(); }
+}, true);
 function depth() {
   return trip.place ? 2 : trip.zone ? 1 : 0;
 }
@@ -164,7 +227,8 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 function navigate() {
   const oldDepth = depth(), oldLayer = layer, oldTrip = trip, lastPin = pinPlace;
   readSelection();
-  render();
+  if (pinPlace?.pixel && (!level || oldLayer !== layer)) zoomTo(2, pinPlace.pixel);
+  else render();
   if (pinMode) {
     const focus = $("map-bubble").querySelector(".bubble-name, .bubble-head strong") ||
       (lastPin && $("map-frame").querySelector('.map-point[data-id="' + lastPin.id + '"]')) || $("map-heading");
@@ -266,5 +330,5 @@ document.addEventListener("keydown", (event) => {
   }
 });
 readSelection();
-render();
+zoomTo(pinPlace?.pixel ? 2 : 0, pinPlace?.pixel || [720,455]);
 fetchRecords();
