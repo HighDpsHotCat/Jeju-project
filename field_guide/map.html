@@ -34,7 +34,7 @@
           <div class="map-card-head"><h2 id="map-heading" tabindex="-1"><span id="layer-title">탐방 장소</span></h2><span id="place-count"></span></div>
           <p id="layer-note" class="layer-note"></p>
           <div id="pin-search" role="search" aria-label="탐방 지도 검색">
-            <label><i data-icon="search" aria-hidden="true"></i><input id="pin-query" type="search" aria-label="장소 또는 관찰 동물 검색" placeholder="장소 또는 관찰 동물 검색" autocomplete="off" /></label>
+            <label><i data-icon="search" aria-hidden="true"></i><input id="pin-query" type="search" aria-label="장소 또는 관찰 동물 검색" placeholder="장소 또는 분석할 동물 검색" autocomplete="off" /></label>
             <div id="pin-results" hidden></div>
           </div>
           <figure>
@@ -89,6 +89,14 @@
         <p>행정 경계는 <a href="https://github.com/wmgeolab/geoBoundaries/tree/9469f09/releaseData/gbOpen/KOR/ADM2">geoBoundaries gbOpen KOR ADM2</a> (citypopulation.de, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>)를 가공했습니다. 선택형 생태·자연도에는 국립생태원 에코뱅크 제주 배포본(고시 제2026-128호, 2026.05.26)과 Natural Earth 해안선을 사용했습니다.</p>
         <p><a href="https://www.nie-ecobank.kr/opn/file/list.do?svcId=101&amp;unitCode=U004&amp;unitSeRealCode=50&amp;unit=U004&amp;unitSeCode=50">공식 공간자료 ↗</a>　<a href="/ecology">생태자연도 원자료 →</a></p>
       </details>
+      <dialog id="analysis-dialog" aria-labelledby="analysis-title">
+        <div class="analysis-head">
+          <h2 id="analysis-title">동물 목격 분석</h2>
+          <button id="analysis-close" type="button" aria-label="분석 닫기" autofocus>×</button>
+        </div>
+        <label class="analysis-period">관찰 기간 <select id="analysis-period"><option value="all">전체 기간</option></select></label>
+        <div id="analysis-result" aria-live="polite"></div>
+      </dialog>
     </main>
   </body>
 </html>

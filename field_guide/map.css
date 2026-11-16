@@ -581,3 +581,34 @@
 #pin-results a { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 44px; padding: 5px 12px; border-bottom: 1px solid #e4ebdf; color: #254e36; font-size: 14px; }
 #pin-results small, #pin-results p { font-size: 12px; color: #526452; }
 #pin-results p { margin: 12px; }
+
+#analysis-dialog {
+  width: min(450px, calc(100% - 24px)); max-height: 85dvh; box-sizing: border-box;
+  margin: auto; padding: 20px; border: 1px solid #b7cbb9; border-radius: 18px;
+  background: #fffef8; color: #253f2c; box-shadow: 0 12px 48px #162b293b;
+  overflow: auto; overscroll-behavior: contain;
+}
+#analysis-dialog::backdrop { background: #132b2680; }
+.analysis-head, .analysis-period, .analysis-regions > div, .analysis-months li, .analysis-sources {
+  display: flex; align-items: center; gap: 10px;
+}
+.analysis-head { justify-content: space-between; }
+.analysis-head h2 { margin: 0; font-size: 21px; overflow-wrap: anywhere; }
+#analysis-close { flex: none; width: 42px; height: 42px; font: inherit; font-size: 24px; border: 0; border-radius: 50%; background: #eef3e9; color: #244532; }
+.analysis-period { margin: 10px 0 18px; font-size: 14px; }
+.analysis-period select { padding: 6px; font: inherit; }
+.analysis-caption { color: #536655; font-size: 13px; margin: 8px 0; line-height: 1.55; }
+.analysis-total { display: block; font-size: 32px; line-height: 1.2; color: #245f42; }
+.analysis-story { padding: 12px; border-radius: 10px; line-height: 1.65; background: #edf4e8; word-break: keep-all; }
+#analysis-result h3 { margin: 20px 0 8px; font-size: 16px; }
+.analysis-regions { margin: 0; }
+.analysis-regions > div { justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #dde5d6; }
+.analysis-regions dd { margin: 0; font-weight: 600; }
+.analysis-months { margin: 10px 0; padding: 0; }
+.analysis-months li { font-size: 13px; line-height: 1.7; font-variant-numeric: tabular-nums; }
+.analysis-months li > span:first-child { width: 3em; }
+.analysis-months li > span:last-child { min-width: 5em; text-align: right; }
+.analysis-track { flex: 1; background: #e7ecdf; border-radius: 5px; overflow: hidden; }
+.analysis-track i { display: block; height: 7px; background: #588361; border-radius: inherit; }
+.analysis-sources a, .bubble-animals a.pin-analysis { color: #285b40; font-size: 13px; text-decoration: underline; }
+.bubble-animals a.pin-analysis { min-height: 28px; padding-top: 0; }

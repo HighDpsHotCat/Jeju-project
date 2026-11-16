@@ -1,3 +1,4 @@
+import { analysisLink } from "./observation-analysis.js";
 import { byId as $, node } from "./ui.js";
 import { guideUrl, speciesIds, pinUrl, loadNearby } from "./map-data.js";
 
@@ -23,7 +24,9 @@ function nearbyAnimals(place) {
       source.href = "https://www.gbif.org/occurrence/" + r.id;
       source.title = [r.credit, r.dataset, r.license].filter(Boolean).join(" · ");
       source.className = "nearby-source";
-      li.append(guide, source);
+      const analysis = analysisLink(r.species, "제주 전체 목격 분석");
+      analysis.className = "pin-analysis";
+      li.append(guide, analysis, source);
       list.append(li);
     }
     block.append(list, node("small", "표본 수집 " + collected));
@@ -222,6 +225,11 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo, 
       guide.setAttribute("aria-label", name + " 동물 도감 열기");
       guide.append(node("span", "›"));
       li.append(guide);
+      if (speciesIds[name]?.startsWith("JJ-")) {
+        const analysis = analysisLink(speciesIds[name], "제주 전체 목격 분석");
+        analysis.className = "pin-analysis";
+        li.append(analysis);
+      }
       list.append(li);
     }
     reference.append(list);

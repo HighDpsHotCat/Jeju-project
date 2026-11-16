@@ -1,3 +1,4 @@
+import { analysisLink, loadAnalysisCatalog, openAnalysis } from "./observation-analysis.js";
 import { byId as $, node } from "./ui.js";
 import { visits, habitats, guideUrl, mapUrl, pinUrl, loadNearby, loadRecords } from "./map-data.js";
 import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
@@ -70,7 +71,10 @@ function cityDetail(city) {
   for (const [id, name] of [...species].sort((a,b) => a[1].localeCompare(b[1],"ko")))
     select.append(new Option(name, id));
   select.value = species.has(filterSpecies) ? filterSpecies : "";
-  select.onchange = () => choose("records", city.id, false, select.value);
+  select.onchange = () => {
+    choose("records", city.id, false, select.value);
+    if (select.value) openAnalysis(select.value);
+  };
   label.append(select);
   const filtered = rows.filter((row) => !select.value || row.species === select.value);
   const list = node("ol", null, "record-list");
@@ -86,7 +90,9 @@ function cityDetail(city) {
     li.append(title, credit, sources);
     list.append(li);
   }
-  detail.append(label, section("날짜순 기록 " + filtered.length + "건", list));
+  detail.append(label);
+  if (select.value) detail.append(analysisLink(select.value, "제주 전체 목격 분석 보기"));
+  detail.append(section("날짜순 기록 " + filtered.length + "건", list));
 }
 function render() {
   clearPinMap();
@@ -159,10 +165,19 @@ async function searchPins() {
   results.replaceChildren();
   results.hidden = !term;
   if (!term) return;
-  let places;
-  try { ({places} = await loadNearby()); } catch { /* Place names remain searchable. */ }
+  const [nearby, catalog] = await Promise.allSettled([loadNearby(), loadAnalysisCatalog()]);
+  const places = nearby.value?.places;
   if (run !== searchRun || results.hidden) return;
   const matches = [];
+  const animals = (catalog.value || []).map(animal => ({
+    animal, names: [animal.korean_name, animal.scientific_name].filter(Boolean).map(normalize),
+  })).filter(({names}) => names.some(name => name.includes(term)))
+    .sort((a,b) => Number(b.names.includes(term)) - Number(a.names.includes(term)));
+  for (const {animal, names} of animals.slice(0, 8)) {
+    const link = analysisLink(animal.species_id, animal.korean_name || animal.scientific_name);
+    link.append(node("small", "제주 전체 목격 분석"));
+    matches.push({link, rank: names.includes(term) ? -1 : 2});
+  }
   for (const place of visits) {
     const exactPlace = normalize(place.name).includes(term);
     const rows = places?.[place.id] || [];
@@ -176,7 +191,8 @@ async function searchPins() {
     matches.push({link, rank: exactPlace ? 0 : 1});
   }
   for (const match of matches.sort((a,b) => a.rank-b.rank)) results.append(match.link);
-  if (!matches.length) results.append(node("p", places ? "일치하는 장소나 관찰 동물이 없어요." : "관찰 기록을 불러오지 못했어요. 장소 이름으로 검색해 주세요."));
+  if (catalog.status === "rejected") results.append(node("p", "동물 목록을 불러오지 못했어요. 다시 검색해 주세요."));
+  if (!matches.length && catalog.status === "fulfilled") results.append(node("p", places ? "일치하는 장소나 관찰 동물이 없어요." : "관찰 기록을 불러오지 못했어요. 장소 이름으로 검색해 주세요."));
 }
 query.addEventListener("input", searchPins);
 query.addEventListener("focus", searchPins);
@@ -368,7 +384,7 @@ function dismissPin() {
   }
 }
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && pinPlace) {
+  if (event.key === "Escape" && pinPlace && !$("analysis-dialog").open) {
     event.preventDefault();
     dismissPin();
   }
