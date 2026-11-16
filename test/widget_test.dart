@@ -268,7 +268,9 @@ void main() {
           .where((a) => a.region == GuideRegion.national)
           .toList();
       expect(ordered.take(4).map((a) => a.name), ['참새', '다람쥐', '까치', '청설모']);
-      for (final animal in ordered.take(80)) {
+      final jeju = catalog.where((a) => a.region == GuideRegion.jeju);
+      expect(jeju.skip(80).every((a) => a.guidePhoto == null), isTrue);
+      for (final animal in [...ordered.take(80), ...jeju.take(80)]) {
         expect(
           animal.guidePhoto?['source'],
           startsWith('https://'),
