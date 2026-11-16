@@ -11,7 +11,95 @@ class ExplorerHome extends StatelessWidget {
     required this.total,
     required this.examples,
     required this.openSettings,
-    required this.openCharacter,
+    required this.openGuide,
+    required this.openMap,
+  });
+
+  final String name;
+  final int total;
+  final bool examples;
+  final VoidCallback openSettings;
+  final VoidCallback openGuide;
+  final VoidCallback openMap;
+
+  static final _actionStyle = OutlinedButton.styleFrom(
+    foregroundColor: ink,
+    backgroundColor: sheet,
+    side: const BorderSide(color: line),
+    padding: const EdgeInsets.symmetric(horizontal: 14),
+  );
+
+  @override
+  Widget build(BuildContext context) => SingleChildScrollView(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _ExplorerHeader(title: '나의 탐험', openSettings: openSettings),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name.isEmpty ? '오늘은 어떤 동물을 만날까요?' : '$name님, 어떤 동물을 만날까요?',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: -.6,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 2,
+                children: [
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.pets_rounded, size: 18, color: leaf),
+                    label: Wrap(
+                      spacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(examples ? '발견한 동물 · 예시' : '발견한 동물'),
+                        Text(
+                          '$total종',
+                          style: const TextStyle(
+                            color: forest,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    onPressed: openGuide,
+                    style: _actionStyle,
+                  ),
+                  OutlinedButton.icon(
+                    icon: const Icon(
+                      Icons.map_outlined,
+                      size: 19,
+                      color: forest,
+                    ),
+                    label: const Text('지도'),
+                    onPressed: openMap,
+                    style: _actionStyle,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class ExplorerYard extends StatelessWidget {
+  const ExplorerYard({
+    super.key,
+    required this.name,
+    required this.total,
+    required this.examples,
+    required this.openSettings,
+    required this.enterYard,
     required this.openGuide,
   });
 
@@ -19,7 +107,7 @@ class ExplorerHome extends StatelessWidget {
   final int total;
   final bool examples;
   final VoidCallback openSettings;
-  final VoidCallback openCharacter;
+  final VoidCallback enterYard;
   final VoidCallback openGuide;
 
   @override
@@ -28,7 +116,7 @@ class ExplorerHome extends StatelessWidget {
       builder: (context, size) {
         final artHeight = math.min(
           size.maxWidth * 504 / 515,
-          math.max(238.0, size.maxHeight - 249),
+          math.max(238.0, size.maxHeight - 284),
         );
         return SingleChildScrollView(
           child: ConstrainedBox(
@@ -36,44 +124,7 @@ class ExplorerHome extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 18, 16, 4),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: CustomPaint(
-                            painter: const _BrushStroke(),
-                            child: const Padding(
-                              padding: EdgeInsets.only(bottom: 9),
-                              child: Text(
-                                '나의 탐험',
-                                style: TextStyle(
-                                  fontSize: 32,
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: -1.6,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      TextButton.icon(
-                        onPressed: openSettings,
-                        icon: const Icon(Icons.settings_outlined, size: 25),
-                        label: const Text(
-                          '설정',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 17,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(foregroundColor: ink),
-                      ),
-                    ],
-                  ),
-                ),
+                _ExplorerHeader(title: '나의 마당', openSettings: openSettings),
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -122,14 +173,14 @@ class ExplorerHome extends StatelessWidget {
                       ),
                     ),
                     FilledButton.tonal(
-                      onPressed: openCharacter,
+                      onPressed: enterYard,
                       style: FilledButton.styleFrom(
                         backgroundColor: const Color(0xFFE3ECCB),
                         foregroundColor: ink,
                         minimumSize: const Size(136, 38),
                       ),
                       child: const Text(
-                        '나의 캐릭터',
+                        '마당 입장',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
@@ -198,6 +249,49 @@ class ExplorerHome extends StatelessWidget {
       },
     );
   }
+}
+
+class _ExplorerHeader extends StatelessWidget {
+  const _ExplorerHeader({required this.title, required this.openSettings});
+  final String title;
+  final VoidCallback openSettings;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(24, 18, 16, 4),
+    child: Row(
+      children: [
+        Expanded(
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: CustomPaint(
+              painter: const _BrushStroke(),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 9),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1.6,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        TextButton.icon(
+          onPressed: openSettings,
+          icon: const Icon(Icons.settings_outlined, size: 25),
+          label: const Text(
+            '설정',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 17),
+          ),
+          style: TextButton.styleFrom(foregroundColor: ink),
+        ),
+      ],
+    ),
+  );
 }
 
 class _BrushStroke extends CustomPainter {

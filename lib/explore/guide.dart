@@ -11,6 +11,7 @@ class AnimalGuide extends StatefulWidget {
     required this.discovered,
     required this.examples,
     required this.onBack,
+    required this.backLabel,
     required this.onRetry,
     required this.onRegister,
     required this.onSendToYard,
@@ -19,6 +20,7 @@ class AnimalGuide extends StatefulWidget {
   final Set<String> discovered;
   final bool examples;
   final VoidCallback onBack;
+  final String backLabel;
   final VoidCallback onRetry;
   final void Function(Animal, FirstEncounter)? onRegister;
   final VoidCallback? onSendToYard;
@@ -68,7 +70,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                         children: [
                           IconButton(
                             onPressed: widget.onBack,
-                            tooltip: '마당으로 돌아가기',
+                            tooltip: widget.backLabel,
                             icon: const Icon(
                               Icons.arrow_back_rounded,
                               size: 26,
@@ -186,10 +188,13 @@ class _AnimalGuideState extends State<AnimalGuide> {
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 1,
                                     ),
-                                    textStyle: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                    ),
+                                    textStyle: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
                                   ),
                                   onPressed: () =>
                                       setState(() => _group = group),
@@ -222,7 +227,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                           horizontal: 4,
                           vertical: 7,
                         ),
-                        child: DefaultTextStyle(
+                        child: DefaultTextStyle.merge(
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,

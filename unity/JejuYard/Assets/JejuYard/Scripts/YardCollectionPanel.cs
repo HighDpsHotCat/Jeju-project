@@ -192,6 +192,9 @@ namespace Jeju.Yard
 
         static FontAsset LoadTypeface()
         {
+#if UNITY_WEBGL && !UNITY_EDITOR
+            return FontAsset.CreateFontAsset(Resources.Load<Font>("JejuGuideSans"));
+#else
             // Select an installed Korean typeface so names remain legible offline on each platform.
             string[] families = Application.platform == RuntimePlatform.Android
                 ? new[] { "Noto Sans CJK KR", "Noto Sans KR", "Noto Sans CJK JP" }
@@ -202,6 +205,7 @@ namespace Jeju.Yard
                 if (font != null) return font;
             }
             return null;
+#endif
         }
 
         void OnDisable()

@@ -25,6 +25,7 @@ Future<SharedPreferences> start(
   Set<String> discoveries = const {},
   Map<String, Object> initial = const {},
   Future<void> Function(String)? publish,
+  WidgetBuilder? mapBuilder,
   Size size = const Size(390, 805),
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -39,6 +40,7 @@ Future<SharedPreferences> start(
       loadAnimals: () async => animals,
       loadRecords: (user) async => GuideRecords(user, discoveries),
       publishYard: publish,
+      mapBuilder: mapBuilder,
     ),
   );
   await tester.pumpAndSettle();
@@ -252,7 +254,7 @@ void main() {
     expect(find.text('조건에 맞는 동물이 없어요.'), findsOneWidget);
     await tapText(tester, '전체 도감 보기');
     expect(find.text('노루'), findsOneWidget);
-    await tester.tap(find.byTooltip('마당으로 돌아가기'));
+    await tester.tap(find.byTooltip('메인으로 돌아가기'));
     await tester.pumpAndSettle();
     expect(find.text('나의 탐험'), findsOneWidget);
   });
@@ -291,11 +293,13 @@ void main() {
     tester.platformDispatcher.textScaleFactorTestValue = 1.6;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
     final prefs = await start(tester, size: const Size(320, 640));
+    await tapText(tester, '설정');
     await tester.ensureVisible(find.text('나의 캐릭터'));
     await tapText(tester, '나의 캐릭터');
     await tester.enterText(find.byType(TextFormField), '한라');
     await tapText(tester, '저장');
     expect(prefs.getString('explorer.name'), '한라');
+    await tapText(tester, '적용');
     await tapText(tester, '카메라');
     expect(find.text('관찰 카메라'), findsOneWidget);
     await tester.binding.handlePopRoute();
@@ -303,5 +307,47 @@ void main() {
     await tapText(tester, '도감');
     expect(find.text('동물 도감'), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('main actions and yard entry return to the originating tab', (
+    tester,
+  ) async {
+    await start(tester);
+    final main = tester.getCenter(find.text('메인'));
+    final camera = tester.getCenter(find.text('카메라'));
+    expect(camera.dx, closeTo(main.dx, 1));
+    expect(camera.dy, lessThan(main.dy));
+    expect(tester.getCenter(find.text('도감')).dx, lessThan(main.dx));
+    expect(tester.getCenter(find.text('마당')).dx, greaterThan(main.dx));
+    await tapText(tester, '지도');
+    expect(find.text('지도를 준비하고 있어요.'), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    await tapText(tester, '마당');
+    expect(find.text('나의 캐릭터'), findsNothing);
+    await tapText(tester, '마당 입장');
+    expect(find.text('제주 마당'), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('마당 입장'), findsOneWidget);
+    await tapText(tester, '발견한 동물');
+    await tester.tap(find.byTooltip('마당으로 돌아가기'));
+    await tester.pumpAndSettle();
+    expect(find.text('나의 마당'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('지도'), findsOneWidget);
+  });
+
+  testWidgets('the map button opens the supplied team screen', (tester) async {
+    await start(
+      tester,
+      mapBuilder: (_) => const Scaffold(body: Text('팀 지도 화면')),
+    );
+    await tapText(tester, '지도');
+    expect(find.text('팀 지도 화면'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.text('나의 탐험'), findsOneWidget);
   });
 }

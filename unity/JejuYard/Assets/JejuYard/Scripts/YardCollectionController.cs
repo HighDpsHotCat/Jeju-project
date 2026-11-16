@@ -60,6 +60,13 @@ namespace Jeju.Yard
             Reload();
         }
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern void FlutterYardReady();
+
+        void Start() => FlutterYardReady();
+#endif
+
         void OnDestroy()
         {
             if (panel != null) panel.Opening -= OpenCollection;

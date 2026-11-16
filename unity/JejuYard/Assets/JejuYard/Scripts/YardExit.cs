@@ -13,10 +13,17 @@ namespace Jeju.Yard
         PanelSettings settings;
         FontAsset font;
 
+#if UNITY_WEBGL && !UNITY_EDITOR
+        [System.Runtime.InteropServices.DllImport("__Internal")]
+        static extern void LeaveFlutterYard();
+#endif
+
         public static void Leave()
         {
 #if UNITY_EDITOR
             UnityEditor.EditorApplication.isPlaying = false;
+#elif UNITY_WEBGL
+            LeaveFlutterYard();
 #elif UNITY_STANDALONE
             Application.Quit();
 #else

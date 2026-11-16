@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>제주 마당</title>
+  <style>
+    * { box-sizing: border-box }
+    html, body, canvas { width: 100%; height: 100%; margin: 0 }
+    body { background: #fbf6ef; color: #1d321d; font: 16px system-ui, sans-serif }
+    canvas { display: block; outline: none; touch-action: none }
+    #status { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; background: #fbf6ef }
+    #status[hidden] { display: none }
+    progress { width: 160px; margin: 0 auto; accent-color: #22652f }
+    button { justify-self: center; padding: .7em 1.4em; color: white; background: #22652f; border: 0; border-radius: 2em; font: inherit }
+  </style>
+</head>
+<body>
+  <canvas id="unity-canvas" aria-label="제주 마당" tabindex="0"></canvas>
+  <div id="status" role="status">
+    <p id="message">마당을 여는 중이에요.</p>
+    <progress max="1" aria-label="마당 로딩"></progress>
+    <button hidden onclick="location.reload()">다시 시도</button>
+  </div>
+  <script>
+    let player;
+    let sceneReady = false;
+    const statusPanel = document.querySelector('#status');
+    const progress = document.querySelector('progress');
+
+    function showError(error) {
+      console.error(error);
+      statusPanel.hidden = false;
+      document.querySelector('#message').textContent = '3D 마당을 열 수 없어요.';
+      progress.hidden = true;
+      document.querySelector('button').hidden = false;
+    }
+
+    function notifyHost(message) {
+      if (window.YardHost) window.YardHost.postMessage(message);
+      else if (parent !== window) parent.postMessage(message, location.origin);
+    }
+
+    function leaveJejuYard() {
+      notifyHost('yard-exit');
+    }
+
+    function yardSceneReady() {
+      sceneReady = true;
+      connectHost();
+    }
+
+    function connectHost() {
+      if (!player || !sceneReady) return;
+      statusPanel.hidden = true;
+      document.querySelector('canvas').focus();
+      notifyHost('yard-ready');
+    }
+
+    function loadGuideSnapshot(json) {
+      player?.SendMessage('YardCollection', 'LoadGuideSnapshot', json);
+    }
+
+    window.addEventListener('message', event => {
+      if (parent !== window && event.source === parent && event.origin === location.origin &&
+          typeof event.data === 'string') loadGuideSnapshot(event.data);
+    });
+
+    function stopJejuYard() {
+      const active = player;
+      player = null;
+      sceneReady = false;
+      return active?.Quit();
+    }
+    window.addEventListener('pagehide', stopJejuYard);
+
+    async function startYard() {
+      const urls = {};
+      try {
+        for (const [key, encoded] of Object.entries(yardFiles)) {
+          const raw = atob(encoded);
+          const bytes = new Uint8Array(raw.length);
+          for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+          urls[key] = URL.createObjectURL(new Blob([bytes]));
+        }
+        const canvas = document.querySelector('canvas');
+        player = await createUnityInstance(canvas, {
+          ...urls,
+          companyName: 'Jeju Explorer',
+          productName: 'Jeju Yard',
+          productVersion: '1.0',
+          devicePixelRatio: Math.min(window.devicePixelRatio, 1.5),
+          autoSyncPersistentDataPath: true,
+          showBanner: (message, type) => type === 'error' ? showError(message) : console.warn(message),
+        }, value => { progress.value = value; });
+        connectHost();
+      } catch (error) {
+        showError(error);
+      } finally {
+        Object.values(urls).forEach(url => URL.revokeObjectURL(url));
+      }
+    }
+  </script>
+  <script src="player.js" onload="startYard()" onerror="showError('Unity player load failed')"></script>
+</body>
+</html>

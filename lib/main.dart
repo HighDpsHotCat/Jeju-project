@@ -11,9 +11,11 @@ import 'explore/collection.dart';
 import 'explore/encounter.dart';
 import 'explore/guide.dart';
 import 'explore/home.dart';
+import 'explore/map.dart';
 import 'explore/navigation.dart';
 import 'explore/profile.dart';
 import 'explore/style.dart';
+import 'explore/yard.dart';
 import 'explore/yard_file.dart';
 import 'explore/yard_snapshot.dart';
 
@@ -40,11 +42,13 @@ class MyApp extends StatelessWidget {
     this.loadAnimals = loadGuideCatalog,
     this.loadRecords = readGuideRecords,
     this.publishYard,
+    this.mapBuilder,
   });
   final SharedPreferences? preferences;
   final Future<List<Animal>> Function() loadAnimals;
   final Future<GuideRecords> Function(String?) loadRecords;
   final Future<void> Function(String)? publishYard;
+  final WidgetBuilder? mapBuilder;
 
   @override
   Widget build(BuildContext context) => MaterialApp(
@@ -54,6 +58,7 @@ class MyApp extends StatelessWidget {
     locale: const Locale('ko'),
     supportedLocales: const [Locale('ko')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
+    routes: {mapRoute: mapBuilder ?? (_) => const MapPendingScreen()},
     home: _FieldJournal(app: this),
   );
 }
@@ -73,11 +78,12 @@ class _FieldJournalState extends State<_FieldJournal>
   Map<String, FirstEncounter> _registered = {};
   String _profile = 'local';
   bool _recordsReady = false;
-  String? _snapshotForCopy;
+  final _snapshot = ValueNotifier<String?>(null);
   int _exportGeneration = 0;
   Future<void> _writes = Future.value();
   Future<List<Animal>>? _catalog;
-  bool _inGuide = false;
+  FieldTab _tab = FieldTab.main;
+  FieldTab _guideOrigin = FieldTab.main;
   bool _cameraOpen = false;
   int _readGeneration = 0;
 
@@ -97,6 +103,7 @@ class _FieldJournalState extends State<_FieldJournal>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _snapshot.dispose();
     super.dispose();
   }
 
@@ -113,7 +120,7 @@ class _FieldJournalState extends State<_FieldJournal>
     if (_recordsReady) {
       setState(() {
         _recordsReady = false;
-        _snapshotForCopy = null;
+        _snapshot.value = null;
       });
     }
     try {
@@ -185,7 +192,7 @@ class _FieldJournalState extends State<_FieldJournal>
     try {
       final json = await _yardSnapshot();
       if (!mounted || generation != _exportGeneration || !_recordsReady) return;
-      setState(() => _snapshotForCopy = json);
+      setState(() => _snapshot.value = json);
       if (write == null) return;
       _writes = _writes
           .then((_) async {
@@ -206,7 +213,7 @@ class _FieldJournalState extends State<_FieldJournal>
   }
 
   Future<void> _copyToYard() async {
-    final data = _snapshotForCopy;
+    final data = _snapshot.value;
     if (data == null) return;
     try {
       // Safari requires the clipboard call to run within this button gesture.
@@ -243,17 +250,31 @@ class _FieldJournalState extends State<_FieldJournal>
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(message)));
 
-  void _openGuide() {
+  void _selectTab(FieldTab tab) {
+    if (_tab == tab) return;
     FocusManager.instance.primaryFocus?.unfocus();
     setState(() {
-      _catalog ??= widget.app.loadAnimals();
-      _inGuide = true;
+      if (tab == FieldTab.guide) {
+        _catalog ??= widget.app.loadAnimals();
+        _guideOrigin = _tab;
+      }
+      _tab = tab;
     });
   }
 
-  void _openHome() {
-    FocusManager.instance.primaryFocus?.unfocus();
-    setState(() => _inGuide = false);
+  void _openGuide() => _selectTab(FieldTab.guide);
+
+  void _goBack() =>
+      _selectTab(_tab == FieldTab.guide ? _guideOrigin : FieldTab.main);
+
+  void _enterYard() {
+    if (ModalRoute.of(context)?.isCurrent != true) return;
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        settings: const RouteSettings(name: '/yard'),
+        builder: (_) => YardScreen(snapshot: _snapshot),
+      ),
+    );
   }
 
   Future<void> _openCamera([XFile? recovered]) async {
@@ -291,13 +312,13 @@ class _FieldJournalState extends State<_FieldJournal>
   Future<void> _settings() async {
     final value = await showFieldSheet<bool>(
       context,
-      SettingsSheet(examples: _examples),
+      SettingsSheet(examples: _examples, openCharacter: _character),
     );
     if (value == null || !mounted || value == _examples) return;
     _exportGeneration++;
     setState(() {
       _examples = value;
-      _snapshotForCopy = null;
+      _snapshot.value = null;
     });
     await _store(widget.app.preferences?.setBool('explorer.examples', value));
     if (mounted) await _publishYard();
@@ -325,6 +346,7 @@ class _FieldJournalState extends State<_FieldJournal>
   @override
   Widget build(BuildContext context) {
     final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(
         statusBarColor: Colors.transparent,
@@ -336,52 +358,87 @@ class _FieldJournalState extends State<_FieldJournal>
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 540),
             child: PopScope(
-              canPop: !_inGuide,
+              canPop: _tab == FieldTab.main,
               onPopInvokedWithResult: (didPop, result) {
-                if (!didPop) _openHome();
+                if (!didPop) _goBack();
               },
               child: Scaffold(
-                body: SafeArea(
-                  bottom: false,
-                  child: IndexedStack(
-                    index: _inGuide ? 1 : 0,
-                    children: [
-                      ExplorerHome(
-                        name: _name,
-                        total: ids.length,
-                        examples: _examples,
-                        openSettings: _settings,
-                        openCharacter: _character,
-                        openGuide: _openGuide,
+                body: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    if (_tab == FieldTab.main)
+                      Image.asset(
+                        'assets/art/main_trail.jpg',
+                        fit: BoxFit.cover,
+                        excludeFromSemantics: true,
                       ),
-                      if (_catalog != null)
-                        AnimalGuide(
-                          catalog: _catalog!,
-                          discovered: ids,
-                          examples: _examples,
-                          onBack: _openHome,
-                          onRegister: _recordsReady && !_examples
-                              ? _register
-                              : null,
-                          onSendToYard: _snapshotForCopy == null
-                              ? null
-                              : _copyToYard,
-                          onRetry: () {
-                            setState(() => _catalog = widget.app.loadAnimals());
-                            _refreshRecords();
-                          },
-                        ),
-                    ],
-                  ),
+                    SafeArea(
+                      bottom: false,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: IndexedStack(
+                              sizing: StackFit.expand,
+                              index: _tab.index,
+                              children: [
+                                if (_catalog == null)
+                                  const SizedBox.shrink()
+                                else
+                                  AnimalGuide(
+                                    catalog: _catalog!,
+                                    discovered: ids,
+                                    examples: _examples,
+                                    onBack: _goBack,
+                                    backLabel: _guideOrigin == FieldTab.yard
+                                        ? '마당으로 돌아가기'
+                                        : '메인으로 돌아가기',
+                                    onRegister: _recordsReady && !_examples
+                                        ? _register
+                                        : null,
+                                    onSendToYard: _snapshot.value == null
+                                        ? null
+                                        : _copyToYard,
+                                    onRetry: () {
+                                      setState(
+                                        () =>
+                                            _catalog = widget.app.loadAnimals(),
+                                      );
+                                      _refreshRecords();
+                                    },
+                                  ),
+                                ExplorerHome(
+                                  name: _name,
+                                  total: ids.length,
+                                  examples: _examples,
+                                  openSettings: _settings,
+                                  openGuide: _openGuide,
+                                  openMap: () =>
+                                      Navigator.pushNamed(context, mapRoute),
+                                ),
+                                ExplorerYard(
+                                  name: _name,
+                                  total: ids.length,
+                                  examples: _examples,
+                                  openSettings: _settings,
+                                  openGuide: _openGuide,
+                                  enterYard: _enterYard,
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (!keyboardOpen)
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: FieldCameraButton(onPressed: _openCamera),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+                bottomNavigationBar: keyboardOpen
                     ? null
-                    : FieldNavigation(
-                        guideSelected: _inGuide,
-                        openGuide: _openGuide,
-                        openCamera: _openCamera,
-                        openHome: _openHome,
-                      ),
+                    : FieldNavigation(selected: _tab, onSelect: _selectTab),
               ),
             ),
           ),

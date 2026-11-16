@@ -47,8 +47,13 @@ class _CharacterSheetState extends State<CharacterSheet> {
 }
 
 class SettingsSheet extends StatefulWidget {
-  const SettingsSheet({super.key, required this.examples});
+  const SettingsSheet({
+    super.key,
+    required this.examples,
+    required this.openCharacter,
+  });
   final bool examples;
+  final VoidCallback openCharacter;
   @override
   State<SettingsSheet> createState() => _SettingsSheetState();
 }
@@ -65,6 +70,15 @@ class _SettingsSheetState extends State<SettingsSheet> {
         style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
       ),
       const SizedBox(height: 8),
+      ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: const CircleAvatar(
+          backgroundImage: AssetImage('assets/art/explorer_portrait.jpg'),
+        ),
+        title: const Text('나의 캐릭터'),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: widget.openCharacter,
+      ),
       SwitchListTile.adaptive(
         contentPadding: EdgeInsets.zero,
         value: _enabled,

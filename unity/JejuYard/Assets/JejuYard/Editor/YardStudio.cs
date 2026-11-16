@@ -185,5 +185,35 @@ namespace Jeju.Yard.EditorArt
             if(report.summary.result!=BuildResult.Succeeded) throw new Exception("Mac player failed: "+report.summary.result);
             Debug.Log("YARD PLAYER "+report.summary.totalSize+" bytes");
         }
+
+        [MenuItem("Jeju Yard/Build Flutter yard player")]
+        public static void BuildFlutterPlayer()
+        {
+            string output = Path.Combine(Output, "Web", "Yard");
+            PlayerSettings.WebGL.compressionFormat = WebGLCompressionFormat.Gzip;
+            PlayerSettings.WebGL.decompressionFallback = true;
+            PlayerSettings.WebGL.dataCaching = false;
+            var report = BuildPipeline.BuildPlayer(new[] { ScenePath }, output, BuildTarget.WebGL, BuildOptions.None);
+            if (report.summary.result != BuildResult.Succeeded)
+                throw new Exception("Web player failed: " + report.summary.result);
+
+            // Script assets can load from both a browser and a mobile WebView's local file origin.
+            string build = Path.Combine(output, "Build");
+            string target = Path.GetFullPath("../../assets/yard/player.js");
+            Directory.CreateDirectory(Path.GetDirectoryName(target));
+            using (var writer = File.CreateText(target + ".tmp"))
+            {
+                writer.WriteLine(File.ReadAllText(Path.Combine(build, "Yard.loader.js")));
+                writer.WriteLine("const yardFiles = {");
+                foreach (var pair in new[] { ("dataUrl", "data"), ("frameworkUrl", "framework.js"), ("codeUrl", "wasm") })
+                {
+                    string file = Path.Combine(build, "Yard." + pair.Item2 + ".unityweb");
+                    writer.WriteLine(pair.Item1 + ": '" + Convert.ToBase64String(File.ReadAllBytes(file)) + "',");
+                }
+                writer.WriteLine("};");
+            }
+            if (File.Exists(target)) File.Replace(target + ".tmp", target, null);
+            else File.Move(target + ".tmp", target);
+        }
     }
 }
