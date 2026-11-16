@@ -8,6 +8,7 @@ import 'package:jeju_project/explore/catalog.dart';
 import 'package:jeju_project/main.dart';
 import 'package:jeju_project/explore/collection.dart';
 import 'package:jeju_project/explore/encounter.dart';
+import 'package:jeju_project/explore/map.dart';
 import 'package:jeju_project/explore/yard_file.dart';
 import 'package:jeju_project/explore/yard_player_native.dart';
 import 'package:jeju_project/explore/yard_snapshot.dart';
@@ -27,6 +28,7 @@ Future<SharedPreferences> start(
   Map<String, Object> initial = const {},
   Future<void> Function(String)? publish,
   WidgetBuilder? mapBuilder,
+  List<Animal> catalog = animals,
   Size size = const Size(390, 805),
 }) async {
   tester.view.devicePixelRatio = 1;
@@ -38,7 +40,7 @@ Future<SharedPreferences> start(
   await tester.pumpWidget(
     MyApp(
       preferences: prefs,
-      loadAnimals: () async => animals,
+      loadAnimals: () async => catalog,
       loadRecords: (user) async => GuideRecords(user, discoveries),
       publishYard: publish,
       mapBuilder: mapBuilder,
@@ -481,8 +483,11 @@ void main() {
     expect(tester.getCenter(find.text('도감')).dx, lessThan(main.dx));
     expect(tester.getCenter(find.text('마당')).dx, greaterThan(main.dx));
     await tapText(tester, '지도');
-    expect(find.text('지도를 준비하고 있어요.'), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
+    expect(
+      tester.widget<ObservationMapPage>(find.byType(ObservationMapPage)).url,
+      observationMapUrl,
+    );
+    await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     await tapText(tester, '마당');
     expect(find.text('카메라'), findsNothing);
@@ -509,6 +514,83 @@ void main() {
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     expect(find.text('지도'), findsOneWidget);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
+
+  test(
+    'Jeju guide has two featured pages followed by alphabetical taxon groups',
+    () {
+      final credits = jsonDecode(
+        File('assets/guide_photos/credits.json').readAsStringSync(),
+      ) as Map<String, dynamic>;
+      final ordered =
+          decodeGuideCatalog(
+              File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
+              credits,
+            ).where((animal) => animal.jejuId.isNotEmpty).toList()
+            ..sort(compareJejuAnimals);
+      expect(ordered.take(4).map((a) => a.name), [
+        '노루',
+        '동박새',
+        '호랑나비',
+        '남방큰돌고래',
+      ]);
+      expect(
+        ordered
+            .skip(4)
+            .take(36)
+            .every((a) => {'Aves', 'Mammalia'}.contains(a.taxon)),
+        isTrue,
+      );
+      expect(ordered[39].name, '흰뺨검둥오리');
+      final rest = ordered.skip(2 * jejuGuidePageSize).toList();
+      expect(rest.first.taxon, 'Mammalia');
+      int group(Animal a) => switch (a.taxon) {
+        'Mammalia' => 0,
+        'Aves' => 1,
+        'Insecta' => 2,
+        _ => 3,
+      };
+      for (var i = 1; i < rest.length; i++) {
+        final a = rest[i - 1], b = rest[i];
+        expect(group(a), lessThanOrEqualTo(group(b)));
+        if (group(a) == group(b) &&
+            a.name != a.scientific &&
+            b.name != b.scientific) {
+          expect(a.name.compareTo(b.name), lessThanOrEqualTo(0));
+        }
+      }
+    },
+  );
+
+  testWidgets('Jeju pages advance and filters reset the page', (tester) async {
+    final catalog = decodeGuideCatalog(
+      File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
+    );
+    await start(tester, catalog: catalog);
+    await tapText(tester, '도감');
+    await tapText(tester, '제주 · 전국');
+    await tester.tap(
+      find.widgetWithText(CheckedPopupMenuItem<GuideRegion>, '제주'),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('1 / 240 페이지'), findsWidgets);
+    expect(find.text('노루'), findsOneWidget);
+    for (var i = 0; i < 2; i++) {
+      await tester.tap(find.byTooltip('다음 페이지').first);
+      await tester.pumpAndSettle();
+    }
+    expect(find.text('3 / 240 페이지'), findsWidgets);
+    final jeju = catalog.where((a) => a.jejuId.isNotEmpty).toList()
+      ..sort(compareJejuAnimals);
+    expect(find.text(jeju[40].name), findsOneWidget);
+    await tapText(tester, '조류');
+    expect(find.text('동박새'), findsOneWidget);
+    await tester.enterText(find.byType(TextField), '갈매기');
+    await tester.pumpAndSettle();
+    expect(
+      find.byWidgetPredicate((w) => w is Text && w.data == '갈매기'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('the map button opens the supplied team screen', (tester) async {

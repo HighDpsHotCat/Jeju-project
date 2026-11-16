@@ -31,6 +31,64 @@ const _featured = {
   'JJ-004729': ('dolphin', '제주 바다에서 만나는 동물'),
 };
 
+const jejuGuidePageSize = 20;
+
+// Editorial order for the first two pages of the Jeju guide.
+final _jejuHighlights = <String>[
+  ..._featured.keys,
+  'JJ-000821', // 개
+  'JJ-001834', // 고양이
+  'JJ-001664', // 말
+  'JJ-003483', // 참새
+  'JJ-003658', // 까치
+  'JJ-004503', // 다람쥐
+  'JJ-000644', // 소
+  'JJ-002426', // 갈매기
+  'JJ-001174', // 까마귀
+  'JJ-004422', // 멧돼지
+  'JJ-002187', // 제비
+  'JJ-000938', // 꽃사슴
+  'JJ-002501', // 멧토끼
+  'JJ-000261', // 청둥오리
+  'JJ-003570', // 꿩
+  'JJ-002293', // 직박구리
+  'JJ-000122', // 독수리
+  'JJ-000835', // 염소
+  'JJ-004398', // 멧비둘기
+  'JJ-003478', // 박새
+  'JJ-002910', // 족제비
+  'JJ-002734', // 오소리
+  'JJ-001990', // 두루미
+  'JJ-001827', // 매
+  'JJ-001333', // 참돌고래
+  'JJ-000444', // 왜가리
+  'JJ-001239', // 뻐꾸기
+  'JJ-000160', // 원앙
+  'JJ-001280', // 고니
+  'JJ-000165', // 물총새
+  'JJ-002902', // 생쥐
+  'JJ-003554', // 가마우지
+  'JJ-003236', // 꾀꼬리
+  'JJ-003601', // 딱새
+  'JJ-003291', // 소쩍새
+  'JJ-000263', // 흰뺨검둥오리
+].asMap().map((index, id) => MapEntry(id, index));
+
+int _groupRank(Animal animal) => switch (animal.taxon) {
+  'Mammalia' => 0,
+  'Aves' => 1,
+  'Insecta' => 2,
+  _ => 3,
+};
+
+int compareJejuAnimals(Animal a, Animal b) {
+  int rank(Animal animal) =>
+      _jejuHighlights[animal.jejuId] ??
+      _jejuHighlights.length + _groupRank(animal);
+  final order = rank(a).compareTo(rank(b));
+  return order != 0 ? order : _compareNames(a, b);
+}
+
 // Everyday wildlife shown first in the national guide.
 const _commonWildlife = [
   '참새',
@@ -52,18 +110,15 @@ int _nationalRank(Animal animal) {
     final index = _commonWildlife.indexOf(animal.name);
     if (index >= 0) return index;
   }
-  return _commonWildlife.length +
-      switch (animal.taxon) {
-        'Mammalia' => 0,
-        'Aves' => 1,
-        'Insecta' => 2,
-        _ => 3,
-      };
+  return _commonWildlife.length + _groupRank(animal);
 }
 
 int compareNationalAnimals(Animal a, Animal b) {
   final rank = _nationalRank(a).compareTo(_nationalRank(b));
-  if (rank != 0) return rank;
+  return rank != 0 ? rank : _compareNames(a, b);
+}
+
+int _compareNames(Animal a, Animal b) {
   final aUnnamed = a.name == a.scientific;
   final bUnnamed = b.name == b.scientific;
   if (aUnnamed != bUnnamed) return aUnnamed ? 1 : -1;
@@ -233,14 +288,19 @@ List<Animal> decodeGuideCatalog(
       .convert(tsv)
       .map((line) {
         final fields = line.split('\t');
+        final localPhoto = lookupPhoto(fields[0]);
+        final credit = localPhoto?.credit;
+        final name = fields[2].isEmpty && credit?['scientific'] == fields[3]
+            ? (credit?['name'] as String? ?? fields[2])
+            : fields[2];
         return Animal(
           fields[0],
           fields[1],
-          fields[2],
+          name,
           fields[3],
           fields[4],
           breeds: breeds[fields[0]] ?? const [],
-          jejuPhoto: lookupPhoto(fields[0]),
+          jejuPhoto: localPhoto,
           nationalPhoto: lookupPhoto(fields[1]),
         );
       })

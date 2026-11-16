@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'explore/camera.dart';
 import 'explore/catalog.dart';
@@ -58,7 +59,7 @@ class MyApp extends StatelessWidget {
     locale: const Locale('ko'),
     supportedLocales: const [Locale('ko')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    routes: {mapRoute: mapBuilder ?? (_) => const MapPendingScreen()},
+    routes: {mapRoute: ?mapBuilder},
     home: _FieldJournal(app: this),
   );
 }
@@ -313,6 +314,28 @@ class _FieldJournalState extends State<_FieldJournal>
     );
   }
 
+  Future<void> _openMap() async {
+    if (widget.app.mapBuilder != null) {
+      await Navigator.pushNamed(context, mapRoute);
+      return;
+    }
+    final url = observationMapUrl;
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS)) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => ObservationMapPage(url: url)),
+      );
+      return;
+    }
+    try {
+      if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
+    } on PlatformException {
+      // Some devices have no browser configured.
+    }
+    if (mounted) _message('관찰 지도를 열 수 없어요. 브라우저 설정을 확인해 주세요.');
+  }
+
   Future<void> _openCamera([List<XFile> recovered = const []]) async {
     if (_cameraOpen) return;
     _cameraOpen = true;
@@ -484,8 +507,7 @@ class _FieldJournalState extends State<_FieldJournal>
                             openSettings: _settings,
                             openGuide: _openGuide,
                             openCamera: _openCamera,
-                            openMap: () =>
-                                Navigator.pushNamed(context, mapRoute),
+                            openMap: _openMap,
                           ),
                           ExplorerYard(
                             name: _name,

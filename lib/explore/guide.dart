@@ -44,6 +44,25 @@ class _AnimalGuideState extends State<AnimalGuide> {
   GuideRegion _region = GuideRegion.combined;
   AnimalGroup _group = AnimalGroup.all;
 
+  final _scroll = ScrollController();
+  int _page = 0;
+  List<Animal>? _jejuSource;
+  List<Animal> _jeju = const [];
+
+  List<Animal> _jejuAnimals(List<Animal> animals) {
+    if (!identical(animals, _jejuSource)) {
+      _jeju = animals.where((a) => a.jejuId.isNotEmpty).toList()
+        ..sort(compareJejuAnimals);
+      _jejuSource = animals;
+    }
+    return _jeju;
+  }
+
+  void _changePage(int page) {
+    setState(() => _page = page);
+    if (_scroll.hasClients) _scroll.jumpTo(0);
+  }
+
   List<Animal>? _nationalSource;
   List<Animal> _national = const [];
 
@@ -58,6 +77,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
 
   @override
   void dispose() {
+    _scroll.dispose();
     _search.dispose();
     super.dispose();
   }
@@ -76,9 +96,11 @@ class _AnimalGuideState extends State<AnimalGuide> {
           future: widget.catalog,
           builder: (context, snapshot) {
             final animals = snapshot.data ?? const <Animal>[];
-            final regional = _region == GuideRegion.national
-                ? _nationalAnimals(animals)
-                : animals;
+            final regional = switch (_region) {
+              GuideRegion.national => _nationalAnimals(animals),
+              GuideRegion.jeju => _jejuAnimals(animals),
+              GuideRegion.combined => animals,
+            };
             final filtered =
                 _region == GuideRegion.combined &&
                     _group == AnimalGroup.all &&
@@ -94,7 +116,23 @@ class _AnimalGuideState extends State<AnimalGuide> {
               );
               if (index > 0) filtered.insert(0, filtered.removeAt(index));
             }
+            final paged = _region == GuideRegion.jeju && filtered.isNotEmpty;
+            final pages =
+                (filtered.length + jejuGuidePageSize - 1) ~/ jejuGuidePageSize;
+            final page = paged ? _page.clamp(0, pages - 1) : 0;
+            final visible = paged
+                ? filtered
+                      .skip(page * jejuGuidePageSize)
+                      .take(jejuGuidePageSize)
+                      .toList()
+                : filtered;
+            final pager = _GuidePager(
+              page: page,
+              pages: pages,
+              onChange: _changePage,
+            );
             return CustomScrollView(
+              controller: _scroll,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 SliverPadding(
@@ -124,8 +162,10 @@ class _AnimalGuideState extends State<AnimalGuide> {
                           PopupMenuButton<GuideRegion>(
                             tooltip: '도감 지역 선택',
                             initialValue: _region,
-                            onSelected: (value) =>
-                                setState(() => _region = value),
+                            onSelected: (value) => setState(() {
+                              _region = value;
+                              _page = 0;
+                            }),
                             itemBuilder: (context) => GuideRegion.values
                                 .map(
                                   (region) => CheckedPopupMenuItem(
@@ -168,8 +208,10 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       TextField(
                         controller: _search,
                         textInputAction: TextInputAction.search,
-                        onChanged: (value) =>
-                            setState(() => _query = value.trim().toLowerCase()),
+                        onChanged: (value) => setState(() {
+                          _query = value.trim().toLowerCase();
+                          _page = 0;
+                        }),
                         decoration: InputDecoration(
                           hintText: '동물 이름 검색',
                           filled: true,
@@ -186,6 +228,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                                   onPressed: () => setState(() {
                                     _search.clear();
                                     _query = '';
+                                    _page = 0;
                                   }),
                                 ),
                           isDense: true,
@@ -231,8 +274,10 @@ class _AnimalGuideState extends State<AnimalGuide> {
                                           fontSize: 15,
                                         ),
                                   ),
-                                  onPressed: () =>
-                                      setState(() => _group = group),
+                                  onPressed: () => setState(() {
+                                    _group = group;
+                                    _page = 0;
+                                  }),
                                   child: Text(group.label),
                                 ),
                               ),
@@ -253,6 +298,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                           label: const Text('마당으로 보내기'),
                         ),
                       ),
+                      if (paged && pages > 1) pager,
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1EBE0),
@@ -328,6 +374,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                             onPressed: () => setState(() {
                               _search.clear();
                               _query = '';
+                              _page = 0;
                               _region = GuideRegion.combined;
                               _group = AnimalGroup.all;
                             }),
@@ -341,9 +388,9 @@ class _AnimalGuideState extends State<AnimalGuide> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(14, 1, 14, 16),
                     sliver: SliverList.builder(
-                      itemCount: filtered.length,
+                      itemCount: visible.length,
                       itemBuilder: (context, index) {
-                        final animal = filtered[index];
+                        final animal = visible[index];
                         final found = _isDiscovered(animal);
                         return _AnimalRow(
                           animal: animal,
@@ -359,6 +406,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       },
                     ),
                   ),
+                if (paged && pages > 1) SliverToBoxAdapter(child: pager),
               ],
             );
           },
@@ -366,6 +414,34 @@ class _AnimalGuideState extends State<AnimalGuide> {
       },
     );
   }
+}
+
+class _GuidePager extends StatelessWidget {
+  const _GuidePager({
+    required this.page,
+    required this.pages,
+    required this.onChange,
+  });
+  final int page, pages;
+  final ValueChanged<int> onChange;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      IconButton(
+        tooltip: '이전 페이지',
+        icon: const Icon(Icons.chevron_left),
+        onPressed: page > 0 ? () => onChange(page - 1) : null,
+      ),
+      Text('${page + 1} / $pages 페이지'),
+      IconButton(
+        tooltip: '다음 페이지',
+        icon: const Icon(Icons.chevron_right),
+        onPressed: page + 1 < pages ? () => onChange(page + 1) : null,
+      ),
+    ],
+  );
 }
 
 class _DiscoveryBanner extends StatelessWidget {
