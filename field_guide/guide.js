@@ -1,5 +1,5 @@
 import { byId as $, node, icon } from "./ui.js";
-import { visits, habitats, speciesIds, mapUrl, loadRecords } from "./map-data.js";
+import { visits, habitats, speciesIds, mapUrl, loadRecords, loadNearby, pinUrl } from "./map-data.js";
 
 const featured = new Map([
   ["JJ-000837", ["roe_deer", "숲과 초원에 사는 동물"]],
@@ -141,6 +141,26 @@ function gbifRecords(id) {
   panel.hidden = true;
   return panel;
 }
+function observedPlaces(id) {
+  const section = node("section", null, "observed-places");
+  const status = node("small", "관찰 장소를 불러오는 중…");
+  section.append(node("h3", "제주 관찰 장소"), status);
+  loadNearby().then(({ places, radiusM }) => {
+    const links = node("div", null, "guide-map-links");
+    for (const place of visits) {
+      const record = places[place.id]?.find(item => item.species === id);
+      if (!record) continue;
+      const link = node("a", place.name);
+      link.href = pinUrl("visit", place.id, true);
+      links.append(link);
+    }
+    status.textContent = links.childElementCount
+      ? "지도 핀 반경 " + radiusM / 1000 + "km 안의 GBIF 관찰 기록"
+      : "수집한 GBIF 표본에는 제주 지도 핀 주변 관찰 기록이 없어요.";
+    section.append(links);
+  }).catch(() => { status.textContent = "관찰 장소를 불러오지 못했어요. 도감을 다시 열어 주세요."; });
+  return section;
+}
 function details(row) {
   const dl = node("dl");
   const entries = [
@@ -161,7 +181,7 @@ function details(row) {
     );
   for (const [label, value] of entries)
     if (value) dl.append(node("dt", label), node("dd", value));
-  const parts = [badge(row), dl];
+  const parts = [badge(row), observedPlaces(animalId(row)), dl];
   const image = featured.get(animalId(row));
   if (image) {
     const img = node("img");

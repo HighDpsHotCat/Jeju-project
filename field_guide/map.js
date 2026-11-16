@@ -1,8 +1,8 @@
 import { byId as $, node } from "./ui.js";
-import { visits, habitats, guideUrl, mapUrl, loadRecords } from "./map-data.js";
+import { visits, habitats, guideUrl, mapUrl, pinUrl, loadRecords } from "./map-data.js";
 import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 
-import { clearPinMap, pinUrl, positionBubble, renderPinMap } from "./pin-map.js";
+import { clearPinMap, positionBubble, renderPinMap } from "./pin-map.js";
 
 const layers = {
   visit: ["탐방 장소", "핀을 누르면 반경 2km에서 관찰된 동물이 보여요."],

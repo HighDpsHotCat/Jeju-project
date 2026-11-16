@@ -155,3 +155,20 @@ export function loadRecords() {
   }
   return recordRequest;
 }
+
+export function pinUrl(layer, id, animals = false) {
+  const url = new URL("/map", location.origin);
+  if (layer !== "visit") url.searchParams.set("layer", layer);
+  if (id) url.searchParams.set("pin", id);
+  if (animals) url.searchParams.set("show", "animals");
+  return url.pathname + url.search;
+}
+
+let nearbyRequest;
+export function loadNearby() {
+  nearbyRequest ??= fetch("/nearby.json").then(response => {
+    if (!response.ok) throw Error("Missing observations");
+    return response.json();
+  }).catch(error => { nearbyRequest = null; throw error; });
+  return nearbyRequest;
+}

@@ -1,18 +1,13 @@
 import { byId as $, node } from "./ui.js";
-import { guideUrl, speciesIds } from "./map-data.js";
+import { guideUrl, speciesIds, pinUrl, loadNearby } from "./map-data.js";
 
 const frame = $("map-frame"), bubble = $("map-bubble");
 let currentMarker = null;
-let nearbyRequest;
 
 function nearbyAnimals(place) {
   const block = node("section", null, "nearby-records");
   block.append(node("p", "주변 GBIF 관찰 기록을 불러오는 중…", "bubble-count"));
-  nearbyRequest ??= fetch("/nearby.json").then(response => {
-    if (!response.ok) throw Error("Missing observations");
-    return response.json();
-  }).catch(error => { nearbyRequest = null; throw error; });
-  nearbyRequest.then(({places, radiusM, collected}) => {
+  loadNearby().then(({places, radiusM, collected}) => {
     const rows = places[place.id];
     if (!rows) throw Error("Missing place");
     block.replaceChildren(node("p", "반경 " + radiusM / 1000 + "km · GBIF 관찰 " + rows.length + "종", "bubble-count"));
@@ -34,13 +29,6 @@ function nearbyAnimals(place) {
   return block;
 }
 
-export function pinUrl(layer, id, animals = false) {
-  const url = new URL("/map", location.origin);
-  if (layer !== "visit") url.searchParams.set("layer", layer);
-  if (id) url.searchParams.set("pin", id);
-  if (animals) url.searchParams.set("show", "animals");
-  return url.pathname + url.search;
-}
 function action(label, href, cls, name) {
   const a = node("a", label, cls);
   a.href = href;
