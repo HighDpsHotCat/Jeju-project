@@ -14,7 +14,7 @@ String encodeYardSnapshot({
   final remaining = {...discoveries}..remove('');
   final animals = <Map<String, Object>>[];
   for (final animal in catalog) {
-    final local = remaining.remove(animal.jejuId);
+    final local = remaining.remove(animal.id);
     final national = remaining.remove(animal.nationalId);
     if (!local && !national) continue;
     animals.add({

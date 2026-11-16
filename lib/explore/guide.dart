@@ -578,14 +578,14 @@ class _AnimalDetail extends StatelessWidget {
                 ),
                 if (animal.korean.isNotEmpty)
                   Text(
-                    animal.scientific,
+                    animal.breedEnglish ?? animal.scientific,
                     style: const TextStyle(
                       fontStyle: FontStyle.italic,
                       color: muted,
                     ),
                   ),
                 const SizedBox(height: 5),
-                Text(animal.groupName),
+                Text(animal.breedId == null ? animal.groupName : '포유류 · 개 품종'),
               ],
             ),
           ),

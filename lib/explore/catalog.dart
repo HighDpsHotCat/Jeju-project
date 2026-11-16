@@ -76,6 +76,29 @@ const exampleSpeciesIds = {
   'JJ-000261',
 };
 
+const _dogBreeds = {
+  'BREED-golden': (korean: '골든 리트리버', english: 'Golden Retriever'),
+  'BREED-dachshund': (korean: '닥스훈트', english: 'Dachshund'),
+  'BREED-labrador': (korean: '래브라도 리트리버', english: 'Labrador Retriever'),
+  'BREED-maltese': (korean: '말티즈', english: 'Maltese'),
+  'BREED-border-collie': (korean: '보더 콜리', english: 'Border Collie'),
+  'BREED-beagle': (korean: '비글', english: 'Beagle'),
+  'BREED-bichon': (korean: '비숑 프리제', english: 'Bichon Frisé'),
+  'BREED-samoyed': (korean: '사모예드', english: 'Samoyed'),
+  'BREED-shiba': (korean: '시바견', english: 'Shiba Inu'),
+  'BREED-husky': (korean: '시베리안 허스키', english: 'Siberian Husky'),
+  'BREED-shih-tzu': (korean: '시추', english: 'Shih Tzu'),
+  'BREED-yorkshire': (korean: '요크셔 테리어', english: 'Yorkshire Terrier'),
+  'BREED-pembroke': (korean: '웰시코기 (펨브로크)', english: 'Pembroke Welsh Corgi'),
+  'BREED-german-shepherd': (korean: '저먼 셰퍼드', english: 'German Shepherd'),
+  'BREED-jindo': (korean: '진돗개', english: 'Korean Jindo'),
+  'BREED-chihuahua': (korean: '치와와', english: 'Chihuahua'),
+  'BREED-pug': (korean: '퍼그', english: 'Pug'),
+  'BREED-pomeranian': (korean: '포메라니안', english: 'Pomeranian'),
+  'BREED-poodle': (korean: '푸들', english: 'Poodle'),
+  'BREED-french-bulldog': (korean: '프렌치 불도그', english: 'French Bulldog'),
+};
+
 class Animal {
   const Animal(
     this.jejuId,
@@ -85,9 +108,12 @@ class Animal {
     this.taxon,
     this.region, {
     this.guidePhoto,
+    this.breedId,
   });
 
   final Map<String, dynamic>? guidePhoto;
+  final String? breedId;
+  String? get breedEnglish => _dogBreeds[breedId]?.english;
   final String jejuId;
   final String nationalId;
   final String korean;
@@ -95,7 +121,7 @@ class Animal {
   final String taxon;
   final GuideRegion region;
 
-  String get id => jejuId.isEmpty ? nationalId : jejuId;
+  String get id => breedId ?? (jejuId.isEmpty ? nationalId : jejuId);
   String get modelKey => _yardModels[id]?.$1 ?? '';
   String get yardName => _yardModels[id]?.$2 ?? name;
   String get name => korean.isNotEmpty
@@ -105,7 +131,7 @@ class Animal {
       : scientific;
   String? get photo {
     if (guidePhoto != null) {
-      final id = region == GuideRegion.jeju ? jejuId : nationalId;
+      final id = breedId ?? (region == GuideRegion.jeju ? jejuId : nationalId);
       return 'assets/guide_photos/$id.jpg';
     }
     final feature = _featured[jejuId];
@@ -113,6 +139,7 @@ class Animal {
   }
 
   String get description =>
+      breedEnglish ??
       _featured[jejuId]?.$2 ??
       (region == GuideRegion.jeju ? '제주 목격 기록' : scientific);
 
@@ -126,12 +153,21 @@ class Animal {
   };
 
   bool isDiscovered(Set<String> ids) =>
+      (breedId != null && ids.contains(breedId)) ||
       (jejuId.isNotEmpty && ids.contains(jejuId)) ||
       (nationalId.isNotEmpty &&
           (ids.contains(nationalId) || ids.contains('KTSN-$nationalId')));
 
   bool matches(AnimalGroup group, String query) {
     if (group != AnimalGroup.all && group.taxon != taxon) return false;
+    if (breedEnglish case final english?) {
+      final compact = query.replaceAll(' ', '');
+      if (korean.replaceAll(' ', '').contains(compact) ||
+          english.toLowerCase().replaceAll(' ', '').contains(compact) ||
+          const {'개', '강아지', '반려견', '견종', '개품종'}.contains(compact)) {
+        return true;
+      }
+    }
     return query.isEmpty ||
         korean.contains(query) ||
         (jejuId == 'JJ-000821' && '강아지 웰시코기'.contains(query)) ||
@@ -157,19 +193,30 @@ List<Animal> decodeGuideCatalog(
   Map<String, dynamic> photos = const {},
 ]) {
   final tsv = utf8.decode(GZipDecoder().decodeBytes(compressed));
-  return const LineSplitter()
-      .convert(tsv)
-      .map((line) {
-        final fields = line.split('\t');
-        return Animal(
-          fields[0],
-          fields[1],
-          fields[2],
-          fields[3],
-          fields[4],
-          GuideRegion.values.byName(fields[5]),
-          guidePhoto: photos[fields[5] == 'national' ? fields[1] : fields[0]],
-        );
-      })
-      .toList(growable: false);
+  final species = const LineSplitter().convert(tsv).map((line) {
+    final fields = line.split('\t');
+    return Animal(
+      fields[0],
+      fields[1],
+      fields[2],
+      fields[3],
+      fields[4],
+      GuideRegion.values.byName(fields[5]),
+      guidePhoto: photos[fields[5] == 'national' ? fields[1] : fields[0]],
+    );
+  });
+  return [
+    ...species,
+    for (final entry in _dogBreeds.entries)
+      Animal(
+        '',
+        '',
+        entry.value.korean,
+        'Canis lupus familiaris',
+        'Mammalia',
+        GuideRegion.national,
+        breedId: entry.key,
+        guidePhoto: photos[entry.key],
+      ),
+  ];
 }
