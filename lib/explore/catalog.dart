@@ -30,7 +30,7 @@ const _featured = {
   'JJ-004729': ('dolphin', '제주 바다에서 만나는 동물'),
 };
 
-const jejuGuidePageSize = 20;
+const guidePageSize = 20;
 
 const _guidePriority = {
   'JJ-000837': 0, // 노루
@@ -54,6 +54,60 @@ int _guideRank(Animal animal) =>
 int compareGuideAnimals(Animal a, Animal b) {
   final rank = _guideRank(a).compareTo(_guideRank(b));
   return rank != 0 ? rank : _compareNames(a, b);
+}
+
+// These species have entries in both the Jeju and national checklists.
+const _familiarInsects = [
+  'JJ-003382', // 호랑나비
+  'JJ-004540', // 사마귀
+  'JJ-000532', // 섬서구메뚜기
+  'JJ-000071', // 방아깨비
+  'JJ-002057', // 무당벌레
+  'JJ-003671', // 배추흰나비
+  'JJ-000379', // 양봉꿀벌
+  'JJ-002219', // 참매미
+  'JJ-003247', // 밀잠자리
+  'JJ-004373', // 곰귀뚜라미
+  'JJ-001126', // 노랑나비
+  'JJ-002166', // 베짱이
+  'JJ-001232', // 말매미
+  'JJ-004541', // 왕사마귀
+  'JJ-003374', // 된장잠자리
+  'JJ-004705', // 장수풍뎅이
+  'JJ-000378', // 재래꿀벌
+  'JJ-001857', // 곰개미
+  'JJ-003377', // 제비나비
+  'JJ-001683', // 꽃등에
+  'JJ-003805', // 네발나비
+  'JJ-003163', // 팥중이
+  'JJ-000805', // 일본왕개미
+  'JJ-003073', // 풀색노린재
+  'JJ-001986', // 유지매미
+  'JJ-003932', // 남방부전나비
+  'JJ-002329', // 아시아실잠자리
+  'JJ-000940', // 꽃무지
+  'JJ-002903', // 집파리
+  'JJ-001901', // 콩중이
+  'JJ-000311', // 알락하늘소
+  'JJ-001980', // 청띠제비나비
+  'JJ-004345', // 좀사마귀
+  'JJ-002828', // 풍뎅이
+  'JJ-002615', // 꽃매미
+  'JJ-003989', // 대벌레
+  'JJ-001051', // 풀잠자리
+  'JJ-004057', // 나비잠자리
+  'JJ-004762', // 작은멋쟁이나비
+  'JJ-004061', // 톱다리개미허리노린재
+];
+
+final _insectRank = {
+  for (final (rank, id) in _familiarInsects.indexed) id: rank,
+};
+
+int compareGuideInsects(Animal a, Animal b) {
+  final aRank = _insectRank[a.jejuId] ?? _familiarInsects.length;
+  final bRank = _insectRank[b.jejuId] ?? _familiarInsects.length;
+  return aRank != bRank ? aRank.compareTo(bRank) : _compareNames(a, b);
 }
 
 int _compareNames(Animal a, Animal b) {

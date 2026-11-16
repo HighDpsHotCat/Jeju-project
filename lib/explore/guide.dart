@@ -48,10 +48,12 @@ class _AnimalGuideState extends State<AnimalGuide> {
   int _page = 0;
   List<Animal>? _catalogSource;
   List<Animal> _ordered = const [];
+  List<Animal>? _insects;
 
   List<Animal> _orderedAnimals(List<Animal> animals) {
     if (!identical(animals, _catalogSource)) {
       _ordered = animals.toList()..sort(compareGuideAnimals);
+      _insects = null;
       _catalogSource = animals;
     }
     return _ordered;
@@ -83,12 +85,20 @@ class _AnimalGuideState extends State<AnimalGuide> {
           future: widget.catalog,
           builder: (context, snapshot) {
             final animals = _orderedAnimals(snapshot.data ?? const <Animal>[]);
+            final showingInsects = _group == AnimalGroup.insects;
+            final source = showingInsects
+                ? (_insects ??=
+                      animals
+                          .where((a) => a.taxon == AnimalGroup.insects.taxon)
+                          .toList()
+                        ..sort(compareGuideInsects))
+                : animals;
             final filtered =
                 _region == GuideRegion.combined &&
                     _group == null &&
                     _query.isEmpty
                 ? animals
-                : animals
+                : source
                       .where((a) => a.matches(_region, _group, _query))
                       .toList();
             if (_query == '개' || _query == '강아지' || _query == '고양이') {
@@ -98,14 +108,16 @@ class _AnimalGuideState extends State<AnimalGuide> {
               );
               if (index > 0) filtered.insert(0, filtered.removeAt(index));
             }
-            final paged = _region == GuideRegion.jeju && filtered.isNotEmpty;
+            final paged =
+                (_region == GuideRegion.jeju || showingInsects) &&
+                filtered.isNotEmpty;
             final pages =
-                (filtered.length + jejuGuidePageSize - 1) ~/ jejuGuidePageSize;
+                (filtered.length + guidePageSize - 1) ~/ guidePageSize;
             final page = paged ? _page.clamp(0, pages - 1) : 0;
             final visible = paged
                 ? filtered
-                      .skip(page * jejuGuidePageSize)
-                      .take(jejuGuidePageSize)
+                      .skip(page * guidePageSize)
+                      .take(guidePageSize)
                       .toList()
                 : filtered;
             final pager = _GuidePager(

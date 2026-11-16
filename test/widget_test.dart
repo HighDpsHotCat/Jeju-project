@@ -546,6 +546,25 @@ void main() {
     },
   );
 
+  test('all insect guides switch to alphabetical order on page three', () {
+    final catalog = decodeGuideCatalog(
+      File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
+    );
+    for (final region in GuideRegion.values) {
+      final insects =
+          catalog
+              .where((a) => a.matches(region, AnimalGroup.insects, ''))
+              .toList()
+            ..sort(compareGuideInsects);
+      expect(insects.take(3).map((a) => a.name), ['호랑나비', '사마귀', '섬서구메뚜기']);
+      expect(insects[20].name, '네발나비');
+      expect(insects[39].name, '톱다리개미허리노린재');
+      final rest = insects.skip(40).where((a) => a.name != a.scientific);
+      final names = rest.map((a) => a.name).toList();
+      expect(names, orderedEquals(names.toList()..sort()));
+    }
+  });
+
   testWidgets('Jeju pages advance and filters reset the page', (tester) async {
     final catalog = decodeGuideCatalog(
       File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
