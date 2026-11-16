@@ -13,11 +13,54 @@ import 'package:jeju_project/explore/yard_snapshot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const animals = [
-  Animal('JJ-000837', '1', '노루', 'Capreolus pygargus', 'Mammalia'),
-  Animal('JJ-004873', '2', '동박새', 'Zosterops japonicus', 'Aves'),
-  Animal('JJ-003382', '3', '호랑나비', 'Papilio xuthus', 'Insecta'),
-  Animal('JJ-004729', '', '남방큰돌고래', 'Tursiops aduncus', 'Mammalia'),
-  Animal('', '4', '반달가슴곰', 'Ursus thibetanus', 'Mammalia'),
+  Animal(
+    'JJ-000837',
+    '1',
+    '노루',
+    'Capreolus pygargus',
+    'Mammalia',
+    GuideRegion.jeju,
+  ),
+  Animal(
+    'JJ-004873',
+    '2',
+    '동박새',
+    'Zosterops japonicus',
+    'Aves',
+    GuideRegion.jeju,
+  ),
+  Animal(
+    'JJ-003382',
+    '3',
+    '호랑나비',
+    'Papilio xuthus',
+    'Insecta',
+    GuideRegion.jeju,
+  ),
+  Animal(
+    'JJ-004729',
+    '',
+    '남방큰돌고래',
+    'Tursiops aduncus',
+    'Mammalia',
+    GuideRegion.jeju,
+  ),
+  Animal(
+    'JJ-000837',
+    '1',
+    '노루',
+    'Capreolus pygargus',
+    'Mammalia',
+    GuideRegion.national,
+  ),
+  Animal(
+    '',
+    '4',
+    '반달가슴곰',
+    'Ursus thibetanus',
+    'Mammalia',
+    GuideRegion.national,
+  ),
 ];
 
 Future<SharedPreferences> start(
@@ -210,12 +253,13 @@ void main() {
       expect(local.toSet(), hasLength(4875));
       expect(national.toSet(), hasLength(34875));
       expect(local.toSet().containsAll(exampleSpeciesIds), isTrue);
-      expect(catalog.take(4).map((animal) => animal.name), [
-        '노루',
-        '동박새',
-        '호랑나비',
-        '남방큰돌고래',
-      ]);
+      expect(
+        catalog
+            .where((a) => a.region == GuideRegion.jeju)
+            .take(4)
+            .map((animal) => animal.name),
+        ['노루', '동박새', '호랑나비', '남방큰돌고래'],
+      );
       expect(
         catalog.firstWhere((animal) => animal.jejuId == 'JJ-003554').name,
         '가마우지',
@@ -237,9 +281,9 @@ void main() {
     expect(find.text('동박새'), findsOneWidget);
     expect(find.text('노루'), findsNothing);
     await tapText(tester, '전체');
-    await tapText(tester, '제주 · 전국');
+    await tapText(tester, '제주 목격');
     await tester.tap(
-      find.widgetWithText(CheckedPopupMenuItem<GuideRegion>, '전국'),
+      find.widgetWithText(CheckedPopupMenuItem<GuideRegion>, '전국 도감'),
     );
     await tester.pumpAndSettle();
     expect(find.text('남방큰돌고래'), findsNothing);
@@ -252,7 +296,7 @@ void main() {
     await tester.enterText(find.byType(TextField), '없는 동물');
     await tester.pumpAndSettle();
     expect(find.text('조건에 맞는 동물이 없어요.'), findsOneWidget);
-    await tapText(tester, '전체 도감 보기');
+    await tapText(tester, '검색·분류 초기화');
     expect(find.text('노루'), findsOneWidget);
     await tester.tap(find.byTooltip('메인으로 돌아가기'));
     await tester.pumpAndSettle();
@@ -274,7 +318,7 @@ void main() {
       expect(prefs.getBool('explorer.examples'), isTrue);
       expect(jsonDecode(snapshot!)['examples'], true);
       await tapText(tester, '도감');
-      expect(find.text('12종'), findsOneWidget);
+      expect(find.text('3종'), findsOneWidget);
       expect(find.text('발견한 동물 · 예시'), findsOneWidget);
       expect(find.text('등록 완료'), findsNWidgets(3));
       await tapText(tester, '마당');
@@ -320,7 +364,7 @@ void main() {
     expect(tester.getCenter(find.text('도감')).dx, lessThan(main.dx));
     expect(tester.getCenter(find.text('마당')).dx, greaterThan(main.dx));
     await tapText(tester, '지도');
-    expect(find.text('지도를 준비하고 있어요.'), findsOneWidget);
+    expect(find.text('제주 관찰 지도 열기'), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     await tapText(tester, '마당');

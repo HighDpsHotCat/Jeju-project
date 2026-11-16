@@ -1,3 +1,5 @@
+import 'map.dart';
+
 import 'package:flutter/material.dart';
 
 import 'catalog.dart';
@@ -474,7 +476,7 @@ class _AnimalRow extends StatelessWidget {
           onTap: () async {
             final encounter = await showFieldSheet<FirstEncounter>(
               context,
-              _AnimalDetail(
+              AnimalDetail(
                 animal: animal,
                 found: found,
                 examples: examples,
@@ -540,15 +542,16 @@ class _AnimalRow extends StatelessWidget {
   );
 }
 
-class _AnimalDetail extends StatelessWidget {
-  const _AnimalDetail({
+class AnimalDetail extends StatelessWidget {
+  const AnimalDetail({
+    super.key,
     required this.animal,
-    required this.found,
-    required this.examples,
-    required this.canRegister,
+    this.found,
+    this.examples = false,
+    this.canRegister = false,
   });
   final Animal animal;
-  final bool found;
+  final bool? found;
   final bool examples;
   final bool canRegister;
   @override
@@ -595,11 +598,22 @@ class _AnimalDetail extends StatelessWidget {
       if (animal.jejuId.isNotEmpty) Text('제주 종 기준표  ${animal.jejuId}'),
       if (animal.nationalId.isNotEmpty) Text('국가생물종목록  ${animal.nationalId}'),
       const SizedBox(height: 14),
-      Row(
-        children: [
-          Text(examples ? '예시 도감   ' : '나의 도감   '),
-          _Registration(found),
-        ],
+      if (found case final registered?)
+        Row(
+          children: [
+            Text(examples ? '예시 도감   ' : '나의 도감   '),
+            _Registration(registered),
+          ],
+        ),
+      TextButton.icon(
+        icon: const Icon(Icons.place_outlined),
+        label: const Text('제주 관찰 장소 보기'),
+        onPressed: () => openSharedGuide(
+          context,
+          animal.jejuId.isEmpty
+              ? {'region': 'national', 'species': 'KTSN-${animal.nationalId}'}
+              : {'species': animal.jejuId},
+        ),
       ),
       if (canRegister) ...[const SizedBox(height: 12), const _EncounterForm()],
     ],

@@ -1,0 +1,550 @@
+{
+  "version": "jeju-5-5d8ac780b1",
+  "groups": {
+    "roe": {
+      "total": 8,
+      "unknown": 2,
+      "suggested": 5,
+      "review": 1,
+      "correct_suggestions": 5
+    },
+    "sparrow": {
+      "total": 8,
+      "suggested": 6,
+      "review": 2,
+      "correct_suggestions": 6
+    },
+    "ladybird": {
+      "total": 8,
+      "unknown": 1,
+      "suggested": 3,
+      "review": 4,
+      "correct_suggestions": 3
+    },
+    "slider": {
+      "total": 8,
+      "unknown": 4,
+      "review": 3,
+      "suggested": 1,
+      "correct_suggestions": 1
+    },
+    "frog": {
+      "total": 1,
+      "suggested": 1,
+      "correct_suggestions": 1
+    },
+    "other": {
+      "total": 51,
+      "unknown": 45,
+      "review": 3,
+      "suggested": 3,
+      "correct_suggestions": 0
+    }
+  },
+  "results": [
+    {
+      "photo": 261213554,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 176146768,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "suggested"
+    },
+    {
+      "photo": 128165545,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "review"
+    },
+    {
+      "photo": 606654240,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "suggested"
+    },
+    {
+      "photo": 10122706,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "review"
+    },
+    {
+      "photo": 503493623,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "suggested"
+    },
+    {
+      "photo": 364725824,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "suggested"
+    },
+    {
+      "photo": 198981670,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "suggested"
+    },
+    {
+      "photo": 356295681,
+      "truth": "sparrow",
+      "top": "sparrow",
+      "decision": "suggested"
+    },
+    {
+      "photo": 43490334,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 375875537,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "suggested"
+    },
+    {
+      "photo": 162226101,
+      "truth": "ladybird",
+      "top": "roe",
+      "decision": "review"
+    },
+    {
+      "photo": 422705125,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "suggested"
+    },
+    {
+      "photo": 652829900,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "review"
+    },
+    {
+      "photo": 603338023,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "review"
+    },
+    {
+      "photo": 97384573,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "suggested"
+    },
+    {
+      "photo": 587347524,
+      "truth": "ladybird",
+      "top": "ladybird",
+      "decision": "review"
+    },
+    {
+      "photo": 5518581,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 177836196,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 120834277,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "review"
+    },
+    {
+      "photo": 192391854,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "suggested"
+    },
+    {
+      "photo": 115039269,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "review"
+    },
+    {
+      "photo": 351758482,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "review"
+    },
+    {
+      "photo": 359350541,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 304869291,
+      "truth": "slider",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 19642255,
+      "truth": "fallow",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 464622341,
+      "truth": "fallow",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 485081113,
+      "truth": "fallow",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 456889916,
+      "truth": "deer",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 4533437,
+      "truth": "deer",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 52105473,
+      "truth": "deer",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 177949148,
+      "truth": "house_sparrow",
+      "top": "sparrow",
+      "decision": "review"
+    },
+    {
+      "photo": 136543105,
+      "truth": "house_sparrow",
+      "top": "sparrow",
+      "decision": "unknown"
+    },
+    {
+      "photo": 362339150,
+      "truth": "house_sparrow",
+      "top": "sparrow",
+      "decision": "unknown"
+    },
+    {
+      "photo": 326606761,
+      "truth": "swallow",
+      "top": "sparrow",
+      "decision": "unknown"
+    },
+    {
+      "photo": 8209375,
+      "truth": "swallow",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 190318146,
+      "truth": "swallow",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 82618589,
+      "truth": "asian_ladybird",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 73842105,
+      "truth": "asian_ladybird",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 550380119,
+      "truth": "asian_ladybird",
+      "top": "ladybird",
+      "decision": "review"
+    },
+    {
+      "photo": 303721649,
+      "truth": "butterfly",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 186022464,
+      "truth": "butterfly",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 707709412,
+      "truth": "butterfly",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 328127476,
+      "truth": "pond_turtle",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 414084125,
+      "truth": "pond_turtle",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 215589886,
+      "truth": "pond_turtle",
+      "top": "roe",
+      "decision": "review"
+    },
+    {
+      "photo": 20216362,
+      "truth": "painted_turtle",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 387397269,
+      "truth": "painted_turtle",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 119028540,
+      "truth": "painted_turtle",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 672705261,
+      "truth": "water_frog",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 13343667,
+      "truth": "water_frog",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 457225110,
+      "truth": "water_frog",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 42142219,
+      "truth": "toad",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 235371826,
+      "truth": "toad",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 81587062,
+      "truth": "toad",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 112393244,
+      "truth": "pine",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 457188850,
+      "truth": "pine",
+      "top": "sparrow",
+      "decision": "unknown"
+    },
+    {
+      "photo": 118250979,
+      "truth": "pine",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 64220079,
+      "truth": "daisy",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 103642455,
+      "truth": "daisy",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 107314466,
+      "truth": "daisy",
+      "top": "ladybird",
+      "decision": "unknown"
+    },
+    {
+      "photo": 116793572,
+      "truth": "duck",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 177479326,
+      "truth": "duck",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 290373164,
+      "truth": "duck",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 208190246,
+      "truth": "squirrel",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 240979230,
+      "truth": "squirrel",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 9638767,
+      "truth": "squirrel",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 259889025,
+      "truth": "european_roe",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 68361043,
+      "truth": "european_roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 7744236,
+      "truth": "european_roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 159297799,
+      "truth": "american_treefrog",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 404885641,
+      "truth": "american_treefrog",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 123713478,
+      "truth": "american_treefrog",
+      "top": "frog",
+      "decision": "unknown"
+    },
+    {
+      "photo": 214150933,
+      "truth": "yellow_slider",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 18939720,
+      "truth": "yellow_slider",
+      "top": "slider",
+      "decision": "suggested"
+    },
+    {
+      "photo": 207359842,
+      "truth": "yellow_slider",
+      "top": "slider",
+      "decision": "unknown"
+    },
+    {
+      "photo": 2703651,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 54048986,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "unknown"
+    },
+    {
+      "photo": 78944896,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 111925560,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 132820504,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 176458436,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "suggested"
+    },
+    {
+      "photo": 279356900,
+      "truth": "roe",
+      "top": "roe",
+      "decision": "review"
+    },
+    {
+      "photo": 116553228,
+      "truth": "frog",
+      "top": "frog",
+      "decision": "suggested"
+    }
+  ]
+}

@@ -58,7 +58,7 @@ class MyApp extends StatelessWidget {
     locale: const Locale('ko'),
     supportedLocales: const [Locale('ko')],
     localizationsDelegates: GlobalMaterialLocalizations.delegates,
-    routes: {mapRoute: mapBuilder ?? (_) => const MapPendingScreen()},
+    routes: {mapRoute: mapBuilder ?? (_) => const ObservationMapScreen()},
     home: _FieldJournal(app: this),
   );
 }

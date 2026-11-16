@@ -43,8 +43,15 @@ dependencies:
   url_launcher: ^6.3.3
   webview_flutter: ^4.14.1
   web: ^1.1.2
+  camera: ^0.12.2
+  geolocator: ^14.1.2
+  path_provider: ^2.1.6
+  path: ^1.9.1
+  flutter_onnxruntime: ^1.9.0
+  image: ^4.12.0
 
 dev_dependencies:
+  camera_platform_interface: ^2.15.0
   flutter_test:
     sdk: flutter
 
@@ -68,6 +75,7 @@ flutter:
   assets:
     - assets/art/
     - assets/yard/
+    - assets/identification/
     - assets/catalog/animals.tsv.gz
     - assets/catalog/jeju_districts.json.gz
     - assets/catalog/jeju_districts_credit.txt
