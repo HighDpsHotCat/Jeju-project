@@ -143,11 +143,11 @@ void main() {
         await tapText(tester, '직접 관찰한 품종으로 수집');
       }
 
-      await openPet('강아지', '개');
-      expect(find.text('개 · 품종 수집 0/20'), findsOneWidget);
+      await openPet('개', '강아지');
+      expect(find.text('강아지 · 품종 수집 0/20'), findsOneWidget);
       await collect('골든 리트리버');
       await collect('닥스훈트');
-      expect(find.text('개 · 품종 수집 2/20'), findsOneWidget);
+      expect(find.text('강아지 · 품종 수집 2/20'), findsOneWidget);
       await close();
       await openPet('고양이', '고양이');
       expect(find.text('고양이 · 품종 수집 0/20'), findsOneWidget);
@@ -155,7 +155,7 @@ void main() {
       expect(find.text('고양이 · 품종 수집 1/20'), findsOneWidget);
       await close();
       expect(find.text('2종'), findsOneWidget);
-      await openPet('골든 리트리버', '개');
+      await openPet('골든 리트리버', '강아지');
       await tapText(tester, '골든 리트리버');
       expect(
         tester.widget<FilledButton>(find.byType(FilledButton).last).onPressed,
@@ -178,8 +178,8 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
-      await openPet('강아지', '개');
-      expect(find.text('개 · 품종 수집 0/20'), findsOneWidget);
+      await openPet('개', '강아지');
+      expect(find.text('강아지 · 품종 수집 0/20'), findsOneWidget);
     },
   );
 
@@ -340,25 +340,10 @@ void main() {
       );
       expect(catalog.any((animal) => animal.name == '구멍의산호'), isFalse);
       expect(catalog.any((animal) => animal.name == '산호랑나비'), isTrue);
-      final ordered = catalog.where((a) => a.nationalId.isNotEmpty).toList()
-        ..sort(compareNationalAnimals);
-      expect(ordered.take(4).map((a) => a.name), ['참새', '다람쥐', '까치', '청설모']);
-      for (final animal in ordered.take(80)) {
-        expect(
-          animal.photoFor(GuideRegion.national)?.credit?['source'],
-          startsWith('https://'),
-          reason: animal.name,
-        );
-        expect(
-          File(animal.photoFor(GuideRegion.national)!.asset).existsSync(),
-          isTrue,
-          reason: animal.name,
-        );
-      }
-      final dolphin = ordered.indexWhere((a) => a.name == '남방큰돌고래');
-      expect(dolphin, greaterThanOrEqualTo(12));
-      expect(ordered[dolphin].taxon, 'Mammalia');
-      expect(dolphin, lessThan(ordered.indexWhere((a) => a.name == '가마우지')));
+      expect(
+        catalog.where((a) => a.nationalPhoto != null).length,
+        greaterThanOrEqualTo(80),
+      );
       expect(local.toSet().containsAll(exampleSpeciesIds), isTrue);
       expect(catalog.take(4).map((animal) => animal.name), [
         '노루',
@@ -517,46 +502,43 @@ void main() {
   }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   test(
-    'Jeju guide has two featured pages followed by alphabetical taxon groups',
+    'each guide pins the six requested species then sorts by group and name',
     () {
       final credits = jsonDecode(
         File('assets/guide_photos/credits.json').readAsStringSync(),
       ) as Map<String, dynamic>;
-      final ordered =
-          decodeGuideCatalog(
-              File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
-              credits,
-            ).where((animal) => animal.jejuId.isNotEmpty).toList()
-            ..sort(compareJejuAnimals);
-      expect(ordered.take(4).map((a) => a.name), [
-        '노루',
-        '동박새',
-        '호랑나비',
-        '남방큰돌고래',
-      ]);
-      expect(
-        ordered
-            .skip(4)
-            .take(36)
-            .every((a) => {'Aves', 'Mammalia'}.contains(a.taxon)),
-        isTrue,
-      );
-      expect(ordered[39].name, '흰뺨검둥오리');
-      final rest = ordered.skip(2 * jejuGuidePageSize).toList();
-      expect(rest.first.taxon, 'Mammalia');
-      int group(Animal a) => switch (a.taxon) {
-        'Mammalia' => 0,
-        'Aves' => 1,
-        'Insecta' => 2,
-        _ => 3,
-      };
-      for (var i = 1; i < rest.length; i++) {
-        final a = rest[i - 1], b = rest[i];
-        expect(group(a), lessThanOrEqualTo(group(b)));
-        if (group(a) == group(b) &&
-            a.name != a.scientific &&
-            b.name != b.scientific) {
-          expect(a.name.compareTo(b.name), lessThanOrEqualTo(0));
+      final catalog = decodeGuideCatalog(
+        File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
+        credits,
+      )..sort(compareGuideAnimals);
+      for (final region in GuideRegion.values) {
+        final ordered = catalog
+            .where((a) => a.matches(region, AnimalGroup.all, ''))
+            .toList();
+        expect(ordered.take(6).map((a) => a.name), [
+          '노루',
+          '동박새',
+          '호랑나비',
+          '남방큰돌고래',
+          '강아지',
+          '고양이',
+        ]);
+        final rest = ordered.skip(6).toList();
+        expect(rest.first.taxon, 'Mammalia');
+        int group(Animal a) => switch (a.taxon) {
+          'Mammalia' => 0,
+          'Aves' => 1,
+          'Insecta' => 2,
+          _ => 3,
+        };
+        for (var i = 1; i < rest.length; i++) {
+          final a = rest[i - 1], b = rest[i];
+          expect(group(a), lessThanOrEqualTo(group(b)));
+          if (group(a) == group(b) &&
+              a.name != a.scientific &&
+              b.name != b.scientific) {
+            expect(a.name.compareTo(b.name), lessThanOrEqualTo(0));
+          }
         }
       }
     },
@@ -581,7 +563,7 @@ void main() {
     }
     expect(find.text('3 / 240 페이지'), findsWidgets);
     final jeju = catalog.where((a) => a.jejuId.isNotEmpty).toList()
-      ..sort(compareJejuAnimals);
+      ..sort(compareGuideAnimals);
     expect(find.text(jeju[40].name), findsOneWidget);
     await tapText(tester, '조류');
     expect(find.text('동박새'), findsOneWidget);

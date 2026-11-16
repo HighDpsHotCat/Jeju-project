@@ -46,33 +46,20 @@ class _AnimalGuideState extends State<AnimalGuide> {
 
   final _scroll = ScrollController();
   int _page = 0;
-  List<Animal>? _jejuSource;
-  List<Animal> _jeju = const [];
+  List<Animal>? _catalogSource;
+  List<Animal> _ordered = const [];
 
-  List<Animal> _jejuAnimals(List<Animal> animals) {
-    if (!identical(animals, _jejuSource)) {
-      _jeju = animals.where((a) => a.jejuId.isNotEmpty).toList()
-        ..sort(compareJejuAnimals);
-      _jejuSource = animals;
+  List<Animal> _orderedAnimals(List<Animal> animals) {
+    if (!identical(animals, _catalogSource)) {
+      _ordered = animals.toList()..sort(compareGuideAnimals);
+      _catalogSource = animals;
     }
-    return _jeju;
+    return _ordered;
   }
 
   void _changePage(int page) {
     setState(() => _page = page);
     if (_scroll.hasClients) _scroll.jumpTo(0);
-  }
-
-  List<Animal>? _nationalSource;
-  List<Animal> _national = const [];
-
-  List<Animal> _nationalAnimals(List<Animal> animals) {
-    if (!identical(animals, _nationalSource)) {
-      _national = animals.where((a) => a.nationalId.isNotEmpty).toList()
-        ..sort(compareNationalAnimals);
-      _nationalSource = animals;
-    }
-    return _national;
   }
 
   @override
@@ -95,22 +82,17 @@ class _AnimalGuideState extends State<AnimalGuide> {
         return FutureBuilder<List<Animal>>(
           future: widget.catalog,
           builder: (context, snapshot) {
-            final animals = snapshot.data ?? const <Animal>[];
-            final regional = switch (_region) {
-              GuideRegion.national => _nationalAnimals(animals),
-              GuideRegion.jeju => _jejuAnimals(animals),
-              GuideRegion.combined => animals,
-            };
+            final animals = _orderedAnimals(snapshot.data ?? const <Animal>[]);
             final filtered =
                 _region == GuideRegion.combined &&
                     _group == AnimalGroup.all &&
                     _query.isEmpty
                 ? animals
-                : regional
+                : animals
                       .where((a) => a.matches(_region, _group, _query))
                       .toList();
             if (_query == '개' || _query == '강아지' || _query == '고양이') {
-              final name = _query == '강아지' ? '개' : _query;
+              final name = _query == '개' ? '강아지' : _query;
               final index = filtered.indexWhere(
                 (a) => a.breeds.isNotEmpty && a.name == name,
               );
