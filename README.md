@@ -1,6 +1,6 @@
 # Jeju-project
 
-[동물 도감](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/) · [제주 관찰 지도](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/map)
+[메인](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/) · [동물 도감](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/?view=guide) · [제주 관찰 지도](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/map)
 
 제주 AI 에이전트 공모전 팀의 Flutter 앱입니다.
 

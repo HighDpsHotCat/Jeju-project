@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>제주 마당</title>
+<style>html,body,iframe{margin:0;width:100%;height:100%;border:0;display:block;background:#fbf6ef}</style></head>
+<body><iframe title="제주 마당" id="player" allow="fullscreen"></iframe>
+<script type="module">
+const frame=document.getElementById("player");
+addEventListener("message", async e=>{
+  if(e.origin!==location.origin || e.source!==frame.contentWindow)return;
+  if(e.data==="yard-exit"){location.replace("/?view=yard");return;}
+  if(e.data!=="yard-ready")return;
+  let demo=false;
+  try {demo=localStorage.getItem("jeju.examples")==="true";}catch{}
+  let animals=[];
+  if(demo){
+    const ids=new Set(["JJ-000837","JJ-004873","JJ-003382","JJ-003554","JJ-002293","JJ-003570","JJ-003658","JJ-004398","JJ-003478","JJ-003671","JJ-002187","JJ-000261"]);
+    try {const rows=await (await fetch("/species.json")).json();
+      animals=rows.filter(r=>ids.has(r.species_id)).map(r=>({id:r.species_id,name:r.korean_name,modelKey:r.species_id==="JJ-003382"?"swallowtail":""}));}catch{}
+  }
+  frame.contentWindow.postMessage(JSON.stringify({version:1,profile:"local",examples:demo,animals}),location.origin);
+});
+frame.src="/yard/index.html";
+</script></body></html>

@@ -30,6 +30,15 @@ const _featured = {
   'JJ-004729': ('dolphin', '제주 바다에서 만나는 동물'),
 };
 
+const _yardModels = {
+  'JJ-000821': ('corgi', '웰시코기'),
+  'JJ-001834': ('tabby', '노란 고양이'),
+  'JJ-002426': ('gull', '갈매기'),
+  'JJ-003483': ('sparrow', '참새'),
+  'JJ-003382': ('swallowtail', '호랑나비'),
+  'JJ-004729': ('dolphin', '남방큰돌고래'),
+};
+
 // Used only when the explorer explicitly turns on the example in Settings.
 const exampleSpeciesIds = {
   'JJ-000837',
@@ -65,11 +74,14 @@ class Animal {
   final String taxon;
   final GuideRegion region;
 
+  String get id => jejuId.isEmpty ? nationalId : jejuId;
+  String get modelKey => _yardModels[jejuId]?.$1 ?? '';
+  String get yardName => _yardModels[jejuId]?.$2 ?? name;
   String get name => korean.isNotEmpty
       ? korean
       : region == GuideRegion.jeju
-          ? '국명 미확인 · $jejuId'
-          : scientific;
+      ? '국명 미확인 · $jejuId'
+      : scientific;
   String? get photo {
     if (guidePhoto != null) return 'assets/guide_photos/$nationalId.jpg';
     final feature = _featured[jejuId];
@@ -77,7 +89,8 @@ class Animal {
   }
 
   String get description =>
-      _featured[jejuId]?.$2 ?? (region == GuideRegion.jeju ? '제주 목격 기록' : scientific);
+      _featured[jejuId]?.$2 ??
+      (region == GuideRegion.jeju ? '제주 목격 기록' : scientific);
 
   String get groupName => switch (taxon) {
     'Mammalia' => '포유류',

@@ -59,9 +59,15 @@ function save(key, value) {
 }
 let demo = stored("examples") === "true",
   explorer = stored("explorer") || "";
-const homeMode = params.get("view") === "home";
-document.body.classList.toggle("home-mode", homeMode);
-$(homeMode ? "home-nav" : "guide-nav").setAttribute("aria-current", "page");
+const view = params.get("view") === "yard" ? "yard" :
+  (params.get("view") === "guide" || ["region","species","group","q"].some(key => params.has(key))) ? "guide" : "main";
+for (const tab of ["main","guide","yard"]) $(tab).hidden = tab !== view;
+$(view + "-nav").setAttribute("aria-current","page");
+if (view === "guide") $("mast-guide").setAttribute("aria-current","page");
+if (params.get("from") === "yard") {
+  $("guide-back").href = "/?view=yard";
+  $("guide-back").setAttribute("aria-label","마당으로 돌아가기");
+}
 if (params.get("region") === "national") $("region").value = "national";
 $("query").value = params.get("q") || "";
 function animalId(row) {
@@ -234,7 +240,7 @@ function details(row) {
 function counts() {
   const label = demo ? "발견한 동물 · 예시" : "발견한 동물";
   $("home-count-label").textContent = $("count-label").textContent = label;
-  $("home-count").textContent = (demo ? examples.size : 0) + "종";
+  $("yard-count").textContent = $("home-count").textContent = (demo ? examples.size : 0) + "종";
   $("guide-count").textContent = (demo ? rows.filter(found).length : 0) + "종";
 }
 function render() {
@@ -368,7 +374,7 @@ function turn(step) {
 }
 $("prev").onclick = () => turn(-1);
 $("next").onclick = () => turn(1);
-$("settings").onclick = () => {
+function settings() {
   const input = node("input");
   input.type = "checkbox";
   input.checked = demo;
@@ -380,8 +386,11 @@ $("settings").onclick = () => {
     counts();
     render();
   };
+  const character = node("button", "나의 캐릭터", "pill");
+  character.onclick = openCharacter;
   sheet(
     "탐험 설정",
+    character,
     label,
     node(
       "p",
@@ -389,7 +398,8 @@ $("settings").onclick = () => {
     ),
   );
 };
-$("character").onclick = () => {
+document.querySelectorAll(".settings").forEach(button => button.onclick = settings);
+function openCharacter() {
   const form = node("form"),
     label = node("label", "탐험가 이름"),
     input = node("input");
@@ -408,13 +418,10 @@ $("character").onclick = () => {
   sheet("나의 캐릭터", form);
 };
 function updateCharacter() {
-  $("character").textContent = explorer || "나의 캐릭터";
+  document.querySelectorAll(".greeting").forEach(el => {
+    el.textContent = explorer ? explorer + "님, 어떤 동물을 만날까요?" : "오늘은 어떤 동물을 만날까요?";
+  });
 }
-$("to-guide").onclick = () => {
-  if (homeMode) {
-    location.href = "/";
-  } else $("guide-title").scrollIntoView({ block: "center" });
-};
 $("camera").onclick = () => {
   $("capture").value = "";
   $("capture").click();
@@ -451,4 +458,4 @@ $("sheet").addEventListener("close", () => {
 });
 updateCharacter();
 counts();
-load();
+if (view === "guide") load();

@@ -3,127 +3,90 @@ import 'package:flutter/material.dart';
 
 import 'style.dart';
 
+enum FieldTab { guide, main, yard }
+
 class FieldNavigation extends StatelessWidget {
   const FieldNavigation({
     super.key,
-    required this.guideSelected,
-    required this.openGuide,
-    required this.openCamera,
-    required this.openHome,
+    required this.selected,
+    required this.onSelect,
   });
-  final bool guideSelected;
-  final VoidCallback openGuide;
-  final VoidCallback openCamera;
-  final VoidCallback openHome;
+  final FieldTab selected;
+  final ValueChanged<FieldTab> onSelect;
 
   @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        const Positioned.fill(
-          top: 7,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: sheet,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-              boxShadow: [
-                BoxShadow(
-                  color: Color(0x0F514731),
-                  blurRadius: 18,
-                  offset: Offset(0, -3),
+  Widget build(BuildContext context) => Material(
+    color: sheet,
+    elevation: 3,
+    shadowColor: const Color(0x24514731),
+    child: SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 0, 12, 5),
+        child: Row(
+          children: [
+            for (final tab in FieldTab.values)
+              Expanded(
+                child: _SideTab(
+                  label: switch (tab) {
+                    FieldTab.guide => '도감',
+                    FieldTab.main => '메인',
+                    FieldTab.yard => '마당',
+                  },
+                  icon: switch (tab) {
+                    FieldTab.guide => CupertinoIcons.book,
+                    FieldTab.main =>
+                      selected == tab
+                          ? CupertinoIcons.house_fill
+                          : CupertinoIcons.house,
+                    FieldTab.yard => null,
+                  },
+                  selected: selected == tab,
+                  onTap: () => onSelect(tab),
                 ),
-              ],
-            ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class FieldCameraButton extends StatelessWidget {
+  const FieldCameraButton({super.key, required this.onPressed});
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: forest,
+    elevation: 3,
+    shape: const CircleBorder(side: BorderSide(color: sheet, width: 3)),
+    clipBehavior: Clip.antiAlias,
+    child: InkWell(
+      onTap: onPressed,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 74, minHeight: 74),
+        child: const Padding(
+          padding: EdgeInsets.all(9),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(CupertinoIcons.camera, color: Colors.white, size: 30),
+              Text(
+                '카메라',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
           ),
         ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 0, 14, 5),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Expanded(
-                  child: _SideTab(
-                    label: '도감',
-                    icon: CupertinoIcons.book,
-                    selected: guideSelected,
-                    onTap: openGuide,
-                  ),
-                ),
-                Semantics(
-                  button: true,
-                  label: '카메라',
-                  onTap: openCamera,
-                  child: ExcludeSemantics(
-                    child: Material(
-                      shape: const CircleBorder(
-                        side: BorderSide(color: sheet, width: 3),
-                      ),
-                      borderOnForeground: true,
-                      color: forest,
-                      clipBehavior: Clip.antiAlias,
-                      child: Ink(
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [Color(0xFF569B48), Color(0xFF1F602C)],
-                          ),
-                        ),
-                        child: InkWell(
-                          onTap: openCamera,
-                          child: ConstrainedBox(
-                            constraints: const BoxConstraints(
-                              minWidth: 74,
-                              minHeight: 74,
-                            ),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 7,
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    CupertinoIcons.camera,
-                                    color: Colors.white,
-                                    size: 32,
-                                  ),
-                                  Text(
-                                    '카메라',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: _SideTab(
-                    label: '마당',
-                    selected: !guideSelected,
-                    onTap: openHome,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ),
+  );
 }
 
 class _SideTab extends StatelessWidget {

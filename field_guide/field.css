@@ -598,10 +598,7 @@ dialog::backdrop {
   .guide {
     padding: 20px 16px;
   }
-  body:not(.home-mode) .home,
-  body.home-mode .guide {
-    display: none;
-  }
+
   .dock {
     width: min(100%, 550px);
     padding: 7px 8px max(7px, env(safe-area-inset-bottom));
@@ -665,3 +662,11 @@ dialog::backdrop {
 .guide-photo { margin: 0 0 12px; }
 .guide-photo img { width: 100%; max-height: 280px; object-fit: contain; }
 .guide-photo figcaption { margin-top: 5px; font-size: .8rem; line-height: 1.5; overflow-wrap: anywhere; }
+
+.journal { display:block; max-width:760px; padding-bottom:155px; }
+.journal [hidden] { display:none; }
+.trail { text-align:left; min-height:clamp(420px,72dvh,860px); background:linear-gradient(to bottom,#fffaf1dd,transparent 42%),url("/art/main_trail.jpg") center/cover; }
+.greeting { font-weight:650; font-size:clamp(18px,2vw,22px); }
+.main-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.action { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:24px; background:var(--paper); padding:.6em 1em; color:var(--forest); font-weight:700; }
+.dock #camera { position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%); margin:0; height:64px; width:64px; }
