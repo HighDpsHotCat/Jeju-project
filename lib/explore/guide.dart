@@ -585,7 +585,7 @@ class _AnimalDetail extends StatelessWidget {
                     ),
                   ),
                 const SizedBox(height: 5),
-                Text(animal.breedId == null ? animal.groupName : '포유류 · 개 품종'),
+                Text(animal.classification),
               ],
             ),
           ),

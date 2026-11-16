@@ -99,6 +99,52 @@ const _dogBreeds = {
   'BREED-french-bulldog': (korean: '프렌치 불도그', english: 'French Bulldog'),
 };
 
+const _catBreeds = {
+  'CAT-norwegian-forest': (
+    korean: '노르웨이 숲고양이',
+    english: 'Norwegian Forest Cat',
+  ),
+  'CAT-devon-rex': (korean: '데본 렉스', english: 'Devon Rex'),
+  'CAT-ragdoll': (korean: '랙돌', english: 'Ragdoll'),
+  'CAT-russian-blue': (korean: '러시안 블루', english: 'Russian Blue'),
+  'CAT-munchkin': (korean: '먼치킨', english: 'Munchkin'),
+  'CAT-maine-coon': (korean: '메인쿤', english: 'Maine Coon'),
+  'CAT-birman': (korean: '버만', english: 'Birman'),
+  'CAT-burmese': (korean: '버미즈', english: 'Burmese'),
+  'CAT-bengal': (korean: '벵갈', english: 'Bengal'),
+  'CAT-british-shorthair': (korean: '브리티시 쇼트헤어', english: 'British Shorthair'),
+  'CAT-siamese': (korean: '샴', english: 'Siamese'),
+  'CAT-somali': (korean: '소말리', english: 'Somali'),
+  'CAT-scottish-fold': (korean: '스코티시 폴드', english: 'Scottish Fold'),
+  'CAT-sphynx': (korean: '스핑크스', english: 'Sphynx'),
+  'CAT-siberian': (korean: '시베리안', english: 'Siberian'),
+  'CAT-american-shorthair': (
+    korean: '아메리칸 쇼트헤어',
+    english: 'American Shorthair',
+  ),
+  'CAT-abyssinian': (korean: '아비시니안', english: 'Abyssinian'),
+  'CAT-exotic-shorthair': (korean: '엑조틱 쇼트헤어', english: 'Exotic Shorthair'),
+  'CAT-turkish-angora': (korean: '터키시 앙고라', english: 'Turkish Angora'),
+  'CAT-persian': (korean: '페르시안', english: 'Persian'),
+};
+
+enum _BreedGroup {
+  dog('개', 'Canis lupus familiaris', _dogBreeds, {
+    '개',
+    '강아지',
+    '반려견',
+    '견종',
+    '개품종',
+  }),
+  cat('고양이', 'Felis catus', _catBreeds, {'고양이', '반려묘', '묘종', '고양이품종'});
+
+  const _BreedGroup(this.label, this.scientific, this.breeds, this.searchTerms);
+  final String label;
+  final String scientific;
+  final Map<String, ({String korean, String english})> breeds;
+  final Set<String> searchTerms;
+}
+
 class Animal {
   const Animal(
     this.jejuId,
@@ -113,7 +159,17 @@ class Animal {
 
   final Map<String, dynamic>? guidePhoto;
   final String? breedId;
-  String? get breedEnglish => _dogBreeds[breedId]?.english;
+  _BreedGroup? get _breedGroup {
+    if (breedId == null) return null;
+    for (final group in _BreedGroup.values) {
+      if (group.breeds.containsKey(breedId)) return group;
+    }
+    return null;
+  }
+
+  String? get breedEnglish => _breedGroup?.breeds[breedId]?.english;
+  String get classification =>
+      _breedGroup == null ? groupName : '$groupName · ${_breedGroup!.label} 품종';
   final String jejuId;
   final String nationalId;
   final String korean;
@@ -164,7 +220,7 @@ class Animal {
       final compact = query.replaceAll(' ', '');
       if (korean.replaceAll(' ', '').contains(compact) ||
           english.toLowerCase().replaceAll(' ', '').contains(compact) ||
-          const {'개', '강아지', '반려견', '견종', '개품종'}.contains(compact)) {
+          _breedGroup!.searchTerms.contains(compact)) {
         return true;
       }
     }
@@ -207,16 +263,17 @@ List<Animal> decodeGuideCatalog(
   });
   return [
     ...species,
-    for (final entry in _dogBreeds.entries)
-      Animal(
-        '',
-        '',
-        entry.value.korean,
-        'Canis lupus familiaris',
-        'Mammalia',
-        GuideRegion.national,
-        breedId: entry.key,
-        guidePhoto: photos[entry.key],
-      ),
+    for (final group in _BreedGroup.values)
+      for (final entry in group.breeds.entries)
+        Animal(
+          '',
+          '',
+          entry.value.korean,
+          group.scientific,
+          'Mammalia',
+          GuideRegion.national,
+          breedId: entry.key,
+          guidePhoto: photos[entry.key],
+        ),
   ];
 }
