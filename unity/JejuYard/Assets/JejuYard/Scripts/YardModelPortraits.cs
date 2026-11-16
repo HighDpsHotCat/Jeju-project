@@ -176,6 +176,8 @@ namespace Jeju.Yard
         {
             var deer = copy.GetComponentInChildren<GrazingDeer>(true);
             if (deer != null) { deer.PoseAt(0f); return deer.transform; }
+            var wildlife = copy.GetComponentInChildren<YardWildlifeResident>(true);
+            if (wildlife != null) return wildlife.InteractionPoint;
             var mammal = copy.GetComponentInChildren<QuadrupedRoamer>(true);
             if (mammal != null) { mammal.PoseAt(0f); return mammal.transform; }
             var bird = copy.GetComponentInChildren<YardBird>(true);

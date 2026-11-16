@@ -36,6 +36,12 @@ const _yardModels = {
   'JJ-004873': ('white_eye', '동박새'),
   'JJ-003658': ('magpie', '까치'),
   'JJ-003671': ('cabbage_white', '배추흰나비'),
+  'JJ-004503': ('chipmunk', '다람쥐'),
+  '120000053353': ('water_deer', '고라니'),
+  '120000053303': ('raccoon_dog', '너구리'),
+  'JJ-001174': ('crow', '까마귀'),
+  'JJ-000261': ('mallard', '청둥오리'),
+  'JJ-002187': ('swallow', '제비'),
   'JJ-000821': ('corgi', '웰시코기'),
   'JJ-001834': ('tabby', '노란 고양이'),
   'JJ-002426': ('gull', '갈매기'),
@@ -87,8 +93,8 @@ class Animal {
   final GuideRegion region;
 
   String get id => jejuId.isEmpty ? nationalId : jejuId;
-  String get modelKey => _yardModels[jejuId]?.$1 ?? '';
-  String get yardName => _yardModels[jejuId]?.$2 ?? name;
+  String get modelKey => _yardModels[id]?.$1 ?? '';
+  String get yardName => _yardModels[id]?.$2 ?? name;
   String get name => korean.isNotEmpty
       ? korean
       : region == GuideRegion.jeju

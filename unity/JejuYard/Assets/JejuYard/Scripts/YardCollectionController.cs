@@ -105,10 +105,37 @@ namespace Jeju.Yard
                     AddModel("magpie",root.transform.Find("Oriental magpie"));
                     AddModel("cabbage_white",root.transform.Find("Small white"));
                     AddModel("swallowtail",root.transform.Find("Asian swallowtail"));
+                    var paint = root.GetComponentInChildren<MeshRenderer>(true).sharedMaterial;
+                    AddWildlife(root.transform, paint, "chipmunk", -3, 1);
+                    AddWildlife(root.transform, paint, "water_deer", 3, 3);
+                    AddWildlife(root.transform, paint, "raccoon_dog", -4, 3);
+                    AddWildlife(root.transform, paint, "crow", 2, 1);
+                    AddWildlife(root.transform, paint, "mallard", 6, -4);
+                    AddWildlife(root.transform, paint, "swallow", -1, -5);
+                    AddWildlife(root.transform, paint, "white_cat", 4, -2);
+                    AddWildlife(root.transform, paint, "jindo", 1, -4);
+                    AddWildlife(root.transform, paint, "beagle", -3, -3);
+                    AddWildlife(root.transform, paint, "poodle", 0, 2);
                 }
                 var dolphin = root.GetComponentInChildren<DolphinVisitor>(true);
                 if (dolphin != null) AddModel("dolphin",dolphin.transform.parent);
             }
+        }
+
+        void AddWildlife(Transform parent, Material paint, string key, float x, float z)
+        {
+            var asset = Resources.Load<GameObject>("YardWildlife/" + key);
+            if (asset == null) { Debug.LogError("Missing yard model: " + key); return; }
+            var anchor = new GameObject(key).transform;
+            anchor.SetParent(parent, false);
+            anchor.localPosition = new Vector3(x, 0, z);
+            var frame = new GameObject("Walker").transform;
+            frame.SetParent(anchor, false);
+            var visual = Instantiate(asset, frame, false);
+            foreach (var renderer in visual.GetComponentsInChildren<MeshRenderer>(true))
+                renderer.sharedMaterial = paint;
+            anchor.gameObject.AddComponent<YardWildlifeResident>().Configure(frame, key);
+            AddModel(key, anchor);
         }
 
         void AddModel(string key, Transform anchor)
@@ -210,7 +237,7 @@ namespace Jeju.Yard
 
         void Apply(YardGuideSnapshot snapshot, Source next, string json)
         {
-            collection = snapshot;
+            collection = YardGuideSnapshot.WithYardModels(snapshot);
             source = next;
             activeJson = json;
             registered.Clear();
@@ -218,7 +245,7 @@ namespace Jeju.Yard
             placementKey = null;
             if (snapshot != null)
             {
-                foreach (var animal in snapshot.animals) registered.Add(animal.id,animal);
+                foreach (var animal in collection.animals) registered.Add(animal.id,animal);
                 string scope = source == Source.StandaloneDemo ? "demo" : snapshot.examples ? "examples" : "guide";
                 placementKey = "jeju.yard.placement.v1." + scope + "." +
                     Convert.ToBase64String(Encoding.UTF8.GetBytes(snapshot.profile));

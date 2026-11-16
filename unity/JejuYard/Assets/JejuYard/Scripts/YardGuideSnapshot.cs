@@ -135,6 +135,49 @@ namespace Jeju.Yard
             }
         }
 
+        static readonly Dictionary<string,string> WildlifeKeys = new Dictionary<string,string>
+        {
+            { "JJ-004503", "chipmunk" },
+            { "120000053353", "water_deer" },
+            { "120000053303", "raccoon_dog" },
+            { "JJ-001174", "crow" },
+            { "JJ-000261", "mallard" },
+            { "JJ-002187", "swallow" },
+        };
+
+        internal static YardGuideSnapshot WithYardModels(YardGuideSnapshot source)
+        {
+            if (source == null) return null;
+            var entries = new List<Animal>();
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var animal in source.animals) ids.Add(animal.id);
+            foreach (var animal in source.animals)
+            {
+                string id = animal.id.StartsWith("KTSN-", StringComparison.Ordinal) ? animal.id.Substring(5) : animal.id;
+                var key = WildlifeKeys.TryGetValue(id, out var wildlife) ? wildlife : animal.modelKey;
+                entries.Add(new Animal(animal.id, animal.name, key, animal.firstMetDate, animal.firstMetLocation)
+                    { startInYard = animal.startInYard });
+                void AddCoat(string model, string name)
+                {
+                    string coatId = animal.id + "/" + model;
+                    if (ids.Add(coatId)) entries.Add(new Animal(coatId, name, model, animal.firstMetDate, animal.firstMetLocation));
+                }
+                switch (id)
+                {
+                    case "JJ-001834":
+                        AddCoat("white_cat", "흰 고양이");
+                        break;
+                    case "JJ-000821":
+                        AddCoat("jindo", "진돗개");
+                        AddCoat("beagle", "비글");
+                        AddCoat("poodle", "푸들");
+                        break;
+                }
+            }
+            return new YardGuideSnapshot { version = source.version, profile = source.profile,
+                examples = source.examples, animals = entries.ToArray() };
+        }
+
         public static YardGuideSnapshot Demo()
         {
             return new YardGuideSnapshot
@@ -152,7 +195,13 @@ namespace Jeju.Yard
                     new Animal("JJ-002426", "갈매기", "gull", "2026-05-08", "서귀포시 성산읍"),
                     new Animal("JJ-003483", "참새", "sparrow", "2026-05-12", "제주시 조천읍"),
                     new Animal("JJ-003382", "호랑나비", "swallowtail", "2026-05-16", "제주시 한림읍"),
-                    new Animal("JJ-004729", "남방큰돌고래", "dolphin", "2026-05-21", "서귀포시 대정읍")
+                    new Animal("JJ-004729", "남방큰돌고래", "dolphin", "2026-05-21", "서귀포시 대정읍"),
+                    new Animal("JJ-004503", "다람쥐", "chipmunk"),
+                    new Animal("120000053353", "고라니", "water_deer"),
+                    new Animal("120000053303", "너구리", "raccoon_dog"),
+                    new Animal("JJ-001174", "까마귀", "crow"),
+                    new Animal("JJ-000261", "청둥오리", "mallard"),
+                    new Animal("JJ-002187", "제비", "swallow")
                 }
             };
         }
