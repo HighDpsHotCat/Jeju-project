@@ -464,7 +464,17 @@ void main() {
     final main = tester.getCenter(find.text('메인'));
     final camera = tester.getCenter(find.text('카메라'));
     expect(camera.dx, closeTo(main.dx, 1));
-    expect(camera.dy, lessThan(main.dy));
+    final map = tester.getRect(
+      find.ancestor(
+        of: find.text('지도'),
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      ),
+    );
+    expect(map.center.dx, closeTo(main.dx, 1));
+    expect(map.top, greaterThan(camera.dy));
+    expect(map.bottom, lessThan(main.dy));
+    expect(map.width, greaterThanOrEqualTo(246));
+    expect(map.height, greaterThanOrEqualTo(96));
     expect(tester.getCenter(find.text('도감')).dx, lessThan(main.dx));
     expect(tester.getCenter(find.text('마당')).dx, greaterThan(main.dx));
     await tapText(tester, '지도');
@@ -472,7 +482,16 @@ void main() {
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
     await tapText(tester, '마당');
+    expect(find.text('카메라'), findsNothing);
     expect(find.text('나의 캐릭터'), findsNothing);
+    final enter = tester.getSize(
+      find.ancestor(
+        of: find.text('마당 입장'),
+        matching: find.byWidgetPredicate((widget) => widget is FilledButton),
+      ),
+    );
+    expect(enter.width, greaterThanOrEqualTo(290));
+    expect(enter.height, greaterThanOrEqualTo(76));
     await tapText(tester, '마당 입장');
     expect(find.byType(AppBar), findsNothing);
     expect(find.byType(BackButton), findsNothing);
@@ -480,6 +499,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('마당 입장'), findsOneWidget);
     await tapText(tester, '발견한 동물');
+    expect(find.text('카메라'), findsNothing);
     await tester.tap(find.byTooltip('마당으로 돌아가기'));
     await tester.pumpAndSettle();
     expect(find.text('나의 마당'), findsOneWidget);

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import 'navigation.dart';
 import 'style.dart';
 
 class ExplorerHome extends StatelessWidget {
@@ -13,6 +14,7 @@ class ExplorerHome extends StatelessWidget {
     required this.openSettings,
     required this.openGuide,
     required this.openMap,
+    required this.openCamera,
   });
 
   final String name;
@@ -21,6 +23,7 @@ class ExplorerHome extends StatelessWidget {
   final VoidCallback openSettings;
   final VoidCallback openGuide;
   final VoidCallback openMap;
+  final VoidCallback openCamera;
 
   static final _actionStyle = OutlinedButton.styleFrom(
     foregroundColor: ink,
@@ -30,64 +33,119 @@ class ExplorerHome extends StatelessWidget {
   );
 
   @override
-  Widget build(BuildContext context) => SingleChildScrollView(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _ExplorerHeader(title: '나의 탐험', openSettings: openSettings),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name.isEmpty ? '오늘은 어떤 동물을 만날까요?' : '$name님, 어떤 동물을 만날까요?',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: -.6,
-                ),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 2,
-                children: [
-                  OutlinedButton.icon(
-                    icon: const Icon(Icons.pets_rounded, size: 18, color: leaf),
-                    label: Wrap(
-                      spacing: 6,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        Text(examples ? '발견한 동물 · 예시' : '발견한 동물'),
-                        Text(
-                          '$total종',
-                          style: const TextStyle(
-                            color: forest,
-                            fontWeight: FontWeight.w800,
-                          ),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, bounds) => SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: bounds.maxHeight),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _ExplorerHeader(title: '나의 탐험', openSettings: openSettings),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 10, 24, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name.isEmpty
+                            ? '오늘은 어떤 동물을 만날까요?'
+                            : '$name님, 어떤 동물을 만날까요?',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: -.6,
                         ),
-                      ],
-                    ),
-                    onPressed: openGuide,
-                    style: _actionStyle,
+                      ),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        icon: const Icon(
+                          Icons.pets_rounded,
+                          size: 18,
+                          color: leaf,
+                        ),
+                        label: Wrap(
+                          spacing: 6,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(examples ? '발견한 동물 · 예시' : '발견한 동물'),
+                            Text(
+                              '$total종',
+                              style: const TextStyle(
+                                color: forest,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        onPressed: openGuide,
+                        style: _actionStyle,
+                      ),
+                    ],
                   ),
-                  OutlinedButton.icon(
-                    icon: const Icon(
-                      Icons.map_outlined,
-                      size: 19,
-                      color: forest,
-                    ),
-                    label: const Text('지도'),
+                ),
+              ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Column(
+                children: [
+                  FieldCameraButton(onPressed: openCamera),
+                  const SizedBox(height: 10),
+                  _ExplorerAction(
+                    label: '지도',
+                    icon: Icons.map_outlined,
                     onPressed: openMap,
-                    style: _actionStyle,
+                    size: const Size(246, 96),
+                    color: const Color(0xFFFFB344),
+                    foreground: const Color(0xFF30200D),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      ],
+      ),
+    ),
+  );
+}
+
+class _ExplorerAction extends StatelessWidget {
+  const _ExplorerAction({
+    required this.label,
+    required this.icon,
+    required this.onPressed,
+    required this.size,
+    required this.color,
+    required this.foreground,
+  });
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Size size;
+  final Color color;
+  final Color foreground;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    width: size.width,
+    child: FilledButton.icon(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: foreground,
+        minimumSize: Size(0, size.height),
+        elevation: 4,
+        shadowColor: const Color(0x990F2418),
+        side: const BorderSide(color: sheet, width: 2),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        textStyle: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+      ),
+      icon: Icon(icon, size: 36),
+      label: Text(label, textAlign: TextAlign.center),
     ),
   );
 }
@@ -116,7 +174,7 @@ class ExplorerYard extends StatelessWidget {
       builder: (context, size) {
         final artHeight = math.min(
           size.maxWidth * 504 / 515,
-          math.max(238.0, size.maxHeight - 284),
+          math.max(150.0, size.maxHeight - 322),
         );
         return SingleChildScrollView(
           child: ConstrainedBox(
@@ -172,19 +230,15 @@ class ExplorerYard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    FilledButton.tonal(
-                      onPressed: enterYard,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFE3ECCB),
-                        foregroundColor: ink,
-                        minimumSize: const Size(136, 38),
-                      ),
-                      child: const Text(
-                        '마당 입장',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 18),
+                      child: _ExplorerAction(
+                        label: '마당 입장',
+                        icon: Icons.cottage_outlined,
+                        onPressed: enterYard,
+                        size: const Size(290, 76),
+                        color: forest,
+                        foreground: Colors.white,
                       ),
                     ),
                   ],

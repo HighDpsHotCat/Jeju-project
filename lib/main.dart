@@ -431,81 +431,70 @@ class _FieldJournalState extends State<_FieldJournal>
                       ),
                     SafeArea(
                       bottom: false,
-                      child: Column(
+                      child: IndexedStack(
+                        sizing: StackFit.expand,
+                        index: _tab.index,
                         children: [
-                          Expanded(
-                            child: IndexedStack(
-                              sizing: StackFit.expand,
-                              index: _tab.index,
-                              children: [
-                                if (_catalog == null)
-                                  const SizedBox.shrink()
-                                else
-                                  AnimalGuide(
-                                    key: _guideSearchKey,
-                                    initialSearch: _guideSearch,
-                                    catalog: _catalog!,
-                                    discovered: ids,
-                                    breedIds: _breedIds,
-                                    onCollectBreed: _examples || !_recordsReady
-                                        ? null
-                                        : (animal, breed) async {
-                                            if (guideProfile != _profile) {
-                                              return '프로필이 바뀌었어요. 도감을 다시 열어 주세요.';
-                                            }
-                                            return _register(
-                                              animal,
-                                              FirstEncounter(
-                                                calendarDay(DateTime.now()),
-                                                '',
-                                              ),
-                                              breed: breed,
-                                            );
-                                          },
-                                    examples: _examples,
-                                    onBack: _goBack,
-                                    backLabel: _guideOrigin == FieldTab.yard
-                                        ? '마당으로 돌아가기'
-                                        : '메인으로 돌아가기',
-                                    onRegister: _recordsReady && !_examples
-                                        ? _registerManually
-                                        : null,
-                                    onSendToYard: _snapshot.value == null
-                                        ? null
-                                        : _copyToYard,
-                                    onRetry: () {
-                                      setState(
-                                        () =>
-                                            _catalog = widget.app.loadAnimals(),
+                          if (_catalog == null)
+                            const SizedBox.shrink()
+                          else
+                            AnimalGuide(
+                              key: _guideSearchKey,
+                              initialSearch: _guideSearch,
+                              catalog: _catalog!,
+                              discovered: ids,
+                              breedIds: _breedIds,
+                              onCollectBreed: _examples || !_recordsReady
+                                  ? null
+                                  : (animal, breed) async {
+                                      if (guideProfile != _profile) {
+                                        return '프로필이 바뀌었어요. 도감을 다시 열어 주세요.';
+                                      }
+                                      return _register(
+                                        animal,
+                                        FirstEncounter(
+                                          calendarDay(DateTime.now()),
+                                          '',
+                                        ),
+                                        breed: breed,
                                       );
-                                      _refreshRecords();
                                     },
-                                  ),
-                                ExplorerHome(
-                                  name: _name,
-                                  total: ids.length,
-                                  examples: _examples,
-                                  openSettings: _settings,
-                                  openGuide: _openGuide,
-                                  openMap: () =>
-                                      Navigator.pushNamed(context, mapRoute),
-                                ),
-                                ExplorerYard(
-                                  name: _name,
-                                  total: ids.length,
-                                  examples: _examples,
-                                  openSettings: _settings,
-                                  openGuide: _openGuide,
-                                  enterYard: _enterYard,
-                                ),
-                              ],
+                              examples: _examples,
+                              onBack: _goBack,
+                              backLabel: _guideOrigin == FieldTab.yard
+                                  ? '마당으로 돌아가기'
+                                  : '메인으로 돌아가기',
+                              onRegister: _recordsReady && !_examples
+                                  ? _registerManually
+                                  : null,
+                              onSendToYard: _snapshot.value == null
+                                  ? null
+                                  : _copyToYard,
+                              onRetry: () {
+                                setState(
+                                  () => _catalog = widget.app.loadAnimals(),
+                                );
+                                _refreshRecords();
+                              },
                             ),
+                          ExplorerHome(
+                            name: _name,
+                            total: ids.length,
+                            examples: _examples,
+                            openSettings: _settings,
+                            openGuide: _openGuide,
+                            openCamera: _openCamera,
+                            openMap: () =>
+                                Navigator.pushNamed(context, mapRoute),
                           ),
-                          if (!keyboardOpen)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: FieldCameraButton(onPressed: _openCamera),
-                            ),
+                          ExplorerYard(
+                            name: _name,
+                            total: ids.length,
+                            examples: _examples,
+                            openSettings: _settings,
+                            openGuide: _openGuide,
+                            enterYard: _enterYard,
+                          ),
                         ],
                       ),
                     ),
