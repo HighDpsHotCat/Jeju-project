@@ -15,7 +15,8 @@ import 'explore/home.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import 'explore/navigation.dart';
-import 'explore/profile.dart';
+import 'explore/credits.dart';
+import 'explore/observation_map.dart';
 import 'explore/style.dart';
 import 'explore/yard.dart';
 import 'explore/yard_file.dart';
@@ -74,8 +75,9 @@ class _FieldJournal extends StatefulWidget {
 
 class _FieldJournalState extends State<_FieldJournal>
     with WidgetsBindingObserver {
-  late String _name = widget.app.preferences?.getString('explorer.name') ?? '';
-  late bool _examples =
+  late final String _name =
+      widget.app.preferences?.getString('explorer.name') ?? '';
+  late final bool _examples =
       widget.app.preferences?.getBool('explorer.examples') ?? false;
   Map<String, FirstEncounter> _registered = {};
   String _profile = 'local';
@@ -292,6 +294,14 @@ class _FieldJournalState extends State<_FieldJournal>
       'jeju-wildlife-field-guide.gimhoyeon.chatgpt.site',
       '/map',
     );
+    if (!kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS)) {
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(builder: (_) => ObservationMapPage(url: url)),
+      );
+      return;
+    }
     try {
       if (await launchUrl(url, mode: LaunchMode.externalApplication)) return;
     } on PlatformException {
@@ -332,38 +342,10 @@ class _FieldJournalState extends State<_FieldJournal>
     }
   }
 
-  Future<void> _settings() async {
-    final value = await showFieldSheet<bool>(
+  void _openCredits() {
+    Navigator.of(
       context,
-      SettingsSheet(examples: _examples, openCharacter: _character),
-    );
-    if (value == null || !mounted || value == _examples) return;
-    _exportGeneration++;
-    setState(() {
-      _examples = value;
-      _snapshot.value = null;
-    });
-    await _store(widget.app.preferences?.setBool('explorer.examples', value));
-    if (mounted) await _publishYard();
-  }
-
-  Future<void> _character() async {
-    final value = await showFieldSheet<String>(
-      context,
-      CharacterSheet(name: _name),
-    );
-    if (value == null || !mounted || value == _name) return;
-    setState(() => _name = value);
-    await _store(widget.app.preferences?.setString('explorer.name', value));
-  }
-
-  Future<void> _store(Future<bool>? write) async {
-    try {
-      if (await write == true) return;
-    } catch (_) {
-      // The current session can still use the chosen setting.
-    }
-    if (mounted) _message('이 기기에 설정을 저장하지 못했어요.');
+    ).push(MaterialPageRoute<void>(builder: (_) => const PhotoCreditsPage()));
   }
 
   @override
@@ -431,24 +413,22 @@ class _FieldJournalState extends State<_FieldJournal>
                                   ),
                                 ExplorerHome(
                                   name: _name,
-                                  total: ids.length,
-                                  examples: _examples,
-                                  openSettings: _settings,
-                                  openGuide: _openGuide,
+                                  openCredits: _openCredits,
+                                  openCamera: _openCamera,
                                   openMap: _openMap,
                                 ),
                                 ExplorerYard(
                                   name: _name,
                                   total: ids.length,
                                   examples: _examples,
-                                  openSettings: _settings,
+                                  openCredits: _openCredits,
                                   openGuide: _openGuide,
                                   enterYard: _enterYard,
                                 ),
                               ],
                             ),
                           ),
-                          if (!keyboardOpen)
+                          if (!keyboardOpen && _tab != FieldTab.main)
                             Padding(
                               padding: const EdgeInsets.symmetric(vertical: 8),
                               child: FieldCameraButton(onPressed: _openCamera),

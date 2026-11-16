@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 enum GuideRegion {
-  jeju('제주 목격 생물'),
+  jeju('제주 생물'),
   national('전국 도감');
 
   const GuideRegion(this.label);

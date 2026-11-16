@@ -667,6 +667,36 @@ dialog::backdrop {
 .journal [hidden] { display:none; }
 .trail { text-align:left; min-height:clamp(420px,72dvh,860px); background:linear-gradient(to bottom,#fffaf1dd,transparent 42%),url("/art/main_trail.jpg") center/cover; }
 .greeting { font-weight:650; font-size:clamp(18px,2vw,22px); }
-.main-actions { display:flex; flex-wrap:wrap; gap:8px; }
-.action { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:24px; background:var(--paper); padding:.6em 1em; color:var(--forest); font-weight:700; }
-.dock #camera { position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%); margin:0; height:64px; width:64px; }
+
+.credits-button {
+  display:grid; place-items:center; width:46px; height:46px; border-radius:50%;
+  background:var(--paper); color:var(--ink); border:1px solid var(--line); font-size:21px;
+}
+body[data-view="main"] .journal { padding:0; max-width:760px; }
+.trail {
+  display:flex; flex-direction:column; min-height:100svh; border:0; border-radius:0;
+  padding:clamp(18px,4vw,36px); padding-bottom:calc(84px + env(safe-area-inset-bottom));
+}
+.trail .greeting { margin-top:12px; }
+.main-actions { margin-top:auto; padding-top:32px; display:grid; justify-items:center; gap:12px; }
+.primary-action {
+  display:inline-flex; justify-content:center; align-items:center; gap:10px;
+  width:min(100%,260px); min-height:60px; padding:12px 24px; border-radius:18px;
+  color:white; background:#205731; border:2px solid #fff9e9; box-shadow:0 3px 12px #14261640;
+  font-size:22px; font-weight:800;
+}
+.yard-actions { display:grid; justify-items:center; gap:12px; }
+.yard-discoveries { justify-self:start; display:flex; align-items:center; gap:5px; min-height:44px; color:var(--ink); }
+#yard:not([hidden]) { display:flex; flex-direction:column; min-height:min(730px,calc(100svh - 150px)); }
+#yard .yard-actions { margin-top:auto; }
+#yard .hero-art img { max-height:min(40svh,360px); object-fit:contain; }
+#camera {
+  display:grid; place-content:center; justify-items:center; width:66px; height:66px; padding:0;
+  border-radius:50%; border:3px solid #fff9e9; color:white; background:#86350e;
+  box-shadow:0 2px 10px #24220f80; font-size:12px; font-weight:750;
+}
+#camera i { font-size:21px; }
+.dock #camera { position:absolute; bottom:calc(100% + 7px); left:50%; transform:translateX(-50%); margin:0; }
+.credit-list { list-style:none; padding:0; margin:0; }
+.credit-list li { padding:10px 0; border-bottom:1px solid var(--line); overflow-wrap:anywhere; }
+.credit-list a { color:var(--forest); text-decoration:underline; }

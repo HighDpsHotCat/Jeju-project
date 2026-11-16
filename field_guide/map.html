@@ -10,19 +10,9 @@
     <script type="module" src="/map.js"></script>
   </head>
   <body>
-    <header class="mast">
-      <div class="mast-inner">
-        <a class="brand" href="/"><span class="brand-icon" data-icon="sprout"></span>제주 탐험</a>
-        <nav aria-label="주 메뉴">
-          <a href="/?view=guide"><i data-icon="book"></i>도감</a>
-          <a class="current" aria-current="page" href="/map"><i data-icon="map"></i>관찰 지도</a>
-          <a class="source-link" href="/ecology">생태자연도</a>
-        </nav>
-      </div>
-    </header>
     <main class="atlas">
       <div class="map-title">
-        <h1>제주 관찰 지도</h1>
+        <div class="title-line"><a class="back" href="/" aria-label="메인으로 돌아가기" title="메인으로 돌아가기">←</a><h1>제주 관찰 지도</h1></div>
         <select id="layer-select" aria-label="지도에서 볼 내용">
           <option value="visit">탐방 장소</option>
           <option value="habitat">서식 기록</option>

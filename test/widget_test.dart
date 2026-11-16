@@ -303,15 +303,15 @@ void main() {
     tester,
   ) async {
     await start(tester, discoveries: {'JJ-000837'});
-    expect(find.text('1종'), findsOneWidget);
-    await tapText(tester, '발견한 동물');
+    expect(find.text('1종'), findsNothing);
+    await tapText(tester, '도감');
     expect(find.text('1종'), findsOneWidget);
     expect(find.text('등록 완료'), findsOneWidget);
     await tapText(tester, '조류');
     expect(find.text('동박새'), findsOneWidget);
     expect(find.text('노루'), findsNothing);
     await tapText(tester, '전체');
-    await tapText(tester, '제주 목격 생물');
+    await tapText(tester, '제주 생물');
     await tester.tap(
       find.widgetWithText(CheckedPopupMenuItem<GuideRegion>, '전국 도감'),
     );
@@ -330,50 +330,55 @@ void main() {
     expect(find.text('노루'), findsOneWidget);
     await tester.tap(find.byTooltip('메인으로 돌아가기'));
     await tester.pumpAndSettle();
-    expect(find.text('나의 탐험'), findsOneWidget);
+    expect(find.text('제주 탐험'), findsOneWidget);
   });
 
   testWidgets(
     'example mode is explicit and leaves the real collection intact',
     (tester) async {
       String? snapshot;
-      final prefs = await start(
+      await start(
         tester,
+        initial: {'explorer.examples': true},
         publish: (value) async => snapshot = value,
       );
-      expect(find.text('0종'), findsOneWidget);
-      await tapText(tester, '설정');
-      await tapText(tester, '예시 기록 보기');
-      await tapText(tester, '적용');
-      expect(prefs.getBool('explorer.examples'), isTrue);
       expect(jsonDecode(snapshot!)['examples'], true);
       await tapText(tester, '도감');
       expect(find.text('3종'), findsOneWidget);
       expect(find.text('발견한 동물 · 예시'), findsOneWidget);
       expect(find.text('등록 완료'), findsNWidgets(3));
       await tapText(tester, '마당');
-      await tapText(tester, '설정');
-      await tapText(tester, '예시 기록 보기');
-      await tapText(tester, '적용');
-      expect(find.text('0종'), findsOneWidget);
-      expect(jsonDecode(snapshot!)['examples'], false);
-      expect(jsonDecode(snapshot!)['animals'], isEmpty);
+      expect(find.text('발견한 동물 · 예시 12종'), findsOneWidget);
     },
   );
 
-  testWidgets('character, camera and guide work on a narrow enlarged display', (
+  testWidgets('credits, camera and guide work on a narrow enlarged display', (
     tester,
   ) async {
     tester.platformDispatcher.textScaleFactorTestValue = 1.6;
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
-    final prefs = await start(tester, size: const Size(320, 640));
-    await tapText(tester, '설정');
-    await tester.ensureVisible(find.text('나의 캐릭터'));
-    await tapText(tester, '나의 캐릭터');
-    await tester.enterText(find.byType(TextFormField), '한라');
-    await tapText(tester, '저장');
-    expect(prefs.getString('explorer.name'), '한라');
-    await tapText(tester, '적용');
+    await start(tester, size: const Size(320, 640));
+    final creditBytes = await tester.runAsync(
+      () => File('assets/guide_photos/credits.json').readAsBytes(),
+    );
+    final messenger = tester.binding.defaultBinaryMessenger;
+    messenger.setMockMessageHandler('flutter/assets', (message) async {
+      final key = utf8.decode(
+        message!.buffer.asUint8List(
+          message.offsetInBytes,
+          message.lengthInBytes,
+        ),
+      );
+      if (key != 'assets/guide_photos/credits.json') return null;
+      return ByteData.sublistView(creditBytes!);
+    });
+    addTearDown(() => messenger.setMockMessageHandler('flutter/assets', null));
+    await tester.tap(find.byTooltip('저작권 및 출처'));
+    await tester.pumpAndSettle();
+    expect(find.text('저작권 및 출처'), findsOneWidget);
+    expect(find.byType(ExpansionTile), findsWidgets);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
     await tapText(tester, '카메라');
     expect(find.text('관찰 카메라'), findsOneWidget);
     await tester.binding.handlePopRoute();
@@ -401,7 +406,7 @@ void main() {
     tester.widget<YardPlayer>(find.byType(YardPlayer)).onExit();
     await tester.pumpAndSettle();
     expect(find.text('마당 입장'), findsOneWidget);
-    await tapText(tester, '발견한 동물');
+    await tapText(tester, '발견한 동물 0종');
     await tester.tap(find.byTooltip('마당으로 돌아가기'));
     await tester.pumpAndSettle();
     expect(find.text('나의 마당'), findsOneWidget);
@@ -419,6 +424,6 @@ void main() {
     expect(find.text('팀 지도 화면'), findsOneWidget);
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
-    expect(find.text('나의 탐험'), findsOneWidget);
+    expect(find.text('제주 탐험'), findsOneWidget);
   });
 }

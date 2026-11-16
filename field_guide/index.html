@@ -12,32 +12,23 @@
     <script type="module" src="/guide.js"></script>
   </head>
   <body>
-    <header class="mast">
-      <div class="mast-inner">
-        <a class="brand" href="/"
-          ><span class="brand-icon" data-icon="sprout"></span>제주 탐험</a
-        >
-        <nav aria-label="주 메뉴">
-          <a id="mast-guide" href="/?view=guide"
-            ><i data-icon="book"></i>도감</a
-          ><a href="/map"><i data-icon="map"></i>관찰 지도</a
-          ><a class="source-link" href="/ecology">생태자연도</a>
-        </nav>
-      </div>
-    </header>
     <main class="journal">
       <section class="home paper trail" id="main" aria-labelledby="main-title">
-        <div class="panel-head"><h1 class="brush" id="main-title">나의 탐험</h1><button class="icon-name settings"><i data-icon="settings"></i>설정</button></div>
+        <div class="panel-head"><h1 class="brush" id="main-title">제주 탐험</h1><button class="credits-button" aria-label="저작권 및 출처" title="저작권 및 출처"><i data-icon="book"></i></button></div>
         <p class="greeting">오늘은 어떤 동물을 만날까요?</p>
-        <div class="main-actions"><a class="action" href="/?view=guide"><i data-icon="paw"></i><span id="home-count-label">발견한 동물</span> <b id="home-count">0종</b></a>
-        <a class="action" href="/map"><i data-icon="map"></i>지도</a></div>
+        <div class="main-actions">
+          <div id="main-camera"></div>
+          <a class="primary-action" href="/map"><i data-icon="map"></i>지도</a>
+        </div>
       </section>
       <section class="home paper" id="yard" aria-labelledby="yard-title" hidden>
-        <div class="panel-head"><h1 class="brush" id="yard-title">나의 마당</h1><button class="icon-name settings"><i data-icon="settings"></i>설정</button></div>
+        <div class="panel-head"><h1 class="brush" id="yard-title">나의 마당</h1><button class="credits-button" aria-label="저작권 및 출처" title="저작권 및 출처"><i data-icon="book"></i></button></div>
         <h2 class="greeting">오늘은 어떤 동물을 만날까요?</h2>
         <div class="hero-art"><img src="/art/explorer.jpg" alt="한라산 돌담 앞의 탐험가"></div>
-        <a class="character action" href="/yard">마당 입장</a>
-        <p><a class="action" href="/?view=guide&amp;from=yard"><i data-icon="paw"></i>발견한 동물 <b id="yard-count">0종</b></a></p>
+        <div class="yard-actions">
+          <a class="primary-action" href="/yard"><i data-icon="house"></i>마당 입장</a>
+          <a class="yard-discoveries" href="/?view=guide&amp;from=yard"><i data-icon="paw"></i><span id="yard-count-label">발견한 동물</span> <b id="yard-count">0종</b></a>
+        </div>
       </section>
       <section hidden class="guide paper" id="guide" aria-labelledby="guide-title">
         <div class="panel-head">
@@ -48,7 +39,7 @@
             <h1 id="guide-title">동물 도감</h1>
           </div>
           <select id="region" aria-label="도감 지역 선택">
-            <option value="jeju">제주 목격 생물</option>
+            <option value="jeju">제주 생물</option>
             <option value="national">전국 도감</option>
           </select>
         </div>

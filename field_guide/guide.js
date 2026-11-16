@@ -50,20 +50,14 @@ function stored(key) {
     return null;
   }
 }
-function save(key, value) {
-  try {
-    localStorage.setItem("jeju." + key, value);
-  } catch {
-    /* Current tab still works. */
-  }
-}
-let demo = stored("examples") === "true",
-  explorer = stored("explorer") || "";
+const demo = stored("examples") === "true";
+const explorer = stored("explorer") || "";
 const view = params.get("view") === "yard" ? "yard" :
   (params.get("view") === "guide" || ["region","species","group","q"].some(key => params.has(key))) ? "guide" : "main";
 for (const tab of ["main","guide","yard"]) $(tab).hidden = tab !== view;
 $(view + "-nav").setAttribute("aria-current","page");
-if (view === "guide") $("mast-guide").setAttribute("aria-current","page");
+document.body.dataset.view = view;
+if (view === "main") $("main-camera").append($("camera"));
 if (params.get("from") === "yard") {
   $("guide-back").href = "/?view=yard";
   $("guide-back").setAttribute("aria-label","마당으로 돌아가기");
@@ -239,8 +233,8 @@ function details(row) {
 }
 function counts() {
   const label = demo ? "발견한 동물 · 예시" : "발견한 동물";
-  $("home-count-label").textContent = $("count-label").textContent = label;
-  $("yard-count").textContent = $("home-count").textContent = (demo ? examples.size : 0) + "종";
+  $("yard-count-label").textContent = $("count-label").textContent = label;
+  $("yard-count").textContent = (demo ? examples.size : 0) + "종";
   $("guide-count").textContent = (demo ? rows.filter(found).length : 0) + "종";
 }
 function render() {
@@ -374,49 +368,33 @@ function turn(step) {
 }
 $("prev").onclick = () => turn(-1);
 $("next").onclick = () => turn(1);
-function settings() {
-  const input = node("input");
-  input.type = "checkbox";
-  input.checked = demo;
-  const label = node("label");
-  label.append(input, " 예시 기록 보기");
-  input.onchange = () => {
-    demo = input.checked;
-    save("examples", String(demo));
-    counts();
-    render();
-  };
-  const character = node("button", "나의 캐릭터", "pill");
-  character.onclick = openCharacter;
-  sheet(
-    "탐험 설정",
-    character,
-    label,
-    node(
-      "p",
-      "12종의 예시 기록으로 등록 표시를 살펴봅니다. 개인 발견 기록은 모바일 앱에 저장됩니다.",
-    ),
-  );
-};
-document.querySelectorAll(".settings").forEach(button => button.onclick = settings);
-function openCharacter() {
-  const form = node("form"),
-    label = node("label", "탐험가 이름"),
-    input = node("input");
-  input.type = "text";
-  input.maxLength = 20;
-  input.value = explorer;
-  label.append(input);
-  form.append(label, node("button", "저장", "pill"));
-  form.onsubmit = (e) => {
-    e.preventDefault();
-    explorer = input.value.trim();
-    save("explorer", explorer);
-    updateCharacter();
-    $("sheet").close();
-  };
-  sheet("나의 캐릭터", form);
-};
+async function showCredits() {
+  const content = node("div");
+  content.textContent = "사진 출처를 불러오는 중…";
+  sheet("저작권 및 출처", content);
+  try {
+    const response = await fetch("/photo-credits.json");
+    if (!response.ok) throw Error();
+    const photos = Object.values(await response.json());
+    photos.sort((a, b) => a.name.localeCompare(b.name, "ko"));
+    const list = node("ul", null, "credit-list");
+    for (const photo of photos) {
+      const item = node("li");
+      const source = node("a", photo.name);
+      source.href = photo.source;
+      const license = node("a", photo.license);
+      license.href = photo.licenseUrl;
+      item.append(source, " · " + (photo.displayCredit || photo.author) + " · ", license);
+      list.append(item);
+    }
+    content.replaceChildren(list);
+  } catch {
+    const retry = node("button", "다시 불러오기", "pill");
+    retry.onclick = showCredits;
+    content.replaceChildren("사진 출처를 불러오지 못했어요. ", retry);
+  }
+}
+document.querySelectorAll(".credits-button").forEach(button => button.onclick = showCredits);
 function updateCharacter() {
   document.querySelectorAll(".greeting").forEach(el => {
     el.textContent = explorer ? explorer + "님, 어떤 동물을 만날까요?" : "오늘은 어떤 동물을 만날까요?";

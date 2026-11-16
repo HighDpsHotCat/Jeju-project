@@ -14,6 +14,7 @@ FILES = {
     "/yard": (HERE / "yard.html", "text/html"),
     "/yard/index.html": (ROOT / "assets/yard/index.html", "text/html"),
     "/yard/player.js": (ROOT / "assets/yard/player.js", "text/javascript"),
+    "/photo-credits.json": (ROOT / "assets/guide_photos/credits.json", "application/json"),
     "/map": (HERE / "map.html", "text/html"),
     "/jeju-grades.png": (HERE / "jeju-grades.png", "image/png"),
     "/jeju-map.png": (HERE / "jeju-map.png", "image/png"),

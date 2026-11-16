@@ -58,8 +58,8 @@ class FieldCameraButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: forest,
-    elevation: 3,
+    color: const Color(0xff86350e),
+    elevation: 6,
     shape: const CircleBorder(side: BorderSide(color: sheet, width: 3)),
     clipBehavior: Clip.antiAlias,
     child: InkWell(
