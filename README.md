@@ -1,5 +1,7 @@
 # Jeju-project
 
+[동물 도감](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/) · [제주 관찰 지도](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/map)
+
 제주 AI 에이전트 공모전 팀의 Flutter 앱입니다.
 
 ## 로컬 실행
@@ -26,8 +28,6 @@ flutter run
 **카메라**에서는 현장 사진을 촬영하고 미리 볼 수 있습니다. 사진의 제주 위치 검증과 종 식별을 거쳐 도감에 쓰는 과정은 후속 연동 범위입니다.
 
 ## 공유 웹 도감과 관찰 지도
-
-[동물 도감](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/) · [제주 관찰 지도](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/map)
 
 공유 웹 화면의 원본은 `field_guide/`에 있습니다. 저장소 루트에서 `python field_guide/preview.py`를 실행하고 `http://127.0.0.1:8787`을 열면 현재 CSV와 앱의 전국 종 색인으로 확인할 수 있습니다. 탐험 설정에서 예시 기록을 켤 수 있습니다. 웹에서 선택한 사진은 해당 브라우저에서만 미리 봅니다.
 
