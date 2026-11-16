@@ -3,6 +3,36 @@ import { guideUrl, speciesIds } from "./map-data.js";
 
 const frame = $("map-frame"), bubble = $("map-bubble");
 let currentMarker = null;
+let nearbyRequest;
+
+function nearbyAnimals(place) {
+  const block = node("section", null, "nearby-records");
+  block.append(node("p", "주변 GBIF 관찰 기록을 불러오는 중…", "bubble-count"));
+  nearbyRequest ??= fetch("/nearby.json").then(response => {
+    if (!response.ok) throw Error("Missing observations");
+    return response.json();
+  }).catch(error => { nearbyRequest = null; throw error; });
+  nearbyRequest.then(({places, radiusM, collected}) => {
+    const rows = places[place.id];
+    if (!rows) throw Error("Missing place");
+    block.replaceChildren(node("p", "반경 " + radiusM / 1000 + "km · GBIF 관찰 " + rows.length + "종", "bubble-count"));
+    if (!rows.length) block.append(node("small", "수집 표본에 일치하는 관찰이 없습니다."));
+    const list = node("ul", null, "bubble-animals");
+    for (const r of rows) {
+      const li = node("li"), guide = node("a", r.name + " ›");
+      guide.href = guideUrl(r.species, r.name);
+      const source = node("a", r.date.split("T")[0] + " · " + r.metres.toLocaleString("ko-KR") + "m · GBIF ↗");
+      source.href = "https://www.gbif.org/occurrence/" + r.id;
+      source.title = [r.credit, r.dataset, r.license].filter(Boolean).join(" · ");
+      source.className = "nearby-source";
+      li.append(guide, source);
+      list.append(li);
+    }
+    block.append(list, node("small", "표본 수집 " + collected));
+    positionBubble();
+  }).catch(() => { block.replaceChildren(node("small", "관찰 기록을 불러오지 못했습니다. 핀을 다시 열어주세요.")); });
+  return block;
+}
 
 export function pinUrl(layer, id, animals = false) {
   const url = new URL("/map", location.origin);
@@ -71,7 +101,7 @@ export function clearPinMap() {
 export function renderPinMap(layer, entries, selected, expanded) {
   $("place-count").textContent = entries.length + "곳";
   for (const [index,p] of entries.entries()) {
-    const marker = action(null, pinUrl(layer, p.id), "map-point", "name");
+    const marker = action(null, pinUrl(layer, p.id, layer === "visit"), "map-point", layer === "visit" ? "animals" : "name");
     marker.dataset.id = p.id;
     marker.dataset.kind = p.kind || "habitat";
     marker.setAttribute("aria-label", (index + 1) + "번 " + p.name);
@@ -106,7 +136,11 @@ export function renderPinMap(layer, entries, selected, expanded) {
     head.append(title, dismiss);
     const content = node("div", null, "bubble-content");
     const kind = layer === "visit" && selected.id === "park" ? "보호·사육 동물" : "관찰·서식 동물";
-    content.append(node("p", kind + " " + selected.species.length + "종", "bubble-count"));
+    const reference = layer === "visit" ? node("details") : content;
+    if (layer === "visit") {
+      content.append(nearbyAnimals(selected), reference);
+      reference.append(node("summary", kind + " 자료 " + selected.species.length + "종"));
+    } else content.append(node("p", kind + " " + selected.species.length + "종", "bubble-count"));
     const list = node("ul", null, "bubble-animals");
     for (const name of selected.species) {
       const li = node("li"), guide = node("a", name);
@@ -116,7 +150,7 @@ export function renderPinMap(layer, entries, selected, expanded) {
       li.append(guide);
       list.append(li);
     }
-    content.append(list);
+    reference.append(list);
     bubble.append(head, content);
   }
   bubble.hidden = false;

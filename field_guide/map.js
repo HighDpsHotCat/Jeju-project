@@ -5,7 +5,7 @@ import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 import { clearPinMap, pinUrl, positionBubble, renderPinMap } from "./pin-map.js";
 
 const layers = {
-  visit: ["탐방 장소", "핀을 누른 뒤 장소 이름을 누르면 동물이 보여요."],
+  visit: ["탐방 장소", "핀을 누르면 반경 2km에서 관찰된 동물이 보여요."],
   habitat: ["서식 기록", "핀을 누른 뒤 권역 이름을 누르면 기록된 동물이 보여요."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
