@@ -2,6 +2,8 @@
 
 [메인](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/) · [동물 도감](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/?view=guide) · [제주 관찰 지도](https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/map)
 
+[안드로이드 시연판 1.0.2 다운로드](https://github.com/HighDpsHotCat/Jeju-project/releases/download/android-test-1.0.2-b9ad951/Jeju-Wildlife-1.0.2.apk)
+
 제주 AI 에이전트 공모전 팀의 Flutter 앱입니다.
 
 ## 로컬 실행
