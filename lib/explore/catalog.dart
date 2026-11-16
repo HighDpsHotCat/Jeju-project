@@ -14,7 +14,6 @@ enum GuideRegion {
 }
 
 enum AnimalGroup {
-  all('전체', ''),
   mammals('포유류', 'Mammalia'),
   birds('조류', 'Aves'),
   insects('곤충', 'Insecta');
@@ -166,7 +165,7 @@ class Animal {
     _ => taxon.isEmpty ? '기타 동물' : taxon,
   };
 
-  bool matches(GuideRegion region, AnimalGroup group, String query) {
+  bool matches(GuideRegion region, AnimalGroup? group, String query) {
     if (region == GuideRegion.jeju && jejuId.isEmpty) return false;
     // The bundled national checklist has no IDs for domestic dogs or cats.
     if (region == GuideRegion.national &&
@@ -175,7 +174,7 @@ class Animal {
         jejuId != 'JJ-001834') {
       return false;
     }
-    if (group != AnimalGroup.all && group.taxon != taxon) return false;
+    if (group != null && group.taxon != taxon) return false;
     return query.isEmpty ||
         name.contains(query) ||
         (jejuId == 'JJ-000821' && query == '개') ||

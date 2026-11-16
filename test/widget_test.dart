@@ -371,7 +371,9 @@ void main() {
     await tapText(tester, '조류');
     expect(find.text('동박새'), findsOneWidget);
     expect(find.text('노루'), findsNothing);
-    await tapText(tester, '전체');
+    expect(find.text('전체'), findsNothing);
+    await tapText(tester, '조류');
+    expect(find.text('노루'), findsOneWidget);
     await tapText(tester, '제주 · 전국');
     await tester.tap(
       find.widgetWithText(CheckedPopupMenuItem<GuideRegion>, '전국'),
@@ -513,7 +515,7 @@ void main() {
       )..sort(compareGuideAnimals);
       for (final region in GuideRegion.values) {
         final ordered = catalog
-            .where((a) => a.matches(region, AnimalGroup.all, ''))
+            .where((a) => a.matches(region, null, ''))
             .toList();
         expect(ordered.take(6).map((a) => a.name), [
           '노루',

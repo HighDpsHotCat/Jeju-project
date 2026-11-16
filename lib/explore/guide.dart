@@ -42,7 +42,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
   late final _search = TextEditingController(text: widget.initialSearch);
   late String _query = widget.initialSearch.toLowerCase();
   GuideRegion _region = GuideRegion.combined;
-  AnimalGroup _group = AnimalGroup.all;
+  AnimalGroup? _group;
 
   final _scroll = ScrollController();
   int _page = 0;
@@ -85,7 +85,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
             final animals = _orderedAnimals(snapshot.data ?? const <Animal>[]);
             final filtered =
                 _region == GuideRegion.combined &&
-                    _group == AnimalGroup.all &&
+                    _group == null &&
                     _query.isEmpty
                 ? animals
                 : animals
@@ -226,10 +226,9 @@ class _AnimalGuideState extends State<AnimalGuide> {
                       ),
                       const SizedBox(height: 12),
                       Row(
+                        spacing: 6,
                         children: [
-                          for (final group in AnimalGroup.values) ...[
-                            if (group != AnimalGroup.all)
-                              const SizedBox(width: 6),
+                          for (final group in AnimalGroup.values)
                             Expanded(
                               child: Semantics(
                                 selected: _group == group,
@@ -257,14 +256,13 @@ class _AnimalGuideState extends State<AnimalGuide> {
                                         ),
                                   ),
                                   onPressed: () => setState(() {
-                                    _group = group;
+                                    _group = _group == group ? null : group;
                                     _page = 0;
                                   }),
                                   child: Text(group.label),
                                 ),
                               ),
                             ),
-                          ],
                         ],
                       ),
                       const SizedBox(height: 14),
@@ -358,7 +356,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                               _query = '';
                               _page = 0;
                               _region = GuideRegion.combined;
-                              _group = AnimalGroup.all;
+                              _group = null;
                             }),
                             child: const Text('전체 도감 보기'),
                           ),
