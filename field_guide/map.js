@@ -5,8 +5,8 @@ import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 import { clearPinMap, positionBubble, renderPinMap } from "./pin-map.js";
 
 const layers = {
-  visit: ["탐방 장소", "권역을 눌러 장소를 보고, 한 번 더 확대하면 주변에서 관찰된 동물이 보여요."],
-  habitat: ["서식 기록", "권역을 확대해 서식 장소와 기록된 동물을 살펴보세요."],
+  visit: ["탐방 장소", "숫자는 가까운 장소의 수예요. 누르면 확대되고, 장소 이름을 누르면 관찰 동물이 보여요."],
+  habitat: ["서식 기록", "숫자를 눌러 가까운 서식 장소를 펼쳐보세요."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
 const cities = [
@@ -105,7 +105,7 @@ function render() {
   $("pin-key").hidden = !pinMode || layer !== "visit";
   $("zone-lists").hidden = layer !== "visit";
   if (pinMode) {
-    renderPinMap(layer, layer === "visit" ? visits : habitats, pinPlace, expanded, level, zoomTo);
+    renderPinMap(layer, layer === "visit" ? visits : habitats, pinPlace, expanded, level, zoomTo, scales.length - 1);
     return;
   }
   if (layer === "visit") { renderVisits(trip); return; }
@@ -147,7 +147,7 @@ $("grades").onchange = () => {
   render();
 };
 const view = $("viewport"), stage = $("stage");
-const scales = [1, 2.5, 5];
+const scales = [1, 2.5, 5, 9];
 let level = 0;
 function mapPoint(x, y) {
   const rect = stage.getBoundingClientRect();
@@ -164,7 +164,7 @@ function zoomTo(next, center, anchor) {
   }
   stage.style.width = scales[level] * 100 + "%";
   stage.classList.toggle("zoomed", level > 0);
-  $("zoom-level").textContent = ["제주 전체", "장소", "상세"][level];
+  $("zoom-level").textContent = ["제주 전체", "장소", "상세", "상세 확대"][level];
   $("zoom").disabled = level === scales.length - 1;
   $("zoom-out").disabled = !level;
   render();
@@ -332,3 +332,11 @@ document.addEventListener("keydown", (event) => {
 readSelection();
 zoomTo(pinPlace?.pixel ? 2 : 0, pinPlace?.pixel || [720,455]);
 fetchRecords();
+
+let lastWidth = view.clientWidth;
+new ResizeObserver(() => {
+  if (view.clientWidth && lastWidth !== view.clientWidth) {
+    lastWidth = view.clientWidth;
+    if (pinMode) render();
+  }
+}).observe(view);

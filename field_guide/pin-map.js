@@ -86,24 +86,79 @@ export function clearPinMap() {
   bubble.hidden = true;
   bubble.replaceChildren();
 }
-export function renderPinMap(layer, entries, selected, expanded, level, zoomTo) {
-  $("place-count").textContent = entries.length + "곳";
-  if (level === 0) {
-    for (const [label, min, max] of [["서부", 0, 450], ["중부", 450, 850], ["동부", 850, 1441]]) {
-      const group = entries.filter(p => !p.offshore && p.pixel[0] >= min && p.pixel[0] < max);
-      if (!group.length) continue;
-      const center = [0, 1].map(axis => group.reduce((sum, p) => sum + p.pixel[axis], 0) / group.length);
-      const cluster = node("button", null, "region-cluster");
-      cluster.append(node("strong", label), node("small", group.length + "곳"));
-      cluster.setAttribute("aria-label", "제주 " + label + " " + group.length + "곳 확대");
-      cluster.style.left = center[0] / 1440 * 100 + "%";
-      cluster.style.top = center[1] / 910 * 100 + "%";
-      cluster.onclick = event => { event.stopPropagation(); zoomTo(1, center); };
-      $("markers").append(cluster);
+// Compare marker footprints in screen pixels so gaps grow naturally as the map zooms.
+function groupMarkers(markers, selected, layer, level, zoomTo, maxLevel) {
+  const rect = $("stage").getBoundingClientRect();
+  const groups = markers.filter(item => item.place !== selected).map(item => {
+    const box = item.marker.getBoundingClientRect();
+    return {items:[item], x:box.left + box.width / 2 - rect.left,
+      y:box.top + box.height / 2 - rect.top, width:box.width, height:box.height};
+  });
+  while (true) {
+    let pair, nearest = Infinity;
+    for (let i = 0; i < groups.length; i++) {
+      for (let j = i + 1; j < groups.length; j++) {
+        const a = groups[i], b = groups[j];
+        const dx = Math.abs(a.x - b.x), dy = Math.abs(a.y - b.y);
+        const distance = dx * dx + dy * dy;
+        if (dx < (a.width + b.width) / 2 + 6 && dy < (a.height + b.height) / 2 + 6 && distance < nearest) {
+          nearest = distance;
+          pair = [i,j];
+        }
+      }
     }
+    if (!pair) break;
+    const a = groups[pair[0]], b = groups.splice(pair[1], 1)[0];
+    const n = a.items.length, m = b.items.length;
+    a.x = (a.x*n + b.x*m) / (n+m);
+    a.y = (a.y*n + b.y*m) / (n+m);
+    a.items.push(...b.items);
+    a.width = a.height = 40;
   }
+  for (const group of groups) {
+    if (group.items.length < 2) continue;
+    const places = group.items.map(({place, marker}) => { marker.remove(); return place; });
+    const count = places.length;
+    const cluster = node("button", String(count), "place-cluster");
+    cluster.setAttribute("aria-label", "가까운 장소 " + count + "곳 " + (level < maxLevel ? "확대" : "보기"));
+    cluster.style.left = group.x / rect.width * 100 + "%";
+    cluster.style.top = group.y / rect.height * 100 + "%";
+    cluster.onclick = event => {
+      event.stopPropagation();
+      if (level < maxLevel) {
+        zoomTo(level + 1, [group.x / rect.width * 1440, group.y / rect.height * 910]);
+        return;
+      }
+      clearPinMap();
+      currentMarker = cluster;
+      bubble.dataset.view = "animals";
+      bubble.setAttribute("aria-label", "가까운 장소 선택");
+      const head = node("div", null, "bubble-head"), close = node("button", "×", "bubble-close");
+      close.setAttribute("aria-label", "말풍선 닫기");
+      close.onclick = () => { clearPinMap(); cluster.focus({preventScroll:true}); };
+      head.append(node("strong", "가까운 장소 " + count + "곳"), close);
+      const content = node("div", null, "bubble-content"), list = node("ul", null, "bubble-animals");
+      for (const place of places) {
+        const li = node("li");
+        li.append(action(place.name, pinUrl(layer, place.id, true), "", "animals"));
+        list.append(li);
+      }
+      for (const part of [head, content]) part.addEventListener("keydown", event => {
+        if (event.key === "Escape") { event.stopPropagation(); close.click(); }
+      });
+      content.append(list);
+      bubble.replaceChildren(head, content);
+      bubble.hidden = false;
+      positionBubble();
+      close.focus({preventScroll:true});
+    };
+    $("markers").append(cluster);
+  }
+}
+export function renderPinMap(layer, entries, selected, expanded, level, zoomTo, maxLevel) {
+  $("place-count").textContent = entries.length + "곳";
+  const markers = [];
   for (const [index,p] of entries.entries()) {
-    if (!level && !p.offshore) continue;
     const marker = action(null, pinUrl(layer, p.id, layer === "visit"), "map-point", layer === "visit" ? "animals" : "name");
     marker.dataset.id = p.id;
     marker.dataset.kind = p.kind || "habitat";
@@ -119,7 +174,7 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo) 
       marker.style.top = p.pixel[1] / 910 * 100 + "%";
       marker.classList.add("place-label");
       marker.append(node("b", p.name));
-      if (level === 2) {
+      if (level >= 2) {
         const summary = node("small", layer === "visit" ? "관찰 기록 조회 중…" : p.species.slice(0, 2).join(" · "));
         marker.append(summary);
         if (layer === "visit") loadNearby().then(({places}) => {
@@ -129,9 +184,11 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo) 
       }
       marker.setAttribute("aria-label", p.name + " 동물 보기");
       $("markers").append(marker);
+      markers.push({place:p, marker});
     }
     if (p === selected) currentMarker = marker;
   }
+  groupMarkers(markers, selected, layer, level, zoomTo, maxLevel);
   if (!currentMarker) return;
   bubble.dataset.view = expanded ? "animals" : "name";
   bubble.setAttribute("aria-label", selected.name + (expanded ? " 동물 목록" : " 장소 이름"));
