@@ -309,13 +309,6 @@ async function load() {
                 jeju_id,
               }),
             );
-      if (scope === "jeju") {
-        const priority = new Map([...featured.keys()].map((id, i) => [id, i]));
-        catalog.sort(
-          (a, b) =>
-            (priority.get(animalId(a)) ?? 4) - (priority.get(animalId(b)) ?? 4),
-        );
-      }
       cache.set(scope, catalog);
     }
     if (version !== generation) return;

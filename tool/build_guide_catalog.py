@@ -25,7 +25,17 @@ MITE_ORDERS = {
 }
 CORAL_ORDERS = {"Alcyonacea", "Pennatulacea", "Scleractinia", "Antipatharia"}
 HYDROCORAL_FAMILIES = {"Stylasteridae", "Milleporidae"}
-FEATURED = ["JJ-000837", "JJ-004873", "JJ-003382", "JJ-004729"]
+# Four 20-species pages of named Jeju wildlife from everyday visitor habitats.
+JEJU_EVERYDAY = """
+참새 직박구리 멧비둘기 까치 동박새 큰부리까마귀 박새 제비 노루 꿩
+배추흰나비 호랑나비 칠성무당벌레 흰뺨검둥오리 왜가리 괭이갈매기 딱새 방울새 바다직박구리 양봉꿀벌
+알락할미새 때까치 곤줄박이 쇠백로 중대백로 청둥오리 가마우지 민물가마우지 섬휘파람새 남방노랑나비
+네발나비 남방부전나비 무당벌레 된장잠자리 청띠제비나비 족제비 참개구리 거북손 군부 갈고둥
+물닭 논병아리 재갈매기 흑로 노랑할미새 멧새 노랑턱멧새 흰배지빠귀 오목눈이 굴뚝새
+찌르레기 뻐꾸기 칼새 황조롱이 물총새 깝작도요 꼬마물떼새 쇠오리 알락오리 원앙
+중백로 쇠물닭 댕기흰죽지 넓적부리 개똥지빠귀 떼까마귀 큰오색딱다구리 진박새 귀제비 꾀꼬리
+제비나비 작은주홍부전나비 큰멋쟁이나비 물결나비 섬서구메뚜기 아시아실잠자리 호리꽃등에 줄장지뱀 밤고둥 좁쌀무늬총알고둥
+""".split()
 
 
 # Editorial first page for the nationwide guide. The remaining animals sort by name.
@@ -105,8 +115,8 @@ def build():
     for row in rows:
         if row[2] == "[국명없음]":
             row[2] = ""
-    priority = {species_id: i for i, species_id in enumerate(FEATURED)}
-    jeju_rows.sort(key=lambda r: (priority.get(r[0], len(FEATURED)), not bool(r[2]), r[2], r[3], r[0], r[1]))
+    priority = {name: i for i, name in enumerate(JEJU_EVERYDAY)}
+    jeju_rows.sort(key=lambda r: (priority.get(r[2], len(priority)), not bool(r[2]), r[2], r[3], r[0], r[1]))
     national_rows.sort(key=national_order)
     rows = jeju_rows + national_rows
     result = ROOT / "assets/catalog/animals.tsv.gz"

@@ -28,17 +28,18 @@ for path in (ROOT / "assets/art").glob("*.jpg"):
 def catalog_data():
     with next(ROOT.glob("*ID*.csv")).open(encoding="utf-8-sig", newline="") as source:
         jeju = list(csv.DictReader(source))
-    guide_ids = set()
+    guide_order = {}
     national = []
     with gzip.open(ROOT / "assets/catalog/animals.tsv.gz", "rt", encoding="utf-8") as stream:
         for jeju_id, ktsn, korean, scientific, taxon, scope in csv.reader(stream, delimiter="\t"):
             if scope == "jeju":
-                guide_ids.add(jeju_id)
+                guide_order[jeju_id] = len(guide_order)
             elif scope == "national":
                 national.append([ktsn, korean, scientific, taxon, jeju_id])
     for row in jeju:
-        if row["species_id"] not in guide_ids:
+        if row["species_id"] not in guide_order:
             row["in_guide"] = False
+    jeju.sort(key=lambda row: guide_order.get(row["species_id"], len(guide_order)))
     return {route: json.dumps(rows, ensure_ascii=False).encode()
             for route, rows in (("/species.json", jeju), ("/national.json", national))}
 

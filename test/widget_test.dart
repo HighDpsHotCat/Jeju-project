@@ -129,7 +129,7 @@ void main() {
             .where((a) => a.region == GuideRegion.jeju)
             .take(4)
             .map((animal) => animal.name),
-        ['노루', '동박새', '호랑나비', '남방큰돌고래'],
+        ['참새', '직박구리', '멧비둘기', '까치'],
       );
       expect(
         catalog.firstWhere((animal) => animal.jejuId == 'JJ-003554').name,
