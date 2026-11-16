@@ -1,11 +1,37 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'dog_coat.dart';
-import 'dog_photo_dialog.dart';
+import 'dog_mask.dart';
 import 'style.dart';
+
+Future<DogCoat?> _analyzeDogPhoto(Uint8List bytes) async {
+  final codec = await ui.instantiateImageCodec(
+    bytes,
+    targetWidth: dogInputSize,
+    targetHeight: dogInputSize,
+  );
+  try {
+    final image = (await codec.getNextFrame()).image;
+    try {
+      final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      if (rgba == null) throw StateError('Unable to read image pixels');
+      final model = await rootBundle.load('assets/models/dog-mask.bin');
+      return await compute(_runDogMask, (Uint8List.sublistView(rgba), model));
+    } finally {
+      image.dispose();
+    }
+  } finally {
+    codec.dispose();
+  }
+}
+
+DogCoat? _runDogMask((Uint8List, ByteData) input) =>
+    recognizeDogCoat(input.$1, input.$2);
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key, this.recovered, this.canRegisterDog = false});
@@ -52,7 +78,20 @@ class _CameraScreenState extends State<CameraScreen> {
           );
       if (file == null) return;
       final bytes = await file.readAsBytes();
-      if (mounted) setState(() => _photo = bytes);
+      if (!mounted) return;
+      setState(() => _photo = bytes);
+      if (widget.canRegisterDog) {
+        final coat = await _analyzeDogPhoto(bytes);
+        if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
+        if (coat != null) {
+          Navigator.pop(context, coat);
+        } else {
+          setState(
+            () => _error =
+                '강아지의 대표 털색을 확인하지 못했어요. 강아지 한 마리가 밝고 크게 보이도록 다시 찍어 주세요.',
+          );
+        }
+      }
     } on PlatformException catch (error) {
       if (mounted) {
         setState(
@@ -120,9 +159,13 @@ class _CameraScreenState extends State<CameraScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  '여기서 사진을 미리 보고 도감에서 닮은 동물을 찾아보세요.',
-                  style: TextStyle(color: muted, height: 1.5),
+                if (_busy && photo != null && widget.canRegisterDog)
+                  const LinearProgressIndicator(),
+                Text(
+                  widget.canRegisterDog
+                      ? '사진에서 강아지와 털색을 확인하면 마당에 자동 등록해요.'
+                      : '여기서 사진을 미리 보고 도감에서 닮은 동물을 찾아보세요.',
+                  style: const TextStyle(color: muted, height: 1.5),
                 ),
                 if (_error != null)
                   Padding(
@@ -154,22 +197,7 @@ class _CameraScreenState extends State<CameraScreen> {
                     icon: const Icon(Icons.photo_library_outlined),
                     label: const Text('앨범에서 선택'),
                   ),
-                if (photo != null && widget.canRegisterDog)
-                  FilledButton.tonalIcon(
-                    icon: const Icon(Icons.pets),
-                    label: const Text('강아지 털색 등록'),
-                    onPressed: _busy
-                        ? null
-                        : () async {
-                            final coat = await showDialog<DogCoat>(
-                              context: context,
-                              builder: (_) => DogPhotoDialog(photo),
-                            );
-                            if (context.mounted && coat != null)
-                              Navigator.pop(context, coat);
-                          },
-                  ),
-                if (photo != null)
+                if (photo != null && !_busy)
                   TextButton(
                     onPressed: () => Navigator.pop(context, true),
                     child: const Text('도감에서 찾아보기'),

@@ -1,5 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:io';
+import 'dart:ui' as ui;
+
+import 'package:jeju_project/explore/dog_mask.dart';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:jeju_project/explore/dog_coat.dart';
@@ -7,21 +11,35 @@ import 'package:jeju_project/explore/encounter.dart';
 import 'package:jeju_project/explore/yard_snapshot.dart';
 
 void main() {
-  test('a sampled fur patch votes for one coat or gives no suggestion', () {
-    DogCoat? sample(int r, int g, int b) {
-      final patch = ByteData(4 * 25);
-      for (var offset = 0; offset < patch.lengthInBytes; offset += 4) {
-        patch.setUint32(offset, (r << 24) | (g << 16) | (b << 8) | 255);
-      }
-      patch.setUint32(12 * 4, 0xffffffff);
-      return sampleDogCoat(patch, 5, 5, .5, .5);
+  TestWidgetsFlutterBinding.ensureInitialized();
+  test('recognizes coats inside dog masks and abstains on a cat', () async {
+    final model = ByteData.sublistView(
+      await File('assets/models/dog-mask.bin').readAsBytes(),
+    );
+    for (final entry in {
+      'BREED-bichon': DogCoat.white,
+      'BREED-shiba': DogCoat.brown,
+      'BREED-french-bulldog': DogCoat.black,
+      'CAT-bengal': null,
+    }.entries) {
+      final bytes = await File('assets/guide_photos/${entry.key}.jpg')
+          .readAsBytes();
+      final codec = await ui.instantiateImageCodec(
+        bytes,
+        targetWidth: dogInputSize,
+        targetHeight: dogInputSize,
+      );
+      final image = (await codec.getNextFrame()).image;
+      final rgba = await image.toByteData(format: ui.ImageByteFormat.rawRgba);
+      image.dispose();
+      codec.dispose();
+      expect(
+        recognizeDogCoat(Uint8List.sublistView(rgba!), model),
+        entry.value,
+        reason: entry.key,
+      );
     }
-
-    expect(sample(124, 74, 46), DogCoat.brown);
-    expect(sample(228, 223, 217), DogCoat.white);
-    expect(sample(38, 35, 36), DogCoat.black);
-    expect(sample(40, 158, 60), isNull);
-  });
+  }, timeout: const Timeout(Duration(minutes: 2)));
 
   test('yard includes only photographed coats and their first dates', () {
     final json = encodeYardSnapshot(

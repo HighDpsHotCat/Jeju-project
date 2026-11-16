@@ -1,0 +1,4 @@
+The Flutter camera uses a quantized export of torchvision LRASPP MobileNetV3 Large, COCO_WITH_VOC_LABELS_V1.
+Upstream architecture and weights: https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.segmentation.lraspp_mobilenet_v3_large.html
+Weight source: https://download.pytorch.org/models/lraspp_mobilenet_v3_large-d234d4ea.pth
+The torchvision license is included in torchvision-LICENSE.txt. The local exporter is tool/export_dog_mask.py.

@@ -96,9 +96,10 @@ class _FieldJournalState extends State<_FieldJournal>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      _refreshRecords();
+      await _refreshRecords();
+      if (!mounted) return;
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         _recoverCamera();
       }
@@ -327,13 +328,16 @@ class _FieldJournalState extends State<_FieldJournal>
     _cameraOpen = true;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
+      if (!_recordsReady) await _refreshRecords();
+      if (!mounted) return;
       final photoProfile = _profile;
+      final canRegisterDog = _recordsReady && !_examples;
       final browse = await Navigator.push<Object>(
         context,
         MaterialPageRoute(
           builder: (_) => CameraScreen(
             recovered: recovered,
-            canRegisterDog: _recordsReady && !_examples,
+            canRegisterDog: canRegisterDog,
           ),
         ),
       );
