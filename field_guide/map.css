@@ -408,8 +408,8 @@
 .visit-layout .map-viewport { background: #d6e9e9; }
 .visit-layout #viewport:not(:has(.zoomed)) { display: grid; grid-template-columns: minmax(0,1fr); align-items: center; }
 #districts { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-#districts path { fill: #45785417; }
-#districts path[data-zone="seogwipo"] { fill: #c8a65b15; }
+#districts path { fill: transparent; }
+
 .show-grades #districts path { fill: transparent; }
 .mini-dot { position: absolute; transform: translate(-50%,-50%); }
 .layer-note { margin: 5px 0 10px; font-size: 14px; color: var(--muted); }
@@ -561,3 +561,11 @@
 .map-point.place-label { width: max-content; max-width: 146px; height: auto; min-height: 32px; padding: 5px 8px; border: 1px solid var(--pin-color); border-top: 3px solid var(--pin-color); border-radius: 8px; background: #fffef9; box-shadow: 0 2px 6px #25432b33; color: #20382a; text-align: center; font-size: 12px; line-height: 1.3; }
 .place-label:after { content: ""; position: absolute; bottom: -5px; width: 7px; height: 7px; transform: rotate(45deg); background: #fffef9; border: solid var(--pin-color); border-width: 0 1px 1px 0; }
 .place-label small { display: block; font-size: 10px; color: #435e47; }
+
+.map-viewport, .visit-layout .map-viewport { background: #a8d3ed; }
+.map-stage .geo { pointer-events: none; color: #394e48; text-shadow: 0 1px 2px #fff, 1px 0 2px #fff; }
+.map-stage .jeju-city { left: 46%; top: 21%; }
+.map-stage .mountain { left: 47.9%; top: 53.8%; color: #38583c; }
+.map-stage:not([data-layer="records"]) .south { left: 51.5%; top: 78%; }
+.basemap-credit { display: block; text-align: right; margin: 5px 2px; color: #536a68; font-size: 10px; }
+.basemap-credit a { text-decoration: underline; }
