@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'catalog.dart';
+import 'encounter.dart';
 import 'style.dart';
 
 class AnimalGuide extends StatefulWidget {
@@ -10,13 +11,19 @@ class AnimalGuide extends StatefulWidget {
     required this.discovered,
     required this.examples,
     required this.onBack,
+    required this.backLabel,
     required this.onRetry,
+    required this.onRegister,
+    required this.onSendToYard,
   });
   final Future<List<Animal>> catalog;
   final Set<String> discovered;
   final bool examples;
   final VoidCallback onBack;
+  final String backLabel;
   final VoidCallback onRetry;
+  final void Function(Animal, FirstEncounter)? onRegister;
+  final VoidCallback? onSendToYard;
 
   @override
   State<AnimalGuide> createState() => _AnimalGuideState();
@@ -62,7 +69,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                         children: [
                           IconButton(
                             onPressed: widget.onBack,
-                            tooltip: '마당으로 돌아가기',
+                            tooltip: widget.backLabel,
                             icon: const Icon(
                               Icons.arrow_back_rounded,
                               size: 26,
@@ -182,10 +189,13 @@ class _AnimalGuideState extends State<AnimalGuide> {
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 1,
                                     ),
-                                    textStyle: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                    ),
+                                    textStyle: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 15,
+                                        ),
                                   ),
                                   onPressed: () =>
                                       setState(() => _group = group),
@@ -201,7 +211,14 @@ class _AnimalGuideState extends State<AnimalGuide> {
                         total: discoveredCount,
                         examples: widget.examples,
                       ),
-                      const SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.ios_share_rounded, size: 17),
+                          onPressed: widget.onSendToYard,
+                          label: const Text('마당으로 보내기'),
+                        ),
+                      ),
                       Container(
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1EBE0),
@@ -211,7 +228,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                           horizontal: 4,
                           vertical: 7,
                         ),
-                        child: DefaultTextStyle(
+                        child: DefaultTextStyle.merge(
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
@@ -299,6 +316,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                           examples: widget.examples,
                           photoWidth: photoWidth,
                           badgeWidth: badgeWidth,
+                          onRegister: widget.onRegister,
                         );
                       },
                     ),
@@ -438,12 +456,14 @@ class _AnimalRow extends StatelessWidget {
     required this.examples,
     required this.photoWidth,
     required this.badgeWidth,
+    required this.onRegister,
   });
   final Animal animal;
   final bool found;
   final bool examples;
   final double photoWidth;
   final double badgeWidth;
+  final void Function(Animal, FirstEncounter)? onRegister;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -451,10 +471,18 @@ class _AnimalRow extends StatelessWidget {
       Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => showFieldSheet<void>(
-            context,
-            _AnimalDetail(animal: animal, found: found, examples: examples),
-          ),
+          onTap: () async {
+            final encounter = await showFieldSheet<FirstEncounter>(
+              context,
+              _AnimalDetail(
+                animal: animal,
+                found: found,
+                examples: examples,
+                canRegister: !found && onRegister != null,
+              ),
+            );
+            if (encounter != null) onRegister?.call(animal, encounter);
+          },
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 7),
             child: Row(
@@ -517,10 +545,12 @@ class _AnimalDetail extends StatelessWidget {
     required this.animal,
     required this.found,
     required this.examples,
+    required this.canRegister,
   });
   final Animal animal;
   final bool found;
   final bool examples;
+  final bool canRegister;
   @override
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
@@ -570,6 +600,93 @@ class _AnimalDetail extends StatelessWidget {
           Text(examples ? '예시 도감   ' : '나의 도감   '),
           _Registration(found),
         ],
+      ),
+      if (canRegister) ...[const SizedBox(height: 12), const _EncounterForm()],
+    ],
+  );
+}
+
+class _EncounterForm extends StatefulWidget {
+  const _EncounterForm();
+
+  @override
+  State<_EncounterForm> createState() => _EncounterFormState();
+}
+
+class _EncounterFormState extends State<_EncounterForm> {
+  DateTime? day = DateTime.now();
+  String? city, district;
+
+  Future<void> _pickDate() async {
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: day ?? DateTime.now(),
+      firstDate: DateTime(1),
+      lastDate: DateTime.now(),
+      helpText: '처음 만난 날짜',
+    );
+    if (selected != null && mounted) setState(() => day = selected);
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      Row(
+        children: [
+          const Text('처음 만난 날짜'),
+          Expanded(
+            child: TextButton(
+              onPressed: _pickDate,
+              child: Text(day == null ? '날짜 선택' : calendarDay(day!)),
+            ),
+          ),
+          if (day != null)
+            IconButton(
+              tooltip: '날짜 모름',
+              onPressed: () => setState(() => day = null),
+              icon: const Icon(Icons.clear, size: 18),
+            ),
+        ],
+      ),
+      DropdownButtonFormField<String>(
+        decoration: const InputDecoration(labelText: '처음 만난 장소 (선택)'),
+        hint: const Text('시 선택'),
+        items: [
+          const DropdownMenuItem(value: '', child: Text('장소 모름')),
+          for (final area in jejuDistricts.keys)
+            DropdownMenuItem(value: area, child: Text(area)),
+        ],
+        onChanged: (value) => setState(() {
+          city = value;
+          district = null;
+        }),
+      ),
+      if (jejuDistricts.containsKey(city)) ...[
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          key: ValueKey(city),
+          decoration: const InputDecoration(labelText: '읍·면·동 (선택)'),
+          hint: const Text('읍·면·동 선택'),
+          items: [
+            const DropdownMenuItem(value: '', child: Text('시까지만 기록')),
+            for (final name in jejuDistricts[city]!)
+              DropdownMenuItem(value: name, child: Text(name)),
+          ],
+          onChanged: (value) => setState(() => district = value),
+        ),
+      ],
+      const SizedBox(height: 12),
+      FilledButton.icon(
+        onPressed: () => Navigator.pop(
+          context,
+          FirstEncounter(
+            day == null ? '' : calendarDay(day!),
+            [city, district].whereType<String>().join(' ').trim(),
+          ),
+        ),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('직접 관찰한 동물로 등록'),
       ),
     ],
   );

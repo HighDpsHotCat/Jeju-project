@@ -1,0 +1,127 @@
+.animal-action-menu {
+    position: absolute; height: 140px;
+    overflow: visible;
+}
+.animal-action-list { width: 100%; height: 140px; justify-content: space-between; }
+.animal-option, .animal-action-nav, .accessory-back {
+    background-image: none;
+    margin: 0; padding: 0;
+    -unity-text-align: middle-center;
+}
+.animal-option {
+    height: 44px; flex-shrink: 0; width: 100%;
+    border-radius: 22px; border-width: 2px;
+    border-color: rgb(84, 98, 67); background-color: rgb(255, 250, 231);
+    color: rgb(53, 70, 44); font-size: 16px; -unity-font-style: bold;
+}
+.animal-option:hover { background-color: rgb(239, 242, 213); }
+.animal-option.animal-option-selected {
+    color: rgb(83, 43, 58); border-color: rgb(157, 94, 116);
+    background-color: rgb(255, 217, 228);
+}
+.yard-root .animal-option:focus, .yard-root .accessory-back:focus { border-color: rgb(159, 111, 48); }
+.selection-marker {
+    display: none; position: absolute; left: 9px; top: 14px;
+    width: 12px; height: 12px; color: rgb(139, 64, 92); rotate: 90deg;
+}
+.animal-option-selected .selection-marker { display: flex; }
+.animal-menu-pointer {
+    position: absolute; width: 16px; height: 10px;
+    color: rgb(74, 91, 62);
+}
+.animal-action-nav {
+    position: absolute; width: 52px; height: 44px;
+    align-items: center; justify-content: center;
+    border-width: 2px; border-radius: 21px;
+    border-color: rgb(59, 81, 72); background-color: rgb(235, 246, 224);
+}
+.animal-action-nav:hover { background-color: rgb(219, 240, 223); }
+.animal-action-nav:active { background-color: rgb(170, 216, 208); }
+.yard-root .animal-action-nav:focus { border-color: rgb(131, 100, 45); }
+.animal-nav-arrow { width: 21px; height: 15px; color: rgb(54, 81, 73); }
+.point-down { rotate: 180deg; }
+.decoration-preview {
+    height: 194px; width: 100%; padding: 7px 8px;
+    align-items: stretch; justify-content: space-between;
+    border-radius: 19px; border-width: 2px;
+    border-color: rgb(95, 111, 79); background-color: rgb(255, 250, 231);
+}
+.outfit-heading {
+    margin: 0; padding: 0; height: 24px; flex-shrink: 0;
+    color: rgb(63, 79, 52); font-size: 16px; -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+.house-action-menu {
+    position: absolute; width: 132px; height: 92px;
+    flex-direction: column; justify-content: space-between; overflow: visible;
+}
+.wearable-option {
+    position: relative; flex-shrink: 0; height: 48px; width: 100%;
+    margin: 0; padding: 0 7px 0 42px;
+    border-width: 1px; border-radius: 13px; border-color: rgb(216, 219, 197);
+    background-image: none; background-color: rgb(255, 253, 244);
+    color: rgb(52, 67, 46); font-size: 14px; -unity-font-style: bold; -unity-text-align: middle-left;
+}
+.wearable-option:hover { background-color: rgb(240, 243, 224); }
+.wearable-option.wearable-equipped {
+    border-width: 2px; border-color: rgb(111, 138, 85); background-color: rgb(234, 241, 215);
+}
+.wearable-swatch {
+    position: absolute; width: 29px; height: 29px; top: 8px; left: 7px;
+}
+.wearable-state {
+    position: absolute; top: 10px; right: 5px;
+    margin: 0; padding: 2px 5px; height: 24px;
+    color: rgb(90, 102, 81); background-color: rgb(239, 239, 224);
+    border-radius: 8px; font-size: 11px; -unity-font-style: normal; -unity-text-align: middle-center;
+}
+.wearable-equipped .wearable-state { color: rgb(58, 79, 47); background-color: rgb(211, 225, 184); }
+.yard-root .wearable-option:focus, .yard-root .wardrobe-tab:focus { border-width: 2px; border-color: rgb(148, 112, 53); }
+.wardrobe-sheet {
+    flex-shrink: 0; overflow: hidden; background-color: rgb(250, 248, 237);
+    border-width: 2px; border-color: rgb(255, 254, 245); border-radius: 24px;
+}
+.wardrobe-heading {
+    flex-shrink: 0; flex-direction: row; align-items: center;
+    padding: 8px 12px 6px 17px; border-bottom-width: 1px; border-bottom-color: rgb(220, 225, 206);
+}
+.wardrobe-title {
+    flex-grow: 1; margin: 0; padding: 0; font-size: 22px; -unity-font-style: bold; color: rgb(51, 72, 47);
+}
+.wardrobe-body { flex-grow: 1; min-height: 0; padding: 10px; }
+.wardrobe-stage {
+    flex-grow: 1; flex-shrink: 1; min-height: 36px; min-width: 0;
+    background-color: rgb(233, 238, 216); border-radius: 15px; overflow: hidden;
+}
+.wardrobe-portrait { position: absolute; left: 4px; top: 4px; right: 4px; bottom: 4px; }
+.wardrobe-controls { flex-shrink: 0; padding-top: 6px; }
+.wardrobe-controls .wearable-option { margin-top: 4px; padding-left: 48px; }
+.wardrobe-controls .wearable-swatch { left: 9px; }
+.wardrobe-tabs { flex-direction: row; margin-bottom: 2px; }
+.wardrobe-tab {
+    flex-grow: 1; flex-basis: 0; height: 44px; margin: 0 2px; padding: 0;
+    border-width: 1px; border-radius: 14px; border-color: rgb(211, 218, 194);
+    background-color: rgb(244, 244, 229); background-image: none; color: rgb(78, 96, 67);
+    font-size: 15px; -unity-font-style: bold; -unity-text-align: middle-center;
+}
+.wardrobe-tab.wardrobe-tab-current { background-color: rgb(71, 96, 61); color: rgb(255, 252, 235); border-color: rgb(65, 87, 54); }
+.wardrobe-wide .wardrobe-body { flex-direction: row; }
+.wardrobe-wide .wardrobe-controls { width: 52%; padding: 0 0 0 10px; justify-content: center; }
+.accessory-back {
+    width: 100%; height: 44px; border-width: 1px; border-radius: 16px;
+    color: rgb(51, 75, 48); font-size: 14px; -unity-font-style: bold;
+    border-color: rgb(179, 195, 153); background-color: rgb(230, 239, 209);
+}
+.pet-feedback { position: absolute; width: 70px; height: 48px; }
+.heart-left, .heart-center, .heart-right { position: absolute; color: rgb(205, 91, 83); }
+.heart-left { left: 1px; top: 18px; width: 17px; height: 17px; rotate: -15deg; }
+.heart-center { left: 18px; top: 2px; width: 28px; height: 28px; rotate: 5deg; }
+.heart-right { left: 45px; top: 9px; width: 16px; height: 16px; rotate: 17deg; }
+.pet-full .heart-center { color: rgb(185, 81, 97); }
+.pet-gain {
+    position: absolute; left: 34px; top: 28px;
+    margin: 0; padding: 0 5px; height: 19px;
+    border-radius: 9px; border-width: 1px; border-color: rgb(181, 114, 78);
+    background-color: rgb(255, 246, 219); color: rgb(136, 73, 55);
+    font-size: 12px; -unity-font-style: bold; -unity-text-align: middle-center;
+}

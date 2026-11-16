@@ -1,0 +1,11 @@
+제주 읍·면·동 경계 (2026-10-01 기준)
+
+본 데이터는 통계청 통계지리정보서비스(SGIS, https://sgis.kostat.go.kr)에서 공공누리 제1유형으로 개방한 행정동 경계를 가공한 것이며(가공: vuski/admdongkor, https://github.com/vuski/admdongkor), CC BY 4.0으로 배포됩니다.
+
+경계 파일 및 이용 조건
+https://github.com/vuski/admdongkor/blob/3bc00489b76696db864bdbea4b19985cdfa8b403/ver20261001/HangJeongDong_ver20261001.geojson
+https://github.com/vuski/admdongkor/blob/master/LICENSE-DATA
+https://creativecommons.org/licenses/by/4.0/
+https://www.kogl.or.kr/info/licenseType1.do
+
+이 앱은 제주특별자치도 43개 행정구역을 추출해 경위도를 소수점 아래 6자리로 반올림하고 gzip으로 압축했습니다. 원본 꼭짓점, 섬 및 폴리곤 고리 구조를 유지했습니다. 본 자료는 현 상태로 제공되며 SGIS는 가공 과정에서 발생한 오류에 대해 책임지지 않습니다.
