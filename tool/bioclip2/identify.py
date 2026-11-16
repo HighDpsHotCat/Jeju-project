@@ -16,6 +16,8 @@ import torch
 from PIL import Image, ImageOps
 from pillow_heif import register_heif_opener
 
+from recapture import suspect_recapture
+
 
 HERE = Path(__file__).resolve().parent
 CATALOG = HERE.parents[1] / "assets/catalog/animals.tsv.gz"
@@ -127,6 +129,8 @@ class Identifier:
         self.device = device
 
     def predict(self, photo):
+        if suspect_recapture(photo):
+            return "recapture", []
         return self.predict_views([self.preprocess(photo)])
 
     @torch.inference_mode()

@@ -82,6 +82,17 @@ void main() {
     },
   );
 
+  test('a suspected recapture blocks the batch and identifies the photo to replace', () async {
+    final result = await identify({
+      'decision': 'recapture',
+      'photo_index': 1,
+      'candidates': candidates,
+    }, count: 3);
+    expect(result.speciesId, isNull);
+    expect(result.encounter, isNull);
+    expect(result.notice, contains('2번째 사진'));
+  });
+
   test('a geotag on Udo qualifies with its original encounter date', () async {
     final result = await identify({
       'decision': 'accepted',

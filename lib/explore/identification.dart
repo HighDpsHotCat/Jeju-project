@@ -88,6 +88,18 @@ Future<PhotoIdentification> identifyPhotos(
     }
     return (speciesId: id, encounter: earliest, notice: null);
   }
+  if (data case {'decision': 'recapture'}) {
+    final index = data['photo_index'];
+    final label = index is int && index >= 0 && index < photos.length
+        ? '${index + 1}번째 사진에서'
+        : '관찰 사진에서';
+    return (
+      speciesId: null,
+      encounter: null,
+      notice:
+          '$label 화면이나 인쇄물을 다시 찍은 흔적이 보여 등록을 보류했어요. 해당 사진을 삭제하고 실제 동물과 주변이 함께 보이게 다시 찍어 주세요.',
+    );
+  }
   final noAnimal = data is Map && data['decision'] == 'no_animal';
   return (
     speciesId: null,

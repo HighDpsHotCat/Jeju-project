@@ -20,7 +20,7 @@ flutter build web --no-web-resources-cdn
 tool/bioclip2/.venv/bin/python tool/bioclip2/server.py --host 0.0.0.0
 ```
 
-Mac에서는 `http://localhost:8765`, 같은 Wi-Fi의 휴대폰에서는 `http://<Mac의 LAN IP>:8765`를 엽니다. **카메라**에서 같은 동물의 사진을 1~5장 모아 **다음**을 누르면 함께 판별합니다. 각 사진에 동물이 보이고 여러 각도의 평균 점수가 한 종을 지지할 때 등록합니다. 특정 사진이 다른 종을 뚜렷하게 지지하면 등록을 보류합니다. 웹앱과 API는 같은 주소에서 제공되며 서버는 판별 후 업로드에 사용한 임시 파일을 닫고 삭제합니다. 개인 Mac에서만 테스트하려면 `--host` 옵션을 생략하세요.
+Mac에서는 `http://localhost:8765`, 같은 Wi-Fi의 휴대폰에서는 `http://<Mac의 LAN IP>:8765`를 엽니다. **카메라**에서 같은 동물의 사진을 1~5장 모아 **다음**을 누르면 함께 판별합니다. 각 사진에 동물이 보이고 여러 각도의 평균 점수가 한 종을 지지할 때 등록합니다. 특정 사진이 다른 종을 뚜렷하게 지지하면 등록을 보류합니다. 종 판별 전에 각 사진의 전체 구도에서 화면·종이의 테두리와 여러 영역에 걸쳐 반복되는 격자·색 간섭 무늬를 검사합니다. 흔적이 발견되면 해당 사진 번호를 반환하고 관찰 묶음의 등록을 보류합니다. 테두리나 무늬가 보이지 않는 재촬영은 통과할 수 있습니다. 웹앱과 API는 같은 주소에서 제공되며 서버는 판별 후 업로드에 사용한 임시 파일을 닫고 삭제합니다. 개인 Mac에서만 테스트하려면 `--host` 옵션을 생략하세요.
 
 Android 에뮬레이터는 기본으로 `10.0.2.2:8765`, Mac 앱과 iOS 시뮬레이터는 `127.0.0.1:8765`를 사용합니다. Android 실기기에서 같은 Wi-Fi로 테스트하려면 Mac의 실제 IP를 넣어 `flutter build apk --debug --dart-define=BIOCLIP_SERVER=http://<Mac의 LAN IP>:8765`로 빌드합니다. 외부 네트워크에서 사용할 네이티브 배포판은 접속 가능한 HTTPS 서버 주소를 `--dart-define=BIOCLIP_SERVER=https://<호스트>`로 지정합니다.
 
@@ -30,7 +30,7 @@ Android 에뮬레이터는 기본으로 `10.0.2.2:8765`, Mac 앱과 iOS 시뮬�
 
 ```sh
 python3.13 -m venv .venv
-.venv/bin/python -m pip install open_clip_torch==4.2.2 pillow-heif==1.8.1 starlette==1.10.0 uvicorn==0.54.0 python-multipart==0.0.33
+.venv/bin/python -m pip install open_clip_torch==4.2.2 pillow-heif==1.8.1 starlette==1.10.0 uvicorn==0.54.0 python-multipart==0.0.33 opencv-python-headless==5.0.0.93
 mkdir -p .model
 base=https://huggingface.co/imageomics/bioclip-2/resolve/2957b322090f9cb17ae72c71981c7218a28d81e0
 curl -fLsS --retry 3 "$base/open_clip_config.json" -o .model/open_clip_config.json

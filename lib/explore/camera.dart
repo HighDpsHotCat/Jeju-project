@@ -219,7 +219,7 @@ class _CameraScreenState extends State<CameraScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  '같은 동물을 여러 각도에서 찍어 주세요. 사진을 모은 뒤 다음을 누르면 AI가 함께 판별해요.',
+                  '현장에서 만난 동물과 주변이 함께 보이게 여러 각도에서 찍어 주세요. 사진을 모은 뒤 다음을 누르면 AI가 함께 판별해요.',
                   style: TextStyle(color: muted, height: 1.5),
                 ),
                 if (requireJejuPhotoLocation)

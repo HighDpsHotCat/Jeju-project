@@ -17,6 +17,7 @@ from starlette.routing import Mount, Route
 from starlette.staticfiles import StaticFiles
 
 from identify import HERE, Identifier
+from recapture import suspect_recapture
 
 MAX_BYTES = 12 * 1024 * 1024
 MAX_PHOTOS = 5
@@ -79,6 +80,12 @@ def classify(files, identifier, capture_mode, *, batch):
                 captures.append(capture_metadata(image, include_gps=capture_mode == "1")
                                 if capture_mode in ("1", "date") else None)
                 photo = ImageOps.exif_transpose(image).convert("RGB")
+                if suspect_recapture(photo):
+                    if batch or capture_mode in ("1", "date"):
+                        return JSONResponse({
+                            "decision": "recapture", "candidates": [], "photo_index": len(pictures),
+                        })
+                    return JSONResponse([])
                 pictures.append(identifier.preprocess(photo))
     except (ValueError, OSError, Image.DecompressionBombError):
         return JSONResponse({"error": "invalid_photo"}, status_code=422)
