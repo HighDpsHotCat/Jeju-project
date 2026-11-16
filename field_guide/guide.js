@@ -83,7 +83,7 @@ function thumb(row) {
     return el;
   }
   const img = node("img", null, "thumb");
-  img.src = row.photo ? "/guide-photos/" + row.species_id.slice(5) + ".jpg" : "/art/" + item[0] + ".jpg";
+  img.src = row.photo ? "/guide-photos/" + row.species_id.replace(/^KTSN-/, "") + ".jpg" : "/art/" + item[0] + ".jpg";
   if (row.photo?.unmodified) img.style.objectFit = "contain";
   img.alt = "";
   return img;
@@ -188,7 +188,7 @@ function details(row) {
   const image = featured.get(animalId(row));
   if (row.photo || image) {
     const img = node("img");
-    img.src = row.photo ? "/guide-photos/" + row.species_id.slice(5) + ".jpg" : "/art/" + image[0] + ".jpg";
+    img.src = row.photo ? "/guide-photos/" + row.species_id.replace(/^KTSN-/, "") + ".jpg" : "/art/" + image[0] + ".jpg";
     img.alt = animalName(row);
     if (row.photo) {
       const photo = row.photo;

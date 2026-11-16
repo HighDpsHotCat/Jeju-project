@@ -71,7 +71,10 @@ class Animal {
           ? '국명 미확인 · $jejuId'
           : scientific;
   String? get photo {
-    if (guidePhoto != null) return 'assets/guide_photos/$nationalId.jpg';
+    if (guidePhoto != null) {
+      final id = region == GuideRegion.jeju ? jejuId : nationalId;
+      return 'assets/guide_photos/$id.jpg';
+    }
     final feature = _featured[jejuId];
     return feature == null ? null : 'assets/art/${feature.$1}.jpg';
   }
@@ -130,7 +133,7 @@ List<Animal> decodeGuideCatalog(
           fields[3],
           fields[4],
           GuideRegion.values.byName(fields[5]),
-          guidePhoto: fields[5] == 'national' ? photos[fields[1]] : null,
+          guidePhoto: photos[fields[5] == 'national' ? fields[1] : fields[0]],
         );
       })
       .toList(growable: false);

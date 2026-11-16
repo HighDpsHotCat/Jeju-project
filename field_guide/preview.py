@@ -43,6 +43,8 @@ def catalog_data():
             elif scope == "national":
                 national.append([ktsn, korean, scientific, taxon, jeju_id, credits.get(ktsn)])
     for row in jeju:
+        if row["species_id"] in credits:
+            row["photo"] = credits[row["species_id"]]
         if row["species_id"] not in guide_order:
             row["in_guide"] = False
     jeju.sort(key=lambda row: guide_order.get(row["species_id"], len(guide_order)))
