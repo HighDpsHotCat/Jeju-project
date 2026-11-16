@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'dog_coat.dart';
+import 'dog_photo_dialog.dart';
 import 'style.dart';
 
 class CameraScreen extends StatefulWidget {
-  const CameraScreen({super.key, this.recovered});
+  const CameraScreen({super.key, this.recovered, this.canRegisterDog = false});
+  final bool canRegisterDog;
   final XFile? recovered;
   @override
   State<CameraScreen> createState() => _CameraScreenState();
@@ -30,7 +33,7 @@ class _CameraScreenState extends State<CameraScreen> {
     if (widget.recovered != null) _pick(recovered: widget.recovered);
   }
 
-  Future<void> _pick({XFile? recovered}) async {
+  Future<void> _pick({XFile? recovered, ImageSource? source}) async {
     if (_busy) return;
     setState(() {
       _busy = true;
@@ -40,7 +43,9 @@ class _CameraScreenState extends State<CameraScreen> {
       final file =
           recovered ??
           await _picker.pickImage(
-            source: _hasCamera ? ImageSource.camera : ImageSource.gallery,
+            source:
+                source ??
+                (_hasCamera ? ImageSource.camera : ImageSource.gallery),
             maxWidth: 1800,
             maxHeight: 1800,
             requestFullMetadata: false,
@@ -141,6 +146,29 @@ class _CameraScreenState extends State<CameraScreen> {
                     _hasCamera ? (photo == null ? '사진 촬영' : '다시 촬영') : '사진 열기',
                   ),
                 ),
+                if (_hasCamera)
+                  TextButton.icon(
+                    onPressed: _busy
+                        ? null
+                        : () => _pick(source: ImageSource.gallery),
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('앨범에서 선택'),
+                  ),
+                if (photo != null && widget.canRegisterDog)
+                  FilledButton.tonalIcon(
+                    icon: const Icon(Icons.pets),
+                    label: const Text('강아지 털색 등록'),
+                    onPressed: _busy
+                        ? null
+                        : () async {
+                            final coat = await showDialog<DogCoat>(
+                              context: context,
+                              builder: (_) => DogPhotoDialog(photo),
+                            );
+                            if (context.mounted && coat != null)
+                              Navigator.pop(context, coat);
+                          },
+                  ),
                 if (photo != null)
                   TextButton(
                     onPressed: () => Navigator.pop(context, true),

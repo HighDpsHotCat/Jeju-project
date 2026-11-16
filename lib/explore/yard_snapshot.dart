@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'catalog.dart';
+import 'dog_coat.dart';
 import 'encounter.dart';
 
 String encodeYardSnapshot({
@@ -8,6 +9,7 @@ String encodeYardSnapshot({
   required bool examples,
   required Set<String> discoveries,
   required List<Animal> catalog,
+  Map<String, FirstEncounter> dogCoats = const {},
   Set<String> startInYard = const {},
   Map<String, FirstEncounter> encounters = const {},
 }) {
@@ -33,6 +35,16 @@ String encodeYardSnapshot({
       'name': id,
       'modelKey': '',
       ...?encounters[id]?.fields,
+    });
+  }
+  for (final coat in DogCoat.values) {
+    final firstMet = dogCoats[coat.name];
+    if (firstMet == null) continue;
+    animals.add({
+      'id': 'JJ-000821/${coat.modelKey}',
+      'name': '${coat.label} 강아지',
+      'modelKey': coat.modelKey,
+      ...firstMet.fields,
     });
   }
   return jsonEncode({

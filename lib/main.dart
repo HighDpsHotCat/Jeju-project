@@ -9,6 +9,7 @@ import 'explore/camera.dart';
 import 'explore/catalog.dart';
 import 'explore/collection.dart';
 import 'explore/encounter.dart';
+import 'explore/dog_coat.dart';
 import 'explore/guide.dart';
 import 'explore/home.dart';
 
@@ -194,6 +195,11 @@ class _FieldJournalState extends State<_FieldJournal>
       examples: examples,
       discoveries: ids,
       startInYard: contestSpeciesIds,
+      dogCoats: examples
+          ? const {}
+          : readManualEncounters(
+              widget.app.preferences?.getString('guide.dogCoats.$profile'),
+            ),
       encounters: _examples ? const {} : _registered,
       catalog: ids.isEmpty ? const [] : await _animals(),
     );
@@ -321,13 +327,43 @@ class _FieldJournalState extends State<_FieldJournal>
     _cameraOpen = true;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
-      final browse = await Navigator.push<bool>(
+      final photoProfile = _profile;
+      final browse = await Navigator.push<Object>(
         context,
-        MaterialPageRoute(builder: (_) => CameraScreen(recovered: recovered)),
+        MaterialPageRoute(
+          builder: (_) => CameraScreen(
+            recovered: recovered,
+            canRegisterDog: _recordsReady && !_examples,
+          ),
+        ),
       );
-      if (mounted && browse == true) _openGuide();
+      if (!mounted) return;
+      if (browse == true) _openGuide();
+      if (browse is DogCoat) await _registerDogCoat(browse, photoProfile);
     } finally {
       _cameraOpen = false;
+    }
+  }
+
+  Future<void> _registerDogCoat(DogCoat coat, String profile) async {
+    final prefs = widget.app.preferences;
+    final key = 'guide.dogCoats.$profile';
+    try {
+      if (prefs == null) throw StateError('Missing preferences');
+      final coats = readManualEncounters(prefs.getString(key));
+      if (coats.containsKey(coat.name)) {
+        _message('이미 등록한 ${coat.label} 강아지예요.');
+        return;
+      }
+      coats[coat.name] = FirstEncounter(calendarDay(DateTime.now()), '');
+      if (!await prefs.setString(key, writeManualEncounters(coats))) {
+        throw StateError('Could not save dog coat');
+      }
+      if (!mounted || profile != _profile) return;
+      await _publishYard();
+      if (mounted) _message('${coat.label} 강아지를 등록했어요.');
+    } catch (_) {
+      if (mounted) _message('강아지 털색을 저장하지 못했어요.');
     }
   }
 

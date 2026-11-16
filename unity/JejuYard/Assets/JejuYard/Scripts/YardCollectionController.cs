@@ -121,6 +121,9 @@ namespace Jeju.Yard
                     AddWildlife(root.transform, paint, "white_cat", 4, -2);
                     AddWildlife(root.transform, paint, "jindo", 1, -4);
                     AddWildlife(root.transform, paint, "beagle", -3, -3);
+                    AddWildlife(root.transform, paint, "dog_brown", -2, 2);
+                    AddWildlife(root.transform, paint, "dog_white", 3, -1);
+                    AddWildlife(root.transform, paint, "dog_black", -3, -1);
                     AddWildlife(root.transform, paint, "poodle", 0, 2);
                 }
                 var dolphin = root.GetComponentInChildren<DolphinVisitor>(true);
