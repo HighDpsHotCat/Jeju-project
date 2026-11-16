@@ -99,7 +99,7 @@ Future<void> tapText(WidgetTester tester, String text) async {
 }
 
 void main() {
-  test('the six yard models use stable species IDs and Korean names', () async {
+  test('the eleven yard models use stable species IDs and Korean names', () async {
     final catalog = decodeGuideCatalog(
       await File('assets/catalog/animals.tsv.gz').readAsBytes(),
     );
@@ -127,13 +127,18 @@ void main() {
         'corgi': '웰시코기',
         'tabby': '노란 고양이',
         'gull': '갈매기',
+        'roe_deer': '노루',
+        'bulbul': '직박구리',
+        'white_eye': '동박새',
+        'magpie': '까치',
+        'cabbage_white': '배추흰나비',
         'sparrow': '참새',
         'swallowtail': '호랑나비',
         'dolphin': '남방큰돌고래',
         '': 'recorder-only',
       },
     );
-    expect(rows, hasLength(7));
+    expect(rows, hasLength(12));
   });
 
   testWidgets(
@@ -203,7 +208,7 @@ void main() {
         },
       );
       expect(exported.where((a) => a['startInYard'] != true), [
-        {'id': 'JJ-000837', 'name': '노루', 'modelKey': ''},
+        {'id': 'JJ-000837', 'name': '노루', 'modelKey': 'roe_deer'},
         {
           'id': 'JJ-003382',
           'name': '호랑나비',

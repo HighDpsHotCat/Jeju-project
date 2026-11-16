@@ -84,7 +84,7 @@ namespace Jeju.Yard
             var portrait = new Portrait
             {
                 pivot = pivot, modelKey = modelKey, speciesId = speciesId,
-                accessories = accessories, outfit = outfit, elevation = modelKey == "swallowtail" ? 43f : 17f
+                accessories = accessories, outfit = outfit, elevation = source.GetComponentInChildren<ButterflyFlight>(true) != null ? 43f : 17f
             };
             if (!Reframe(portrait)) { Destroy(pivot); return null; }
             var target = portrait.texture = CreateTarget(Width, Height, modelKey + " portrait");
@@ -174,6 +174,8 @@ namespace Jeju.Yard
 
         static Transform SetPose(GameObject copy)
         {
+            var deer = copy.GetComponentInChildren<GrazingDeer>(true);
+            if (deer != null) { deer.PoseAt(0f); return deer.transform; }
             var mammal = copy.GetComponentInChildren<QuadrupedRoamer>(true);
             if (mammal != null) { mammal.PoseAt(0f); return mammal.transform; }
             var bird = copy.GetComponentInChildren<YardBird>(true);

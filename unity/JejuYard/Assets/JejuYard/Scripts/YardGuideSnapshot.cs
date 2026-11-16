@@ -142,6 +142,11 @@ namespace Jeju.Yard
                 version = 1, profile = "standalone", examples = true,
                 animals = new[]
                 {
+                    new Animal("JJ-000837", "노루", "roe_deer"),
+                    new Animal("JJ-002293", "직박구리", "bulbul"),
+                    new Animal("JJ-004873", "동박새", "white_eye"),
+                    new Animal("JJ-003658", "까치", "magpie"),
+                    new Animal("JJ-003671", "배추흰나비", "cabbage_white"),
                     new Animal("JJ-000821", "웰시코기", "corgi", "2026-05-02", "제주시 애월읍"),
                     new Animal("JJ-001834", "노란 고양이", "tabby", "2026-05-05", "제주시 연동"),
                     new Animal("JJ-002426", "갈매기", "gull", "2026-05-08", "서귀포시 성산읍"),

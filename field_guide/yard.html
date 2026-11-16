@@ -3,7 +3,7 @@
 <style>html,body,iframe{margin:0;width:100%;height:100%;border:0;display:block;background:#fbf6ef}</style></head>
 <body><iframe title="제주 마당" id="player" allow="fullscreen"></iframe>
 <script type="module">
-import { contestAnimals, exampleIds } from "./demo-roster.js";
+import { contestAnimals, exampleIds, exampleModelKeys } from "./demo-roster.js";
 const frame=document.getElementById("player");
 addEventListener("message", async e=>{
   if(e.origin!==location.origin || e.source!==frame.contentWindow)return;
@@ -17,7 +17,7 @@ addEventListener("message", async e=>{
     try {
       const rows = await (await fetch("/species.json")).json();
       for (const row of rows.filter(row => ids.has(row.species_id))) {
-        animals.push({id: row.species_id, name: row.korean_name, modelKey: row.species_id === "JJ-003382" ? "swallowtail" : ""});
+        animals.push({id: row.species_id, name: row.korean_name, modelKey: exampleModelKeys[row.species_id] || ""});
       }
     } catch { /* The four contest residents are bundled with the page. */ }
   }

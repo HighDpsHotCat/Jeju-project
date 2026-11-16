@@ -99,6 +99,11 @@ namespace Jeju.Yard
                     AddModel("tabby",root.transform.Find("Yellow tabby cat"));
                     AddModel("gull",root.transform.Find("Seagull"));
                     AddModel("sparrow",root.transform.Find("Tree sparrow"));
+                    AddModel("roe_deer",root.transform.Find("Roe deer"));
+                    AddModel("bulbul",root.transform.Find("Brown-eared bulbul"));
+                    AddModel("white_eye",root.transform.Find("Warbling white-eye"));
+                    AddModel("magpie",root.transform.Find("Oriental magpie"));
+                    AddModel("cabbage_white",root.transform.Find("Small white"));
                     AddModel("swallowtail",root.transform.Find("Asian swallowtail"));
                 }
                 var dolphin = root.GetComponentInChildren<DolphinVisitor>(true);

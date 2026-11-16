@@ -31,6 +31,11 @@ const _featured = {
 };
 
 const _yardModels = {
+  'JJ-000837': ('roe_deer', '노루'),
+  'JJ-002293': ('bulbul', '직박구리'),
+  'JJ-004873': ('white_eye', '동박새'),
+  'JJ-003658': ('magpie', '까치'),
+  'JJ-003671': ('cabbage_white', '배추흰나비'),
   'JJ-000821': ('corgi', '웰시코기'),
   'JJ-001834': ('tabby', '노란 고양이'),
   'JJ-002426': ('gull', '갈매기'),
