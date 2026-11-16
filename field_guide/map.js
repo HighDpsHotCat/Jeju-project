@@ -1,5 +1,5 @@
 import { byId as $, node } from "./ui.js";
-import { visits, habitats, guideUrl, mapUrl, pinUrl, loadRecords } from "./map-data.js";
+import { visits, habitats, guideUrl, mapUrl, pinUrl, loadNearby, loadRecords } from "./map-data.js";
 import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 
 import { clearPinMap, positionBubble, renderPinMap } from "./pin-map.js";
@@ -102,6 +102,8 @@ function render() {
   $("map-panel").hidden = !pinMode && layer !== "records";
   $("detail").hidden = pinMode;
   $("places").hidden = layer !== "records";
+  $("pin-search").hidden = layer !== "visit" || !pinMode;
+  if ($("pin-search").hidden) $("pin-results").hidden = true;
   $("pin-key").hidden = !pinMode || layer !== "visit";
   $("zone-lists").hidden = layer !== "visit";
   if (pinMode) {
@@ -149,6 +151,48 @@ $("grades").onchange = () => {
 const view = $("viewport"), stage = $("stage");
 const scales = [1, 2.5, 5, 9];
 let level = 0;
+const query = $("pin-query"), results = $("pin-results");
+const normalize = text => text.normalize("NFC").toLowerCase().replace(/\s+/g, "");
+let searchRun = 0;
+async function searchPins() {
+  const run = ++searchRun, term = normalize(query.value);
+  results.replaceChildren();
+  results.hidden = !term;
+  if (!term) return;
+  let places;
+  try { ({places} = await loadNearby()); } catch { /* Place names remain searchable. */ }
+  if (run !== searchRun || results.hidden) return;
+  const matches = [];
+  for (const place of visits) {
+    const exactPlace = normalize(place.name).includes(term);
+    const rows = places?.[place.id] || [];
+    const animal = rows.find(row => normalize(row.name) === term) ||
+      rows.find(row => normalize(row.name).includes(term));
+    if (!exactPlace && !animal) continue;
+    const url = new URL(pinUrl("visit", place.id, true), location.origin);
+    if (animal && !exactPlace) url.searchParams.set("species", animal.species);
+    const link = anchor(place.name, url.href);
+    link.append(node("small", animal && !exactPlace ? animal.name + " 관찰" : place.type));
+    matches.push({link, rank: exactPlace ? 0 : 1});
+  }
+  for (const match of matches.sort((a,b) => a.rank-b.rank)) results.append(match.link);
+  if (!matches.length) results.append(node("p", places ? "일치하는 장소나 관찰 동물이 없어요." : "관찰 기록을 불러오지 못했어요. 장소 이름으로 검색해 주세요."));
+}
+query.addEventListener("input", searchPins);
+query.addEventListener("focus", searchPins);
+query.addEventListener("keydown", e => {
+  if (!e.isComposing && e.key === "ArrowDown") {
+    e.preventDefault(); results.querySelector("a")?.focus();
+  }
+});
+$("pin-search").addEventListener("keydown", e => {
+  if (e.key === "Escape" && !results.hidden) {
+    e.stopPropagation(); query.focus(); results.hidden = true;
+  }
+});
+$("pin-search").addEventListener("focusout", e => {
+  if (!$("pin-search").contains(e.relatedTarget)) results.hidden = true;
+});
 function mapPoint(x, y) {
   const rect = stage.getBoundingClientRect();
   return [(x - rect.left) / rect.width * 1440, (y - rect.top) / rect.height * 910];

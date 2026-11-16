@@ -13,7 +13,10 @@ function nearbyAnimals(place) {
     block.replaceChildren(node("p", "반경 " + radiusM / 1000 + "km · GBIF 관찰 " + rows.length + "종", "bubble-count"));
     if (!rows.length) block.append(node("small", "수집 표본에 일치하는 관찰이 없습니다."));
     const list = node("ul", null, "bubble-animals");
-    for (const r of rows) {
+    const params = new URLSearchParams(location.search);
+    const match = params.get("pin") === place.id && rows.find(r => r.species === params.get("species"));
+    const ordered = match ? [match, ...rows.filter(row => row !== match)] : rows;
+    for (const r of ordered) {
       const li = node("li"), guide = node("a", r.name + " ›");
       guide.href = guideUrl(r.species, r.name);
       const source = node("a", r.date.split("T")[0] + " · " + r.metres.toLocaleString("ko-KR") + "m · GBIF ↗");

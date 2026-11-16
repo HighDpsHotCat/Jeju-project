@@ -571,3 +571,13 @@
 .map-stage:not([data-layer="records"]) .south { left: 51.5%; top: 78%; }
 .basemap-credit { display: block; text-align: right; margin: 5px 2px; color: #536a68; font-size: 10px; }
 .basemap-credit a { text-decoration: underline; }
+
+#pin-search { position: relative; margin-bottom: 8px; z-index: 6; }
+#pin-search label { display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1px solid #c5d3be; border-radius: 14px; background: #fafbf5; color: #49654f; }
+#pin-search label:focus-within { outline: 2px solid #477852; }
+#pin-search label i { width: 18px; display: flex; }
+#pin-query { min-width: 0; width: 100%; height: 42px; border: 0; outline: none; background: transparent; font: inherit; font-size: 16px; }
+#pin-results { position: absolute; top: calc(100% + 3px); inset-inline: 0; max-height: min(220px, 32dvh); overflow-y: auto; overscroll-behavior: contain; background: #fffefa; border: 1px solid #cad6c6; border-radius: 12px; box-shadow: 0 5px 16px #244c3024; }
+#pin-results a { display: flex; align-items: center; justify-content: space-between; gap: 6px; min-height: 44px; padding: 5px 12px; border-bottom: 1px solid #e4ebdf; color: #254e36; font-size: 14px; }
+#pin-results small, #pin-results p { font-size: 12px; color: #526452; }
+#pin-results p { margin: 12px; }

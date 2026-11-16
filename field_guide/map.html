@@ -33,6 +33,10 @@
         <section id="map-panel" class="map-card paper" aria-label="관찰 지도와 지역 목록">
           <div class="map-card-head"><h2 id="map-heading" tabindex="-1"><span id="layer-title">탐방 장소</span></h2><span id="place-count"></span></div>
           <p id="layer-note" class="layer-note"></p>
+          <div id="pin-search" role="search" aria-label="탐방 지도 검색">
+            <label><i data-icon="search" aria-hidden="true"></i><input id="pin-query" type="search" aria-label="장소 또는 관찰 동물 검색" placeholder="장소 또는 관찰 동물 검색" autocomplete="off" /></label>
+            <div id="pin-results" hidden></div>
+          </div>
           <figure>
             <div class="map-frame" id="map-frame">
               <div class="map-viewport" id="viewport" tabindex="0" aria-label="제주 본섬 지도">
