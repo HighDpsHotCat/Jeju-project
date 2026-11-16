@@ -462,8 +462,11 @@ void main() {
   ) async {
     await start(tester);
     final main = tester.getCenter(find.text('메인'));
-    final camera = tester.getCenter(find.text('카메라'));
-    expect(camera.dx, closeTo(main.dx, 1));
+    final camera = tester.getRect(
+      find.ancestor(of: find.text('카메라'), matching: find.byType(InkWell)).first,
+    );
+    expect(camera.size, const Size.square(148));
+    expect(camera.center.dx, closeTo(main.dx, 1));
     final map = tester.getRect(
       find.ancestor(
         of: find.text('지도'),
@@ -471,7 +474,7 @@ void main() {
       ),
     );
     expect(map.center.dx, closeTo(main.dx, 1));
-    expect(map.top, greaterThan(camera.dy));
+    expect(map.top, greaterThan(camera.bottom));
     expect(map.bottom, lessThan(main.dy));
     expect(map.width, greaterThanOrEqualTo(246));
     expect(map.height, greaterThanOrEqualTo(96));

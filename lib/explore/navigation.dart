@@ -65,18 +65,18 @@ class FieldCameraButton extends StatelessWidget {
     child: InkWell(
       onTap: onPressed,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minWidth: 74, minHeight: 74),
+        constraints: const BoxConstraints(minWidth: 148, minHeight: 148),
         child: const Padding(
-          padding: EdgeInsets.all(9),
+          padding: EdgeInsets.all(12),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(CupertinoIcons.camera, color: Colors.white, size: 30),
+              Icon(CupertinoIcons.camera, color: Colors.white, size: 60),
               Text(
                 '카메라',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 28,
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
                 ),
