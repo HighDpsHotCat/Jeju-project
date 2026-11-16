@@ -142,10 +142,14 @@ class _ExplorerAction extends StatelessWidget {
         side: const BorderSide(color: sheet, width: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        textStyle: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+        visualDensity: VisualDensity.standard,
       ),
       icon: Icon(icon, size: 36),
-      label: Text(label, textAlign: TextAlign.center),
+      label: Text(
+        label,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+      ),
     ),
   );
 }
