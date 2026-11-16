@@ -109,6 +109,38 @@ $("sheet").addEventListener("click", (e) => {
       $("sheet").close();
   }
 });
+let gbifSnapshot;
+function gbifRecords(id) {
+  const panel = node("details");
+  if (!gbifSnapshot) {
+    gbifSnapshot = fetch("/gbif.json").then(response => {
+      if (!response.ok) throw Error("GBIF snapshot unavailable");
+      return response.json();
+    }).catch(error => { gbifSnapshot = null; throw error; });
+  }
+  gbifSnapshot.then(({collected, records}) => {
+    const rows = records[id];
+    if (!rows?.length) return;
+    panel.append(node("summary", "GBIF 제주 관찰 표본 " + rows.length + "건"));
+    panel.addEventListener("toggle", () => {
+      if (!panel.open || panel.childElementCount > 1) return;
+      panel.append(node("small", "수집일 " + collected));
+      const list = node("ul");
+      for (const row of rows) {
+        const item = node("li"), source = node("a", row.date.split("T")[0] + " · GBIF 원문 ↗");
+        source.href = "https://www.gbif.org/occurrence/" + row.id;
+        const license = node("a", "이용허락");
+        license.href = row.license;
+        item.append(source, node("small", [row.credit, row.dataset].filter(Boolean).join(" · ")), license);
+        list.append(item);
+      }
+      panel.append(list);
+    });
+    panel.hidden = false;
+  }).catch(() => {});
+  panel.hidden = true;
+  return panel;
+}
 function details(row) {
   const dl = node("dl");
   const entries = [
@@ -159,7 +191,7 @@ function details(row) {
       }
     }
   }).catch(() => { /* The catalog is also usable when regional records are unavailable. */ });
-  parts.push(mapLinks);
+  parts.push(gbifRecords(id), mapLinks);
   sheet(animalName(row), ...parts);
 }
 function counts() {

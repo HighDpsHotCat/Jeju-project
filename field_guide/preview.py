@@ -15,6 +15,7 @@ FILES = {
     "/jeju-grades.png": (HERE / "jeju-grades.png", "image/png"),
     "/jeju-map.png": (HERE / "jeju-map.png", "image/png"),
     "/observations.json": (HERE / "observations.json", "application/json"),
+    "/gbif.json": (HERE / "gbif.json", "application/json"),
 }
 for name in ("field.css", "map.css", "ui.js", "guide.js", "map.js", "map-data.js", "visit-map.js", "pin-map.js"):
     FILES["/" + name] = (HERE / name, "text/css" if name.endswith(".css") else "text/javascript")

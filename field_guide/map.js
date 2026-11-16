@@ -1,5 +1,5 @@
-import { byId as $, node, icon } from "./ui.js";
-import { visits, habitats, speciesIds, guideUrl, mapUrl, loadRecords } from "./map-data.js";
+import { byId as $, node } from "./ui.js";
+import { visits, habitats, guideUrl, mapUrl, loadRecords } from "./map-data.js";
 import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 
 import { clearPinMap, pinUrl, positionBubble, renderPinMap } from "./pin-map.js";
@@ -24,7 +24,7 @@ function readSelection() {
   const place = entries.find((p) => p.id === params.get("place"));
   const pin = entries.find((p) => p.id === params.get("pin"));
   const regionList = layer === "visit" && trip.zone && !place && !pin;
-  pinMode = layer !== "records" && !regionList && !(place && params.get("view") === "details");
+  pinMode = layer !== "records" && !regionList;
   pinPlace = pinMode ? pin || place : null;
   expanded = Boolean(pinPlace) && (pin ? params.get("show") === "animals" : true);
   selected = pinMode ? pinPlace : place || trip.zone || entries[0];
@@ -48,25 +48,6 @@ function choose(nextLayer, id, scroll = false, species = "") {
   render();
   if (scroll && matchMedia("(max-width:820px)").matches)
     $("detail").scrollIntoView({ block: "start" });
-}
-function placeDetail(p) {
-  const address = node("p", null, "area");
-  address.append(icon("pin"), p.area);
-  const animals = node("div", null, "animals-here");
-  for (const name of p.species) animals.append(anchor(name + " ↗", guideUrl(speciesIds[name], name)));
-  const back = anchor("‹ 지도로", pinUrl("habitat", p.id, true), "back-to-pins");
-  const parts = [back, node("span", p.type, "tag"), node("h2", p.name),
-    address, node("p", p.description), section("관련 동물 도감", animals)];
-  const actions = node("div", null, "actions");
-  const visit = visits.find((v) => v.habitat === p.id);
-  if (visit) actions.append(anchor("탐방 출발점 보기", mapUrl("visit", visit.id)));
-  const sources = node("div", null, "source-links");
-  for (const [label,url] of p.sources) sources.append(anchor(label + " ↗", url));
-  if (actions.childElementCount) parts.push(actions);
-  if ($("grades").checked && p.grade)
-    parts.push(section("대표 지점 생태·자연도", node("p", p.grade)));
-  parts.push(section("자료 출처", sources));
-  $("detail").replaceChildren(...parts);
 }
 function cityDetail(city) {
   const detail = $("detail");
@@ -128,7 +109,6 @@ function render() {
     return;
   }
   if (layer === "visit") { renderVisits(trip); return; }
-  if (layer === "habitat") { placeDetail(selected); return; }
   $("place-count").textContent = records ? Object.values(records).flat().length + "건" : "2개 행정시";
   for (const [i, city] of cities.entries()) {
     const count = records ? records[city.name].length + "건" : "";

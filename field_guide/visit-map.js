@@ -1,6 +1,5 @@
-import { byId as $, node, icon } from "./ui.js";
-import { visits, habitats, speciesIds, guideUrl, mapUrl } from "./map-data.js";
-import { pinUrl } from "./pin-map.js";
+import { byId as $, node } from "./ui.js";
+import { visits } from "./map-data.js";
 
 const zones = [
   { id: "jeju", name: "제주시" },
@@ -78,7 +77,7 @@ function screenHeader(title, backLabel, backUrl) {
   head.append(back, h2);
   return head;
 }
-function regionList({zone, kind}) {
+export function renderVisits({zone, kind}) {
   const places = inZone(zone);
   const visible = places.filter((p) => kind === "all" || p.kind === kind);
   const head = screenHeader(zone.name + " 관광지", "지역 선택으로 돌아가기", "/map");
@@ -111,61 +110,6 @@ function regionList({zone, kind}) {
   }
   $("detail").replaceChildren(head, body);
   body.scrollTop = history.state?.tripScroll || 0;
-}
-function direction(place) {
-  const url = place.search ? "https://map.kakao.com/?" + new URLSearchParams({q: place.search}) :
-    "https://map.kakao.com/link/to/" + encodeURIComponent(place.destinationName || place.name) + "," + place.destination.join(",");
-  return link(place.search ? place.search + " 찾기 ↗" : "탐방 출발점 길찾기 ↗", url);
-}
-function renderPlace({place}) {
-  const head = screenHeader(place.name, "지도 말풍선으로 돌아가기", pinUrl("visit", place.id, true));
-  const body = node("div", null, "trip-scroll");
-  const managed = place.id === "park";
-  const habitat = habitats.find((h) => h.id === place.habitat);
-  const label = managed ? "보호·사육 동물" : "관찰·서식 동물";
-  const heading = node("h3", label + " " + place.species.length + "종", "animals-title");
-  const grid = node("div", null, "animal-list");
-  const evidence = node("details", null, "trip-disclosure");
-  evidence.append(node("summary", "동물 기록과 출처"));
-  for (const name of place.species) {
-    const [type, note, source] = place.evidence?.[name] || (managed
-      ? ["보호·사육", "제주도 안내서에 실린 관찰장 동물입니다. 당일 관람 여부는 공원에 확인하세요.", place.sources[0][1]]
-      : ["지역 서식 자료", habitat.description, habitat.sources[0][1]]);
-    const a = link(null, guideUrl(speciesIds[name], name), "animal-entry");
-    a.setAttribute("aria-label", name + " 동물 도감 열기");
-    const art = {노루:"roe_deer", 남방큰돌고래:"dolphin", 동박새:"white_eye"}[name];
-    const mark = node("span", null, "animal-mark");
-    if (art) {
-      const img = node("img"); img.src = "/art/" + art + ".jpg"; img.alt = ""; mark.append(img);
-    } else mark.append(icon("paw"));
-    const copy = node("span", null, "trip-copy");
-    copy.append(node("strong", name), node("small", type));
-    a.append(mark, copy, node("span", "도감 ›", "guide-arrow"));
-    grid.append(a);
-    const item = node("div", null, "evidence-item");
-    item.append(node("b", name), node("p", note), link("원자료 ↗", source));
-    evidence.append(item);
-  }
-  const info = node("details", null, "trip-disclosure");
-  info.append(node("summary", "장소 안내·길찾기"), node("p", place.area, "trip-address"),
-    node("p", place.description), node("p", place.access));
-  const actions = node("div", null, "actions");
-  actions.append(direction(place));
-  if (place.habitat) actions.append(link("서식 기록 보기", mapUrl("habitat", place.habitat)));
-  info.append(actions);
-  if ($("grades").checked && place.grade) info.append(node("p", place.grade, "grade-box"));
-  const sources = node("div", null, "source-links");
-  if (place.csvName) sources.append(link("VISIT JEJU 여행장소 · " + place.csvName + " ↗", "https://www.data.go.kr/data/15049995/fileData.do"));
-  for (const [label,url] of place.sources) sources.append(link(label + " ↗", url));
-  info.append(sources);
-  body.append(heading, grid, evidence, info);
-  $("detail").replaceChildren(head, body);
-}
-export function renderVisits(state) {
-  $("map-panel").hidden = Boolean(state.zone);
-  $("detail").hidden = !state.zone;
-  if (state.place) renderPlace(state);
-  else regionList(state);
 }
 export function filterUrl(state, kind) {
   return tripUrl(state.zone.id, null, kind);

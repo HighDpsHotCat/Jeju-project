@@ -1,5 +1,5 @@
 import { byId as $, node } from "./ui.js";
-import { guideUrl, mapUrl, speciesIds } from "./map-data.js";
+import { guideUrl, speciesIds } from "./map-data.js";
 
 const frame = $("map-frame"), bubble = $("map-bubble");
 let currentMarker = null;
@@ -116,9 +116,7 @@ export function renderPinMap(layer, entries, selected, expanded) {
       li.append(guide);
       list.append(li);
     }
-    const info = node("a", layer === "visit" ? "장소 안내·근거 보기" : "서식 자료 보기", "bubble-info");
-    info.href = mapUrl(layer, selected.id) + "&view=details";
-    content.append(list, info);
+    content.append(list);
     bubble.append(head, content);
   }
   bubble.hidden = false;
