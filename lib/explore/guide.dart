@@ -387,7 +387,13 @@ class _AnimalPhoto extends StatelessWidget {
                 color: Color(0xFFEDF0E4),
                 child: Icon(Icons.pets_outlined, color: Color(0xFF95A18B)),
               )
-            : Image.asset(photo, fit: BoxFit.cover, excludeFromSemantics: true),
+            : Image.asset(
+                photo,
+                fit: animal.guidePhoto?['unmodified'] == true
+                    ? BoxFit.contain
+                    : BoxFit.cover,
+                excludeFromSemantics: true,
+              ),
       ),
     );
   }
@@ -556,7 +562,23 @@ class _AnimalDetail extends StatelessWidget {
           ),
         ],
       ),
-      if (animal.photo != null)
+      if (animal.guidePhoto case final credit?)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: SelectableText(
+            [
+              if (credit['note'] != null) credit['note'],
+              if (credit['title'] != null) credit['title'],
+              "사진 · ${credit['displayCredit'] ?? credit['author']} · ${credit['license']}",
+              "원본  ${credit['source']}",
+              "이용 조건  ${credit['licenseUrl']}",
+              credit['unmodified'] == true
+                  ? "원본 그대로 제공"
+                  : "도감용 크기 조정 · 원본과 같은 이용 조건",
+            ].join('\n'),
+          ),
+        )
+      else if (animal.photo != null)
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Text(animal.description),

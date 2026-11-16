@@ -661,3 +661,7 @@ dialog::backdrop {
   background: #edf2df;
   border-radius: 10px;
 }
+
+.guide-photo { margin: 0 0 12px; }
+.guide-photo img { width: 100%; max-height: 280px; object-fit: contain; }
+.guide-photo figcaption { margin-top: 5px; font-size: .8rem; line-height: 1.5; overflow-wrap: anywhere; }

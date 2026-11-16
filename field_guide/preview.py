@@ -25,7 +25,13 @@ for path in (ROOT / "assets/art").glob("*.jpg"):
     FILES["/art/" + path.name] = (path, "image/jpeg")
 
 
+PHOTO_DIR = ROOT / "assets/guide_photos"
+for path in PHOTO_DIR.glob("*.jpg"):
+    FILES["/guide-photos/" + path.name] = (path, "image/jpeg")
+
+
 def catalog_data():
+    credits = json.loads((PHOTO_DIR / "credits.json").read_text(encoding="utf-8"))
     with next(ROOT.glob("*ID*.csv")).open(encoding="utf-8-sig", newline="") as source:
         jeju = list(csv.DictReader(source))
     guide_order = {}
@@ -35,7 +41,7 @@ def catalog_data():
             if scope == "jeju":
                 guide_order[jeju_id] = len(guide_order)
             elif scope == "national":
-                national.append([ktsn, korean, scientific, taxon, jeju_id])
+                national.append([ktsn, korean, scientific, taxon, jeju_id, credits.get(ktsn)])
     for row in jeju:
         if row["species_id"] not in guide_order:
             row["in_guide"] = False

@@ -77,13 +77,14 @@ function animalName(row) {
 }
 function thumb(row) {
   const item = featured.get(animalId(row));
-  if (!item) {
+  if (!item && !row.photo) {
     const el = node("span", null, "thumb fallback");
     el.append(icon("paw"));
     return el;
   }
   const img = node("img", null, "thumb");
-  img.src = "/art/" + item[0] + ".jpg";
+  img.src = row.photo ? "/guide-photos/" + row.species_id.slice(5) + ".jpg" : "/art/" + item[0] + ".jpg";
+  if (row.photo?.unmodified) img.style.objectFit = "contain";
   img.alt = "";
   return img;
 }
@@ -185,11 +186,25 @@ function details(row) {
     if (value) dl.append(node("dt", label), node("dd", value));
   const parts = [badge(row), observedPlaces(animalId(row)), dl];
   const image = featured.get(animalId(row));
-  if (image) {
+  if (row.photo || image) {
     const img = node("img");
-    img.src = "/art/" + image[0] + ".jpg";
+    img.src = row.photo ? "/guide-photos/" + row.species_id.slice(5) + ".jpg" : "/art/" + image[0] + ".jpg";
     img.alt = animalName(row);
-    parts.unshift(img);
+    if (row.photo) {
+      const photo = row.photo;
+      const figure = node("figure", null, "guide-photo");
+      const credit = node("figcaption");
+      const source = node("a", photo.title || "사진 원본");
+      source.href = photo.source;
+      const license = node("a", photo.license);
+      license.href = photo.licenseUrl;
+      credit.append(photo.note ? photo.note + " · " : "", (photo.displayCredit || photo.author) + " · ", source, " · ", license,
+        photo.unmodified ? " · 원본 그대로 제공" : " · 도감용 크기 조정. 원본과 같은 이용 조건.");
+      figure.append(img, credit);
+      parts.unshift(figure);
+    } else {
+      parts.unshift(img);
+    }
   }
   const mapLinks = node("div", null, "guide-map-links");
   function addLink(label, url) {
@@ -303,12 +318,13 @@ async function load() {
         scope === "jeju"
           ? data.filter((r) => r.in_guide !== false && Number(r.source_occurrence_count) > 0)
           : data.map(
-              ([ktsn, korean_name, scientific_name, taxon, jeju_id]) => ({
+              ([ktsn, korean_name, scientific_name, taxon, jeju_id, photo]) => ({
                 species_id: "KTSN-" + ktsn,
                 korean_name,
                 scientific_name,
                 class: taxon,
                 jeju_id,
+                photo,
               }),
             );
       cache.set(scope, catalog);
