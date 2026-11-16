@@ -15,6 +15,7 @@ namespace Jeju.Yard
         public sealed class Animal
         {
             public string id, name, modelKey, firstMetDate, firstMetLocation;
+            public bool startInYard;
 
             public Animal(string id, string name, string modelKey, string firstMetDate = null, string firstMetLocation = null)
             {

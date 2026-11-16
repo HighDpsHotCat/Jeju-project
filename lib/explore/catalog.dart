@@ -39,7 +39,14 @@ const _yardModels = {
   'JJ-004729': ('dolphin', '남방큰돌고래'),
 };
 
-// Used only when the explorer explicitly turns on the example in Settings.
+const contestSpeciesIds = {
+  'JJ-001834', // 고양이
+  'JJ-004729', // 남방큰돌고래
+  'JJ-003483', // 참새
+  'JJ-000821', // 개 (웰시코기)
+};
+
+// Additional records for profiles that previously enabled example mode.
 const exampleSpeciesIds = {
   'JJ-000837',
   'JJ-004873',
@@ -113,6 +120,7 @@ class Animal {
     if (group != AnimalGroup.all && group.taxon != taxon) return false;
     return query.isEmpty ||
         korean.contains(query) ||
+        (jejuId == 'JJ-000821' && '강아지 웰시코기'.contains(query)) ||
         scientific.toLowerCase().contains(query) ||
         jejuId.toLowerCase().contains(query) ||
         (nationalId.isNotEmpty && 'ktsn-$nationalId'.contains(query));

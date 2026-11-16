@@ -180,14 +180,20 @@ class _FieldJournalState extends State<_FieldJournal>
     }
   }
 
+  Set<String> get _discovered => {
+    ...contestSpeciesIds,
+    ...(_examples ? exampleSpeciesIds : _registered.keys),
+  };
+
   Future<String> _yardSnapshot() async {
-    final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
+    final ids = _discovered;
     final profile = _profile;
     final examples = _examples;
     return encodeYardSnapshot(
       profile: profile,
       examples: examples,
       discoveries: ids,
+      startInYard: contestSpeciesIds,
       encounters: _examples ? const {} : _registered,
       catalog: ids.isEmpty ? const [] : await _animals(),
     );
@@ -233,7 +239,7 @@ class _FieldJournalState extends State<_FieldJournal>
   }
 
   Future<void> _register(Animal animal, FirstEncounter encounter) async {
-    if (_examples || !_recordsReady || _registered.containsKey(animal.id)) {
+    if (_examples || !_recordsReady || _discovered.contains(animal.id)) {
       return;
     }
     final prefs = widget.app.preferences;
@@ -350,7 +356,7 @@ class _FieldJournalState extends State<_FieldJournal>
 
   @override
   Widget build(BuildContext context) {
-    final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
+    final ids = _discovered;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(

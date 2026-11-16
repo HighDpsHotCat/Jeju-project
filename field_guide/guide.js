@@ -1,3 +1,4 @@
+import { contestAnimals, exampleIds } from "./demo-roster.js";
 import { byId as $, node, icon } from "./ui.js";
 import { visits, habitats, speciesIds, mapUrl, loadRecords, loadNearby, pinUrl } from "./map-data.js";
 
@@ -7,21 +8,6 @@ const featured = new Map([
   ["JJ-003382", ["swallowtail", "노란 날개와 검은 무늬"]],
   ["JJ-004729", ["dolphin", "제주 바다에서 만나는 동물"]],
 ]);
-const examples = new Set(
-  [...featured.keys()]
-    .slice(0, 3)
-    .concat([
-      "JJ-003554",
-      "JJ-002293",
-      "JJ-003570",
-      "JJ-003658",
-      "JJ-004398",
-      "JJ-003478",
-      "JJ-003671",
-      "JJ-002187",
-      "JJ-000261",
-    ]),
-);
 const groups = {
   Mammalia: "포유류",
   Aves: "조류",
@@ -51,6 +37,8 @@ function stored(key) {
   }
 }
 const demo = stored("examples") === "true";
+const registeredIds = new Set(contestAnimals.map(animal => animal.id));
+if (demo) exampleIds.forEach(id => registeredIds.add(id));
 const explorer = stored("explorer") || "";
 const view = params.get("view") === "yard" ? "yard" :
   (params.get("view") === "guide" || ["region","species","group","q"].some(key => params.has(key))) ? "guide" : "main";
@@ -67,7 +55,7 @@ function animalId(row) {
   return row.jeju_id || row.species_id;
 }
 function found(row) {
-  return demo && examples.has(animalId(row));
+  return registeredIds.has(animalId(row));
 }
 function animalName(row) {
   if ($("region").value === "jeju" && (!row.korean_name || row.korean_name === "[국명없음]"))
@@ -233,8 +221,8 @@ function details(row) {
 function counts() {
   const label = demo ? "발견한 동물 · 예시" : "발견한 동물";
   $("yard-count-label").textContent = $("count-label").textContent = label;
-  $("yard-count").textContent = (demo ? examples.size : 0) + "종";
-  $("guide-count").textContent = (demo ? rows.filter(found).length : 0) + "종";
+  $("yard-count").textContent = registeredIds.size + "종";
+  $("guide-count").textContent = rows.filter(found).length + "종";
 }
 function render() {
   const start = page * pageSize,
@@ -281,6 +269,7 @@ function apply() {
           row.jeju_id,
           row.korean_name,
           row.scientific_name,
+          animalId(row) === "JJ-000821" ? "강아지 웰시코기" : "",
         ].some((v) => v && v.toLowerCase().includes(q))),
   );
   page = 0;

@@ -9,7 +9,8 @@ namespace Jeju.Yard
     [DisallowMultipleComponent]
     public sealed class YardCollectionController : MonoBehaviour
     {
-        [Serializable] sealed class Placement { public string[] ids; }
+        [Serializable] sealed class Placement { public string[] ids; public bool contestSeeded; }
+        bool contestSeeded;
 
         enum Source { Unlinked, Linked, Imported, StandaloneDemo }
         const string DemoOptIn = "jeju.yard.standaloneDemo";
@@ -226,20 +227,35 @@ namespace Jeju.Yard
 
         void RestorePlacement()
         {
-            if (!PlayerPrefs.HasKey(placementKey))
+            contestSeeded = false;
+            Placement saved = null;
+            if (PlayerPrefs.HasKey(placementKey))
             {
-                if (source == Source.StandaloneDemo)
-                    foreach (var animal in collection.animals)
-                        if (HasModel(animal)) placed.Add(animal.id);
-                return;
+                try { saved = JsonUtility.FromJson<Placement>(PlayerPrefs.GetString(placementKey)); }
+                catch (ArgumentException) { return; }
+                if (saved?.ids == null) return;
+                foreach (string id in saved.ids)
+                    if (id != null && registered.TryGetValue(id, out var item) && HasModel(item)) placed.Add(id);
             }
-            Placement saved;
-            try { saved = JsonUtility.FromJson<Placement>(PlayerPrefs.GetString(placementKey)); }
-            catch (ArgumentException) { return; }
-            if (saved?.ids == null) return;
-            foreach (string id in saved.ids)
-                if (id != null && registered.TryGetValue(id,out var item) && HasModel(item)) placed.Add(id);
-            if (placed.Count != saved.ids.Length) SavePlacement();
+            else if (source == Source.StandaloneDemo)
+            {
+                foreach (var animal in collection.animals)
+                    if (HasModel(animal)) placed.Add(animal.id);
+            }
+
+            contestSeeded = saved != null && saved.contestSeeded;
+            bool changed = saved != null && placed.Count != saved.ids.Length;
+            if (!contestSeeded)
+            {
+                foreach (var animal in collection.animals)
+                {
+                    if (!animal.startInYard || !HasModel(animal)) continue;
+                    placed.Add(animal.id);
+                    contestSeeded = true;
+                    changed = true;
+                }
+            }
+            if (changed) SavePlacement();
         }
 
         void SavePlacement()
@@ -247,7 +263,7 @@ namespace Jeju.Yard
             var ids = new string[placed.Count];
             placed.CopyTo(ids);
             Array.Sort(ids,StringComparer.Ordinal);
-            PlayerPrefs.SetString(placementKey,JsonUtility.ToJson(new Placement { ids=ids }));
+            PlayerPrefs.SetString(placementKey,JsonUtility.ToJson(new Placement { ids=ids, contestSeeded=contestSeeded }));
             PlayerPrefs.Save();
         }
 
