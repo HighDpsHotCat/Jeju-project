@@ -201,6 +201,9 @@ void main() {
     () async {
       final catalog = decodeGuideCatalog(
         await File('assets/catalog/animals.tsv.gz').readAsBytes(),
+        jsonDecode(
+          await File('assets/guide_photos/credits.json').readAsString(),
+        ) as Map<String, dynamic>,
       );
       final local = catalog
           .where((animal) => animal.jejuId.isNotEmpty)
@@ -223,6 +226,14 @@ void main() {
       final ordered = catalog.where((a) => a.nationalId.isNotEmpty).toList()
         ..sort(compareNationalAnimals);
       expect(ordered.take(4).map((a) => a.name), ['참새', '다람쥐', '까치', '청설모']);
+      for (final animal in ordered.take(80)) {
+        expect(
+          animal.guidePhoto?['source'],
+          startsWith('https://'),
+          reason: animal.name,
+        );
+        expect(File(animal.photo!).existsSync(), isTrue, reason: animal.name);
+      }
       final dolphin = ordered.indexWhere((a) => a.name == '남방큰돌고래');
       expect(dolphin, greaterThanOrEqualTo(12));
       expect(ordered[dolphin].taxon, 'Mammalia');

@@ -66,6 +66,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/art/
+    - assets/guide_photos/
     - assets/yard/
     - assets/catalog/animals.tsv.gz
     - assets/catalog/jeju_districts.json.gz

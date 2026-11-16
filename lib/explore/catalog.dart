@@ -105,9 +105,11 @@ class Animal {
     this.nationalId,
     this.korean,
     this.scientific,
-    this.taxon,
-  );
+    this.taxon, {
+    this.guidePhoto,
+  });
 
+  final Map<String, dynamic>? guidePhoto;
   final String jejuId;
   final String nationalId;
   final String korean;
@@ -123,6 +125,7 @@ class Animal {
   String get modelKey => _yardModels[jejuId]?.$1 ?? '';
   String get yardName => _yardModels[jejuId]?.$2 ?? name;
   String? get photo {
+    if (guidePhoto != null) return 'assets/guide_photos/$nationalId.jpg';
     final feature = _featured[jejuId];
     return feature == null ? null : 'assets/art/${feature.$1}.jpg';
   }
@@ -154,16 +157,32 @@ class Animal {
 
 Future<List<Animal>> loadGuideCatalog() async {
   final data = await rootBundle.load('assets/catalog/animals.tsv.gz');
-  return compute(decodeGuideCatalog, Uint8List.sublistView(data));
+  final credits = await rootBundle.loadString(
+    'assets/guide_photos/credits.json',
+  );
+  return compute(_decodeWithPhotos, (Uint8List.sublistView(data), credits));
 }
 
-List<Animal> decodeGuideCatalog(Uint8List compressed) {
+List<Animal> _decodeWithPhotos((Uint8List, String) input) =>
+    decodeGuideCatalog(input.$1, jsonDecode(input.$2) as Map<String, dynamic>);
+
+List<Animal> decodeGuideCatalog(
+  Uint8List compressed, [
+  Map<String, dynamic> photos = const {},
+]) {
   final tsv = utf8.decode(GZipDecoder().decodeBytes(compressed));
   return const LineSplitter()
       .convert(tsv)
       .map((line) {
         final fields = line.split('\t');
-        return Animal(fields[0], fields[1], fields[2], fields[3], fields[4]);
+        return Animal(
+          fields[0],
+          fields[1],
+          fields[2],
+          fields[3],
+          fields[4],
+          guidePhoto: photos[fields[1]],
+        );
       })
       .toList(growable: false);
 }
