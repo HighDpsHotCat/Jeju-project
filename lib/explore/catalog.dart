@@ -75,6 +75,17 @@ int compareNationalAnimals(Animal a, Animal b) {
 
 // Domestic breeds share their species-level discovery with the local yard model.
 const _yardModels = {
+  'JJ-000837': ('roe_deer', '노루'),
+  'JJ-002293': ('bulbul', '직박구리'),
+  'JJ-004873': ('white_eye', '동박새'),
+  'JJ-003658': ('magpie', '까치'),
+  'JJ-003671': ('cabbage_white', '배추흰나비'),
+  'JJ-004503': ('chipmunk', '다람쥐'),
+  '120000053353': ('water_deer', '고라니'),
+  '120000053303': ('raccoon_dog', '너구리'),
+  'JJ-001174': ('crow', '까마귀'),
+  'JJ-000261': ('mallard', '청둥오리'),
+  'JJ-002187': ('swallow', '제비'),
   'JJ-000821': ('corgi', '웰시코기'),
   'JJ-001834': ('tabby', '노란 고양이'),
   'JJ-002426': ('gull', '갈매기'),
@@ -99,6 +110,8 @@ const exampleSpeciesIds = {
   'JJ-000261',
 };
 
+typedef GuidePhoto = ({String asset, Map<String, dynamic>? credit});
+
 class Animal {
   const Animal(
     this.jejuId,
@@ -106,10 +119,12 @@ class Animal {
     this.korean,
     this.scientific,
     this.taxon, {
-    this.guidePhoto,
+    this.jejuPhoto,
+    this.nationalPhoto,
   });
 
-  final Map<String, dynamic>? guidePhoto;
+  final GuidePhoto? jejuPhoto;
+  final GuidePhoto? nationalPhoto;
   final String jejuId;
   final String nationalId;
   final String korean;
@@ -122,12 +137,17 @@ class Animal {
     'JJ-001834' => '고양이',
     _ => korean.isEmpty ? scientific : korean,
   };
-  String get modelKey => _yardModels[jejuId]?.$1 ?? '';
-  String get yardName => _yardModels[jejuId]?.$2 ?? name;
-  String? get photo {
-    if (guidePhoto != null) return 'assets/guide_photos/$nationalId.jpg';
+  String get modelKey => _yardModels[id]?.$1 ?? '';
+  String get yardName => _yardModels[id]?.$2 ?? name;
+  GuidePhoto? photoFor(GuideRegion region) {
+    final photo = region == GuideRegion.national
+        ? nationalPhoto ?? jejuPhoto
+        : jejuPhoto ?? nationalPhoto;
+    if (photo != null) return photo;
     final feature = _featured[jejuId];
-    return feature == null ? null : 'assets/art/${feature.$1}.jpg';
+    return feature == null
+        ? null
+        : (asset: 'assets/art/${feature.$1}.jpg', credit: null);
   }
 
   String get description =>
@@ -170,6 +190,13 @@ List<Animal> decodeGuideCatalog(
   Uint8List compressed, [
   Map<String, dynamic> photos = const {},
 ]) {
+  GuidePhoto? lookupPhoto(String id) {
+    final credit = photos[id] as Map<String, dynamic>?;
+    return credit == null
+        ? null
+        : (asset: 'assets/guide_photos/$id.jpg', credit: credit);
+  }
+
   final tsv = utf8.decode(GZipDecoder().decodeBytes(compressed));
   return const LineSplitter()
       .convert(tsv)
@@ -181,7 +208,8 @@ List<Animal> decodeGuideCatalog(
           fields[2],
           fields[3],
           fields[4],
-          guidePhoto: photos[fields[1]],
+          jejuPhoto: lookupPhoto(fields[0]),
+          nationalPhoto: lookupPhoto(fields[1]),
         );
       })
       .toList(growable: false);

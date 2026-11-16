@@ -11,17 +11,18 @@ namespace Jeju.Yard.EditorArt
         static readonly Color Orange = Draft.C(0xED925B);
         static Vector2 P(float x, float z) => new Vector2(x, z);
 
-        public static ButterflyFlight Build(Transform parent)
+        public static ButterflyFlight Build(Transform parent, bool cabbageWhite = false)
         {
-            var butterfly = new GameObject("Asian swallowtail").AddComponent<ButterflyFlight>();
+            var butterfly = new GameObject(cabbageWhite ? "Small white" : "Asian swallowtail").AddComponent<ButterflyFlight>();
             butterfly.transform.SetParent(parent, false);
             // Perches on two existing daisy heads in the east flower bed.
-            butterfly.transform.localPosition = new Vector3(2.635f, .367f, 3.554f);
+            butterfly.transform.localPosition = cabbageWhite ? new Vector3(3.35f,.38f,4.18f) : new Vector3(2.635f, .367f, 3.554f);
             var frame = new GameObject("Flutter").transform;
             frame.SetParent(butterfly.transform, false);
             butterfly.airframe = frame;
-            Body().Bake("SwallowtailBody", frame);
-            var right = Wing().Bake("SwallowtailWing", frame);
+            Body().Bake(cabbageWhite ? "SmallWhiteBody" : "SwallowtailBody", frame);
+            if (cabbageWhite) butterfly.transform.localScale = Vector3.one * .78f;
+            var right = cabbageWhite ? WhiteWing().Bake("SmallWhiteWing",frame) : Wing().Bake("SwallowtailWing",frame);
             right.transform.localPosition = new Vector3(.013f, .010f, 0f);
             right.name = "Right wings";
             var left = Object.Instantiate(right, frame);
@@ -59,6 +60,21 @@ namespace Jeju.Yard.EditorArt
                     mesh.Rod(knee,new Vector3(side*.044f,-.040f,z+.020f-i*.017f),.002f,.0015f,Ink,4);
                 }
             }
+            return mesh;
+        }
+
+        static Draft WhiteWing()
+        {
+            var mesh = new Draft();
+            Color ivory = Draft.C(0xFFF9DC);
+            Panel(mesh, P(.14f,-.05f), new[]{P(.009f,0),P(.015f,-.12f),P(.09f,-.175f),
+                P(.18f,-.17f),P(.24f,-.11f),P(.255f,-.036f),P(.18f,.03f)},Draft.C(0xEBE9BF),0);
+            Panel(mesh,P(.16f,.058f),new[]{P(.008f,-.03f),P(.13f,-.06f),P(.24f,-.035f),
+                P(.313f,.055f),P(.34f,.15f),P(.31f,.215f),P(.22f,.192f),P(.024f,.072f)},ivory,0);
+            Panel(mesh,P(.306f,.156f),new[]{P(.247f,.197f),P(.31f,.215f),P(.34f,.15f),
+                P(.313f,.055f),P(.297f,.125f)},Ink,.001f);
+            Spot(mesh,P(.208f,.074f),.020f,.016f,Ink);
+            Spot(mesh,P(.151f,-.005f),.014f,.012f,Ink);
             return mesh;
         }
 

@@ -333,6 +333,7 @@ class _AnimalGuideState extends State<AnimalGuide> {
                         final found = _isDiscovered(animal);
                         return _AnimalRow(
                           animal: animal,
+                          photo: animal.photoFor(_region),
                           found: found,
                           examples: widget.examples,
                           photoWidth: photoWidth,
@@ -409,13 +410,13 @@ class _DiscoveryBanner extends StatelessWidget {
 }
 
 class _AnimalPhoto extends StatelessWidget {
-  const _AnimalPhoto(this.animal, {required this.width, required this.height});
-  final Animal animal;
+  const _AnimalPhoto(this.photo, {required this.width, required this.height});
+  final GuidePhoto? photo;
   final double width;
   final double height;
   @override
   Widget build(BuildContext context) {
-    final photo = animal.photo;
+    final photo = this.photo;
     return ClipRRect(
       borderRadius: BorderRadius.circular(13),
       child: SizedBox(
@@ -427,8 +428,8 @@ class _AnimalPhoto extends StatelessWidget {
                 child: Icon(Icons.pets_outlined, color: Color(0xFF95A18B)),
               )
             : Image.asset(
-                photo,
-                fit: animal.guidePhoto?['unmodified'] == true
+                photo.asset,
+                fit: photo.credit?['unmodified'] == true
                     ? BoxFit.contain
                     : BoxFit.cover,
                 excludeFromSemantics: true,
@@ -479,6 +480,7 @@ class _Registration extends StatelessWidget {
 class _AnimalRow extends StatelessWidget {
   const _AnimalRow({
     required this.animal,
+    required this.photo,
     required this.found,
     required this.examples,
     required this.photoWidth,
@@ -486,6 +488,7 @@ class _AnimalRow extends StatelessWidget {
     required this.onRegister,
   });
   final Animal animal;
+  final GuidePhoto? photo;
   final bool found;
   final bool examples;
   final double photoWidth;
@@ -503,6 +506,7 @@ class _AnimalRow extends StatelessWidget {
               context,
               _AnimalDetail(
                 animal: animal,
+                photo: photo,
                 found: found,
                 examples: examples,
                 canRegister: !found && onRegister != null,
@@ -515,7 +519,7 @@ class _AnimalRow extends StatelessWidget {
             child: Row(
               children: [
                 _AnimalPhoto(
-                  animal,
+                  photo,
                   width: photoWidth,
                   height: photoWidth * .80,
                 ),
@@ -570,11 +574,13 @@ class _AnimalRow extends StatelessWidget {
 class _AnimalDetail extends StatelessWidget {
   const _AnimalDetail({
     required this.animal,
+    required this.photo,
     required this.found,
     required this.examples,
     required this.canRegister,
   });
   final Animal animal;
+  final GuidePhoto? photo;
   final bool found;
   final bool examples;
   final bool canRegister;
@@ -585,7 +591,7 @@ class _AnimalDetail extends StatelessWidget {
     children: [
       Row(
         children: [
-          _AnimalPhoto(animal, width: 88, height: 80),
+          _AnimalPhoto(photo, width: 88, height: 80),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -613,7 +619,7 @@ class _AnimalDetail extends StatelessWidget {
           ),
         ],
       ),
-      if (animal.guidePhoto case final credit?)
+      if (photo?.credit case final credit?)
         Padding(
           padding: const EdgeInsets.only(top: 12),
           child: SelectableText(
@@ -629,7 +635,7 @@ class _AnimalDetail extends StatelessWidget {
             ].join('\n'),
           ),
         )
-      else if (animal.photo != null)
+      else if (photo != null)
         Padding(
           padding: const EdgeInsets.only(top: 16),
           child: Text(animal.description),

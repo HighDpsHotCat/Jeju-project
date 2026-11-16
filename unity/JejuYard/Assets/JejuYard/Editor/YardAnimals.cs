@@ -18,6 +18,7 @@ namespace Jeju.Yard.EditorArt
             YardMammals.Build(group.transform);
             YardBirds.Build(group.transform);
             YardButterfly.Build(group.transform);
+            BuildCommonWildlife(group.transform);
             for (int i = 0; i < group.transform.childCount; i++)
             {
                 GameObject animal = group.transform.GetChild(i).gameObject;
@@ -25,6 +26,13 @@ namespace Jeju.Yard.EditorArt
             }
             SavePrefab(group, AnimalGroup);
             return group;
+        }
+
+        public static void BuildCommonWildlife(Transform parent)
+        {
+            YardRoeDeer.Build(parent);
+            YardSongbirds.Build(parent);
+            YardButterfly.Build(parent, true);
         }
 
         static void SavePrefab(GameObject model, string path)

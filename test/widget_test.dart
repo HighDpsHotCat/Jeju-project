@@ -54,7 +54,7 @@ Future<void> tapText(WidgetTester tester, String text) async {
 }
 
 void main() {
-  test('the six yard models use stable species IDs and Korean names', () async {
+  test('the yard models use stable species IDs and Korean names', () async {
     final catalog = decodeGuideCatalog(
       await File('assets/catalog/animals.tsv.gz').readAsBytes(),
     );
@@ -73,12 +73,23 @@ void main() {
     );
     final rows = (data['animals'] as List).cast<Map>();
     expect(rows.map((row) => row['id']).toSet(), {
-      for (final a in models) a.jejuId,
+      for (final a in models) a.id,
       'recorder-only',
     });
     expect(
       {for (final row in rows) row['modelKey']: row['name']},
       {
+        'roe_deer': '노루',
+        'bulbul': '직박구리',
+        'white_eye': '동박새',
+        'magpie': '까치',
+        'cabbage_white': '배추흰나비',
+        'chipmunk': '다람쥐',
+        'water_deer': '고라니',
+        'raccoon_dog': '너구리',
+        'crow': '까마귀',
+        'mallard': '청둥오리',
+        'swallow': '제비',
         'corgi': '웰시코기',
         'tabby': '노란 고양이',
         'gull': '갈매기',
@@ -88,7 +99,7 @@ void main() {
         '': 'recorder-only',
       },
     );
-    expect(rows, hasLength(7));
+    expect(rows, hasLength(18));
   });
 
   testWidgets(
@@ -145,7 +156,7 @@ void main() {
       expect(data['profile'], 'user:field-a');
       expect(data['examples'], false);
       expect(data['animals'], [
-        {'id': 'JJ-000837', 'name': '노루', 'modelKey': ''},
+        {'id': 'JJ-000837', 'name': '노루', 'modelKey': 'roe_deer'},
         {
           'id': 'JJ-003382',
           'name': '호랑나비',
@@ -199,12 +210,28 @@ void main() {
   test(
     'bundled Jeju and national indexes keep source IDs and example cards',
     () async {
+      final credits = jsonDecode(
+        await File('assets/guide_photos/credits.json').readAsString(),
+      ) as Map<String, dynamic>;
       final catalog = decodeGuideCatalog(
         await File('assets/catalog/animals.tsv.gz').readAsBytes(),
-        jsonDecode(
-          await File('assets/guide_photos/credits.json').readAsString(),
-        ) as Map<String, dynamic>,
+        credits,
       );
+      final displayed = <String>{};
+      for (final animal in catalog) {
+        for (final (region, id) in [
+          (GuideRegion.jeju, animal.jejuId),
+          (GuideRegion.national, animal.nationalId),
+        ]) {
+          if (!credits.containsKey(id)) continue;
+          final photo = animal.photoFor(region)!;
+          expect(photo.asset, 'assets/guide_photos/$id.jpg');
+          expect(photo.credit, credits[id]);
+          expect(File(photo.asset).existsSync(), isTrue);
+          displayed.add(id);
+        }
+      }
+      expect(displayed, credits.keys.toSet());
       final local = catalog
           .where((animal) => animal.jejuId.isNotEmpty)
           .map((animal) => animal.jejuId);
@@ -228,11 +255,11 @@ void main() {
       expect(ordered.take(4).map((a) => a.name), ['참새', '다람쥐', '까치', '청설모']);
       for (final animal in ordered.take(80)) {
         expect(
-          animal.guidePhoto?['source'],
+          animal.photoFor(GuideRegion.national)?.credit?['source'],
           startsWith('https://'),
           reason: animal.name,
         );
-        expect(File(animal.photo!).existsSync(), isTrue, reason: animal.name);
+        expect(File(animal.photoFor(GuideRegion.national)!.asset).existsSync(), isTrue, reason: animal.name);
       }
       final dolphin = ordered.indexWhere((a) => a.name == '남방큰돌고래');
       expect(dolphin, greaterThanOrEqualTo(12));
