@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 
 import 'catalog.dart';
 import 'encounter.dart';
 import 'style.dart';
+
+part 'pet_breeds.dart';
 
 class AnimalGuide extends StatefulWidget {
   const AnimalGuide({
@@ -10,6 +13,8 @@ class AnimalGuide extends StatefulWidget {
     this.initialSearch = '',
     required this.catalog,
     required this.discovered,
+    required this.breedIds,
+    required this.onCollectBreed,
     required this.examples,
     required this.onBack,
     required this.backLabel,
@@ -20,6 +25,8 @@ class AnimalGuide extends StatefulWidget {
   final String initialSearch;
   final Future<List<Animal>> catalog;
   final Set<String> discovered;
+  final ValueListenable<Set<String>> breedIds;
+  final CollectBreed? onCollectBreed;
   final bool examples;
   final VoidCallback onBack;
   final String backLabel;
@@ -79,7 +86,14 @@ class _AnimalGuideState extends State<AnimalGuide> {
                 ? animals
                 : regional
                       .where((a) => a.matches(_region, _group, _query))
-                      .toList(growable: false);
+                      .toList();
+            if (_query == '개' || _query == '강아지' || _query == '고양이') {
+              final name = _query == '강아지' ? '개' : _query;
+              final index = filtered.indexWhere(
+                (a) => a.breeds.isNotEmpty && a.name == name,
+              );
+              if (index > 0) filtered.insert(0, filtered.removeAt(index));
+            }
             return CustomScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
@@ -333,6 +347,8 @@ class _AnimalGuideState extends State<AnimalGuide> {
                         final found = _isDiscovered(animal);
                         return _AnimalRow(
                           animal: animal,
+                          breedIds: widget.breedIds,
+                          onCollectBreed: widget.onCollectBreed,
                           photo: animal.photoFor(_region),
                           found: found,
                           examples: widget.examples,
@@ -410,7 +426,13 @@ class _DiscoveryBanner extends StatelessWidget {
 }
 
 class _AnimalPhoto extends StatelessWidget {
-  const _AnimalPhoto(this.photo, {required this.width, required this.height});
+  const _AnimalPhoto(
+    this.photo, {
+    required this.width,
+    required this.height,
+    this.fit = BoxFit.cover,
+  });
+  final BoxFit fit;
   final GuidePhoto? photo;
   final double width;
   final double height;
@@ -429,9 +451,7 @@ class _AnimalPhoto extends StatelessWidget {
               )
             : Image.asset(
                 photo.asset,
-                fit: photo.credit?['unmodified'] == true
-                    ? BoxFit.contain
-                    : BoxFit.cover,
+                fit: photo.credit?['unmodified'] == true ? BoxFit.contain : fit,
                 excludeFromSemantics: true,
               ),
       ),
@@ -480,6 +500,8 @@ class _Registration extends StatelessWidget {
 class _AnimalRow extends StatelessWidget {
   const _AnimalRow({
     required this.animal,
+    required this.breedIds,
+    required this.onCollectBreed,
     required this.photo,
     required this.found,
     required this.examples,
@@ -488,6 +510,8 @@ class _AnimalRow extends StatelessWidget {
     required this.onRegister,
   });
   final Animal animal;
+  final ValueListenable<Set<String>> breedIds;
+  final CollectBreed? onCollectBreed;
   final GuidePhoto? photo;
   final bool found;
   final bool examples;
@@ -502,15 +526,24 @@ class _AnimalRow extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () async {
+            Widget info(bool registered) => _AnimalDetail(
+              animal: animal,
+              photo: photo,
+              found: registered,
+              examples: examples,
+              canRegister: !registered && onRegister != null,
+            );
             final encounter = await showFieldSheet<FirstEncounter>(
               context,
-              _AnimalDetail(
-                animal: animal,
-                photo: photo,
-                found: found,
-                examples: examples,
-                canRegister: !found && onRegister != null,
-              ),
+              animal.breeds.isEmpty
+                  ? info(found)
+                  : _PetDetail(
+                      animal: animal,
+                      breedIds: breedIds,
+                      examples: examples,
+                      onCollect: onCollectBreed,
+                      info: (hasBreed) => info(found || hasBreed),
+                    ),
             );
             if (encounter != null) onRegister?.call(animal, encounter);
           },
@@ -622,18 +655,7 @@ class _AnimalDetail extends StatelessWidget {
       if (photo?.credit case final credit?)
         Padding(
           padding: const EdgeInsets.only(top: 12),
-          child: SelectableText(
-            [
-              if (credit['note'] != null) credit['note'],
-              if (credit['title'] != null) credit['title'],
-              "사진 · ${credit['displayCredit'] ?? credit['author']} · ${credit['license']}",
-              "원본  ${credit['source']}",
-              "이용 조건  ${credit['licenseUrl']}",
-              credit['unmodified'] == true
-                  ? "원본 그대로 제공"
-                  : "도감용 크기 조정 · 원본과 같은 이용 조건",
-            ].join('\n'),
-          ),
+          child: _PhotoCredit(credit),
         )
       else if (photo != null)
         Padding(
@@ -738,5 +760,21 @@ class _EncounterFormState extends State<_EncounterForm> {
         label: const Text('직접 관찰한 동물로 등록'),
       ),
     ],
+  );
+}
+
+class _PhotoCredit extends StatelessWidget {
+  const _PhotoCredit(this.credit);
+  final Map<String, dynamic> credit;
+  @override
+  Widget build(BuildContext context) => SelectableText(
+    [
+      if (credit['note'] != null) credit['note'],
+      if (credit['title'] != null) credit['title'],
+      "사진 · ${credit['displayCredit'] ?? credit['author']} · ${credit['license']}",
+      "원본  ${credit['source']}",
+      "이용 조건  ${credit['licenseUrl']}",
+      credit['unmodified'] == true ? "원본 그대로 제공" : "도감용 크기 조정 · 원본과 같은 이용 조건",
+    ].join('\n'),
   );
 }

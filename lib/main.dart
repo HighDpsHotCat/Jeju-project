@@ -76,6 +76,7 @@ class _FieldJournalState extends State<_FieldJournal>
   late bool _examples =
       widget.app.preferences?.getBool('explorer.examples') ?? false;
   Map<String, FirstEncounter> _registered = {};
+  final _breedIds = ValueNotifier<Set<String>>({});
   String _profile = 'local';
   bool _recordsReady = false;
   final _snapshot = ValueNotifier<String?>(null);
@@ -106,6 +107,7 @@ class _FieldJournalState extends State<_FieldJournal>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _snapshot.dispose();
+    _breedIds.dispose();
     super.dispose();
   }
 
@@ -153,6 +155,12 @@ class _FieldJournalState extends State<_FieldJournal>
         add(id, FirstEncounter.unknown);
       }
       manual.forEach(add);
+      final breedIds = entries.keys
+          .where((id) => breedSpeciesId(id) != null)
+          .toSet();
+      for (final id in breedIds) {
+        add(breedSpeciesId(id)!, entries.remove(id)!);
+      }
       if (entries.isNotEmpty) {
         for (final a in await _animals()) {
           if (a.nationalId.isEmpty || a.jejuId.isEmpty) continue;
@@ -164,6 +172,7 @@ class _FieldJournalState extends State<_FieldJournal>
       setState(() {
         _profile = records.profile;
         _registered = entries;
+        _breedIds.value = breedIds;
         _recordsReady = true;
       });
       await _publishYard();
@@ -226,10 +235,17 @@ class _FieldJournalState extends State<_FieldJournal>
     }
   }
 
-  Future<String> _register(Animal animal, FirstEncounter encounter) async {
+  Future<String> _register(
+    Animal animal,
+    FirstEncounter encounter, {
+    PetBreed? breed,
+  }) async {
     if (_examples) return '예시 도감에서는 관찰 기록을 저장하지 않아요.';
     if (!_recordsReady) return '도감 기록을 읽는 중이에요. 잠시 후 다시 시도해 주세요.';
-    if (_registered.containsKey(animal.id)) {
+    if (breed != null && _breedIds.value.contains(breed.id)) {
+      return '${breed.name} · 이미 수집한 품종이에요.';
+    }
+    if (breed == null && _registered.containsKey(animal.id)) {
       return '${animal.name} · 이미 도감에 등록되어 있어요.';
     }
     final prefs = widget.app.preferences;
@@ -237,7 +253,10 @@ class _FieldJournalState extends State<_FieldJournal>
     try {
       if (prefs == null) throw StateError('Missing local preferences');
       final entries = readManualEncounters(prefs.getString(key));
-      entries.putIfAbsent(animal.id, () => encounter);
+      if (!_registered.containsKey(animal.id)) {
+        entries.putIfAbsent(animal.id, () => encounter);
+      }
+      if (breed != null) entries.putIfAbsent(breed.id, () => encounter);
       if (!await prefs.setString(key, writeManualEncounters(entries))) {
         throw StateError('Could not save registration');
       }
@@ -245,7 +264,7 @@ class _FieldJournalState extends State<_FieldJournal>
       return '이 기기에 등록 기록을 저장하지 못했어요.';
     }
     if (mounted) await _refreshRecords();
-    return '${animal.name} 등록 완료';
+    return breed == null ? '${animal.name} 등록 완료' : '${breed.name} 수집 완료';
   }
 
   Future<void> _registerManually(
@@ -382,6 +401,7 @@ class _FieldJournalState extends State<_FieldJournal>
 
   @override
   Widget build(BuildContext context) {
+    final guideProfile = _profile;
     final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -426,6 +446,22 @@ class _FieldJournalState extends State<_FieldJournal>
                                     initialSearch: _guideSearch,
                                     catalog: _catalog!,
                                     discovered: ids,
+                                    breedIds: _breedIds,
+                                    onCollectBreed: _examples || !_recordsReady
+                                        ? null
+                                        : (animal, breed) async {
+                                            if (guideProfile != _profile) {
+                                              return '프로필이 바뀌었어요. 도감을 다시 열어 주세요.';
+                                            }
+                                            return _register(
+                                              animal,
+                                              FirstEncounter(
+                                                calendarDay(DateTime.now()),
+                                                '',
+                                              ),
+                                              breed: breed,
+                                            );
+                                          },
                                     examples: _examples,
                                     onBack: _goBack,
                                     backLabel: _guideOrigin == FieldTab.yard

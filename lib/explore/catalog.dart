@@ -112,6 +112,14 @@ const exampleSpeciesIds = {
 
 typedef GuidePhoto = ({String asset, Map<String, dynamic>? credit});
 
+typedef PetBreed = ({String id, String name, String english, GuidePhoto photo});
+
+String? breedSpeciesId(String id) {
+  if (id.startsWith('BREED-')) return 'JJ-000821';
+  if (id.startsWith('CAT-')) return 'JJ-001834';
+  return null;
+}
+
 class Animal {
   const Animal(
     this.jejuId,
@@ -119,10 +127,12 @@ class Animal {
     this.korean,
     this.scientific,
     this.taxon, {
+    this.breeds = const [],
     this.jejuPhoto,
     this.nationalPhoto,
   });
 
+  final List<PetBreed> breeds;
   final GuidePhoto? jejuPhoto;
   final GuidePhoto? nationalPhoto;
   final String jejuId;
@@ -168,6 +178,12 @@ class Animal {
     if (group != AnimalGroup.all && group.taxon != taxon) return false;
     return query.isEmpty ||
         name.contains(query) ||
+        (jejuId == 'JJ-000821' && '강아지'.contains(query)) ||
+        breeds.any(
+          (breed) =>
+              breed.name.contains(query) ||
+              breed.english.toLowerCase().contains(query),
+        ) ||
         yardName.contains(query) ||
         scientific.toLowerCase().contains(query) ||
         jejuId.toLowerCase().contains(query) ||
@@ -197,6 +213,21 @@ List<Animal> decodeGuideCatalog(
         : (asset: 'assets/guide_photos/$id.jpg', credit: credit);
   }
 
+  final breeds = <String, List<PetBreed>>{};
+  for (final id in photos.keys) {
+    final parent = breedSpeciesId(id);
+    if (parent == null) continue;
+    final credit = photos[id] as Map<String, dynamic>;
+    (breeds[parent] ??= []).add((
+      id: id,
+      name: credit['name'] as String,
+      english: credit['subject'] as String,
+      photo: lookupPhoto(id)!,
+    ));
+  }
+  for (final list in breeds.values) {
+    list.sort((a, b) => a.name.compareTo(b.name));
+  }
   final tsv = utf8.decode(GZipDecoder().decodeBytes(compressed));
   return const LineSplitter()
       .convert(tsv)
@@ -208,6 +239,7 @@ List<Animal> decodeGuideCatalog(
           fields[2],
           fields[3],
           fields[4],
+          breeds: breeds[fields[0]] ?? const [],
           jejuPhoto: lookupPhoto(fields[0]),
           nationalPhoto: lookupPhoto(fields[1]),
         );

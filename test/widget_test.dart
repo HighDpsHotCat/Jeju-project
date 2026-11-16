@@ -103,6 +103,85 @@ void main() {
   });
 
   testWidgets(
+    'pet details collect individual breeds by profile and count each species once',
+    (tester) async {
+      final catalog = decodeGuideCatalog(
+        File('assets/catalog/animals.tsv.gz').readAsBytesSync(),
+        jsonDecode(File('assets/guide_photos/credits.json').readAsStringSync())
+            as Map<String, dynamic>,
+      ).where((a) => a.breeds.isNotEmpty).toList();
+      expect(catalog, hasLength(2));
+      SharedPreferences.setMockInitialValues({'device_profile.user_id': 'a'});
+      final prefs = await SharedPreferences.getInstance();
+      await tester.pumpWidget(
+        MyApp(
+          preferences: prefs,
+          loadAnimals: () async => catalog,
+          loadRecords: (user) async => GuideRecords(user, {}),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tapText(tester, '도감');
+
+      Future<void> openPet(String query, String name) async {
+        await tester.enterText(find.byType(TextField).first, query);
+        await tester.pumpAndSettle();
+        await tapText(tester, name);
+      }
+
+      Future<void> close() async {
+        Navigator.of(tester.element(find.text('품종 수집'))).pop();
+        await tester.pumpAndSettle();
+      }
+
+      Future<void> collect(String name) async {
+        await tester.ensureVisible(find.text(name));
+        await tapText(tester, name);
+        await tester.ensureVisible(find.text('직접 관찰한 품종으로 수집'));
+        await tapText(tester, '직접 관찰한 품종으로 수집');
+      }
+
+      await openPet('강아지', '개');
+      expect(find.text('개 · 품종 수집 0/20'), findsOneWidget);
+      await collect('골든 리트리버');
+      await collect('닥스훈트');
+      expect(find.text('개 · 품종 수집 2/20'), findsOneWidget);
+      await close();
+      await openPet('고양이', '고양이');
+      expect(find.text('고양이 · 품종 수집 0/20'), findsOneWidget);
+      await collect('노르웨이 숲고양이');
+      expect(find.text('고양이 · 품종 수집 1/20'), findsOneWidget);
+      await close();
+      expect(find.text('2종'), findsOneWidget);
+      await openPet('골든 리트리버', '개');
+      await tapText(tester, '골든 리트리버');
+      expect(
+        tester.widget<FilledButton>(find.byType(FilledButton).last).onPressed,
+        isNull,
+      );
+      Navigator.of(tester.element(find.text('골든 리트리버').last)).pop();
+      await tester.pumpAndSettle();
+      await close();
+      final saved = readManualEncounters(
+        prefs.getString('guide.encounters.user:a'),
+      );
+      expect(saved.keys.toSet(), {
+        'JJ-000821',
+        'BREED-golden',
+        'BREED-dachshund',
+        'JJ-001834',
+        'CAT-norwegian-forest',
+      });
+      await prefs.setString('device_profile.user_id', 'b');
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle();
+      await openPet('강아지', '개');
+      expect(find.text('개 · 품종 수집 0/20'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
     'manual registration persists by profile and exports the visible collection',
     (tester) async {
       String? snapshot;
@@ -231,6 +310,15 @@ void main() {
           displayed.add(id);
         }
       }
+      for (final parent in catalog.where((a) => a.breeds.isNotEmpty)) {
+        expect(parent.breeds, hasLength(20));
+        for (final breed in parent.breeds) {
+          expect(breedSpeciesId(breed.id), parent.id);
+          expect(breed.photo.credit, credits[breed.id]);
+          expect(File(breed.photo.asset).existsSync(), isTrue);
+          expect(displayed.add(breed.id), isTrue);
+        }
+      }
       expect(displayed, credits.keys.toSet());
       final local = catalog
           .where((animal) => animal.jejuId.isNotEmpty)
@@ -259,7 +347,11 @@ void main() {
           startsWith('https://'),
           reason: animal.name,
         );
-        expect(File(animal.photoFor(GuideRegion.national)!.asset).existsSync(), isTrue, reason: animal.name);
+        expect(
+          File(animal.photoFor(GuideRegion.national)!.asset).existsSync(),
+          isTrue,
+          reason: animal.name,
+        );
       }
       final dolphin = ordered.indexWhere((a) => a.name == '남방큰돌고래');
       expect(dolphin, greaterThanOrEqualTo(12));
