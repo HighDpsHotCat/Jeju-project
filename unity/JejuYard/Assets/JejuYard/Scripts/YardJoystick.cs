@@ -70,12 +70,12 @@ namespace Jeju.Yard
 
         void OnGUI()
         {
-            if (YardCollectionPanel.BlocksYardInput || Event.current.type != EventType.Repaint || disc == null || (!Input.touchSupported && finger == NoFinger)) return;
+            if (finger == NoFinger || YardCollectionPanel.BlocksYardInput || Event.current.type != EventType.Repaint || disc == null) return;
             float r = Radius;
-            Vector2 p = finger == NoFinger ? Screen.safeArea.min + Vector2.one * (r * 1.6f) : origin;
+            Vector2 p = origin;
             p.y = Screen.height - p.y;
             Color previous = GUI.color;
-            GUI.color = new Color(.15f, .23f, .16f, finger == NoFinger ? .18f : .32f);
+            GUI.color = new Color(.15f, .23f, .16f, .32f);
             GUI.DrawTexture(new Rect(p.x-r, p.y-r, 2*r, 2*r), disc);
             Vector2 t = p + new Vector2(thumb.x, -thumb.y) * r;
             GUI.color = new Color(1f, .98f, .88f, .74f);

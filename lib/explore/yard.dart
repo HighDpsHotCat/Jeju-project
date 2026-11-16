@@ -10,12 +10,7 @@ class YardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('제주 마당'),
-      leading: BackButton(onPressed: () => Navigator.pop(context)),
-    ),
     body: SafeArea(
-      top: false,
       child: ValueListenableBuilder<String?>(
         valueListenable: snapshot,
         builder: (context, value, _) => YardPlayer(

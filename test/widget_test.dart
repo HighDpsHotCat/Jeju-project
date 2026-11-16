@@ -9,6 +9,7 @@ import 'package:jeju_project/main.dart';
 import 'package:jeju_project/explore/collection.dart';
 import 'package:jeju_project/explore/encounter.dart';
 import 'package:jeju_project/explore/yard_file.dart';
+import 'package:jeju_project/explore/yard_player_native.dart';
 import 'package:jeju_project/explore/yard_snapshot.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -326,8 +327,9 @@ void main() {
     await tapText(tester, '마당');
     expect(find.text('나의 캐릭터'), findsNothing);
     await tapText(tester, '마당 입장');
-    expect(find.text('제주 마당'), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
+    expect(find.byType(AppBar), findsNothing);
+    expect(find.byType(BackButton), findsNothing);
+    tester.widget<YardPlayer>(find.byType(YardPlayer)).onExit();
     await tester.pumpAndSettle();
     expect(find.text('마당 입장'), findsOneWidget);
     await tapText(tester, '발견한 동물');
