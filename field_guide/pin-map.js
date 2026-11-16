@@ -151,7 +151,8 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo) 
     const kind = layer === "visit" && selected.id === "park" ? "보호·사육 동물" : "관찰·서식 동물";
     const reference = layer === "visit" ? node("details") : content;
     if (layer === "visit") {
-      content.append(nearbyAnimals(selected), reference);
+      content.append(nearbyAnimals(selected));
+      if (selected.species.length) content.append(reference);
       reference.append(node("summary", kind + " 자료 " + selected.species.length + "종"));
     } else content.append(node("p", kind + " " + selected.species.length + "종", "bubble-count"));
     const list = node("ul", null, "bubble-animals");

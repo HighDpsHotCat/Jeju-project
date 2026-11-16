@@ -1,5 +1,5 @@
 import { byId as $, node } from "./ui.js";
-import { visits } from "./map-data.js";
+import { visits, loadNearby } from "./map-data.js";
 
 const zones = [
   { id: "jeju", name: "제주시" },
@@ -95,7 +95,11 @@ export function renderVisits({zone, kind}) {
     const card = route(null, tripUrl(zone.id, p.id, kind), "trip-card");
     card.dataset.returnTo = p.id;
     const copy = node("span", null, "trip-copy");
-    copy.append(node("strong", p.name), node("small", p.type + " · 동물 " + p.species.length + "종"));
+    const summary = node("small", p.type);
+    copy.append(node("strong", p.name), summary);
+    loadNearby().then(({places}) => {
+      if (places[p.id]) summary.textContent = p.type + " · 주변 관찰 " + places[p.id].length + "종";
+    }).catch(() => { /* Keep the place type available offline. */ });
     card.append(thumbnail(p), copy, node("span", "›", "trip-arrow"));
     grid.append(card);
   }

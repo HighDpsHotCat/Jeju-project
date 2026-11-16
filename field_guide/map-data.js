@@ -1,3 +1,4 @@
+import tourismSites from "./visit-jeju.json" with { type: "json" };
 // Mainland marker positions are pixels in the 1440 × 910 EPSG:5186 basemap.
 const hub = (id) => "https://jejudatahub.net/data/view/data/" + id;
 const ramsar = (id) => "https://rsis.ramsar.org/ris/" + id;
@@ -115,6 +116,7 @@ export const visits = [
     access: "지도에는 오름의 위치를 표시했습니다. 차량으로 갈 때는 아래 버튼에서 탐방 주차장을 찾아 출발하세요.",
     sources: [["제주도 오름 안내", "https://www.jeju.go.kr/is/oreum/info/jejuoreum/view.wp?menuId=MENU000000000000274&oreumId=145"], ["습지 자료", ramsar(1648)]],
   },
+  ...tourismSites.map(place => ({ ...place, species: [] })),
 ];
 
 export const habitats = [

@@ -1,4 +1,4 @@
-"""Build a public GBIF sample around the ten visitor map pins (WGS84)."""
+"""Build a public GBIF sample around the visitor map pins (WGS84)."""
 import csv
 import json
 import math
@@ -64,8 +64,10 @@ if __name__ == "__main__":
         for r in csv.DictReader(f):
             catalog.setdefault(r["scientific_name"].strip().casefold(), []).append(
                 (r["species_id"], r["korean_name"] or r["scientific_name"]))
+    tourism_sites = json.loads((ROOT / "field_guide/visit-jeju.json").read_text(encoding="utf8"))
+    centers = {**CENTERS, **{site["id"]: site["destination"] for site in tourism_sites}}
     with ThreadPoolExecutor(max_workers=3) as pool:
-        jobs = {k: pool.submit(collect, *point, catalog) for k, point in CENTERS.items()}
+        jobs = {k: pool.submit(collect, *point, catalog) for k, point in centers.items()}
         places = {k: job.result() for k, job in jobs.items()}
     out = ROOT / "field_guide/nearby.json"
     tmp = out.with_suffix(".tmp")
