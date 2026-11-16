@@ -399,6 +399,7 @@ void main() {
     expect(tester.getCenter(find.text('도감')).dx, lessThan(main.dx));
     expect(tester.getCenter(find.text('마당')).dx, greaterThan(main.dx));
     await tapText(tester, '마당');
+    expect(find.text('카메라'), findsNothing);
     expect(find.text('나의 캐릭터'), findsNothing);
     await tapText(tester, '마당 입장');
     expect(find.byType(AppBar), findsNothing);
@@ -407,6 +408,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('마당 입장'), findsOneWidget);
     await tapText(tester, '발견한 동물 0종');
+    expect(find.text('카메라'), findsNothing);
     await tester.tap(find.byTooltip('마당으로 돌아가기'));
     await tester.pumpAndSettle();
     expect(find.text('나의 마당'), findsOneWidget);

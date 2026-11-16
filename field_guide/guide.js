@@ -57,7 +57,6 @@ const view = params.get("view") === "yard" ? "yard" :
 for (const tab of ["main","guide","yard"]) $(tab).hidden = tab !== view;
 $(view + "-nav").setAttribute("aria-current","page");
 document.body.dataset.view = view;
-if (view === "main") $("main-camera").append($("camera"));
 if (params.get("from") === "yard") {
   $("guide-back").href = "/?view=yard";
   $("guide-back").setAttribute("aria-label","마당으로 돌아가기");

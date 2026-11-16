@@ -379,60 +379,48 @@ class _FieldJournalState extends State<_FieldJournal>
                       ),
                     SafeArea(
                       bottom: false,
-                      child: Column(
+                      child: IndexedStack(
+                        sizing: StackFit.expand,
+                        index: _tab.index,
                         children: [
-                          Expanded(
-                            child: IndexedStack(
-                              sizing: StackFit.expand,
-                              index: _tab.index,
-                              children: [
-                                if (_catalog == null)
-                                  const SizedBox.shrink()
-                                else
-                                  AnimalGuide(
-                                    catalog: _catalog!,
-                                    discovered: ids,
-                                    examples: _examples,
-                                    onBack: _goBack,
-                                    backLabel: _guideOrigin == FieldTab.yard
-                                        ? '마당으로 돌아가기'
-                                        : '메인으로 돌아가기',
-                                    onRegister: _recordsReady && !_examples
-                                        ? _register
-                                        : null,
-                                    onSendToYard: _snapshot.value == null
-                                        ? null
-                                        : _copyToYard,
-                                    onRetry: () {
-                                      setState(
-                                        () =>
-                                            _catalog = widget.app.loadAnimals(),
-                                      );
-                                      _refreshRecords();
-                                    },
-                                  ),
-                                ExplorerHome(
-                                  name: _name,
-                                  openCredits: _openCredits,
-                                  openCamera: _openCamera,
-                                  openMap: _openMap,
-                                ),
-                                ExplorerYard(
-                                  name: _name,
-                                  total: ids.length,
-                                  examples: _examples,
-                                  openCredits: _openCredits,
-                                  openGuide: _openGuide,
-                                  enterYard: _enterYard,
-                                ),
-                              ],
+                          if (_catalog == null)
+                            const SizedBox.shrink()
+                          else
+                            AnimalGuide(
+                              catalog: _catalog!,
+                              discovered: ids,
+                              examples: _examples,
+                              onBack: _goBack,
+                              backLabel: _guideOrigin == FieldTab.yard
+                                  ? '마당으로 돌아가기'
+                                  : '메인으로 돌아가기',
+                              onRegister: _recordsReady && !_examples
+                                  ? _register
+                                  : null,
+                              onSendToYard: _snapshot.value == null
+                                  ? null
+                                  : _copyToYard,
+                              onRetry: () {
+                                setState(
+                                  () => _catalog = widget.app.loadAnimals(),
+                                );
+                                _refreshRecords();
+                              },
                             ),
+                          ExplorerHome(
+                            name: _name,
+                            openCredits: _openCredits,
+                            openCamera: _openCamera,
+                            openMap: _openMap,
                           ),
-                          if (!keyboardOpen && _tab != FieldTab.main)
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: FieldCameraButton(onPressed: _openCamera),
-                            ),
+                          ExplorerYard(
+                            name: _name,
+                            total: ids.length,
+                            examples: _examples,
+                            openCredits: _openCredits,
+                            openGuide: _openGuide,
+                            enterYard: _enterYard,
+                          ),
                         ],
                       ),
                     ),
