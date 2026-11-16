@@ -63,14 +63,18 @@ class Animal {
   final String taxon;
   final GuideRegion region;
 
-  String get name => korean.isEmpty ? scientific : korean;
+  String get name => korean.isNotEmpty
+      ? korean
+      : region == GuideRegion.jeju
+          ? '국명 미확인 · $jejuId'
+          : scientific;
   String? get photo {
     final feature = _featured[jejuId];
     return feature == null ? null : 'assets/art/${feature.$1}.jpg';
   }
 
   String get description =>
-      _featured[jejuId]?.$2 ?? (korean.isEmpty ? groupName : scientific);
+      _featured[jejuId]?.$2 ?? (region == GuideRegion.jeju ? '제주 목격 기록' : scientific);
 
   String get groupName => switch (taxon) {
     'Mammalia' => '포유류',

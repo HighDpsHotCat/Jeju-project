@@ -71,6 +71,8 @@ function found(row) {
   return demo && examples.has(animalId(row));
 }
 function animalName(row) {
+  if ($("region").value === "jeju" && (!row.korean_name || row.korean_name === "[국명없음]"))
+    return "국명 미확인 · " + row.species_id;
   return row.korean_name || row.scientific_name;
 }
 function thumb(row) {
@@ -232,9 +234,9 @@ function render() {
       node(
         "small",
         featured.get(animalId(row))?.[1] ||
-          (row.korean_name
-            ? row.scientific_name
-            : groups[row.class] || row.class),
+          ($("region").value === "jeju"
+            ? [groups[row.class], "제주 관찰 기록 " + row.source_occurrence_count + "건"].filter(Boolean).join(" · ")
+            : row.scientific_name),
       ),
     );
     button.append(thumb(row), copy, badge(row));
@@ -313,6 +315,8 @@ async function load() {
     }
     if (version !== generation) return;
     rows = cache.get(scope);
+    const mammals = $("groups").querySelector('[data-group="Mammalia"]');
+    mammals.textContent = "포유류 " + rows.filter(row => row.class === "Mammalia").length + "종";
     apply();
     counts();
     if (requestedSpecies) {
