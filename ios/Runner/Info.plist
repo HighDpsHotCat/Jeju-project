@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>같은 네트워크의 제주 동물 판별 서버에 사진을 보냅니다.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -11,7 +13,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>탐험 중 만난 동물의 사진을 촬영할 때 카메라를 사용합니다.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>관찰 사진을 미리 볼 때 사진을 사용합니다.</string>
+	<string>선택한 관찰 사진으로 동물을 판별해 도감에 등록합니다.</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

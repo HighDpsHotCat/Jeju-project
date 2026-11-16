@@ -82,6 +82,8 @@ class _FieldJournalState extends State<_FieldJournal>
   int _exportGeneration = 0;
   Future<void> _writes = Future.value();
   Future<List<Animal>>? _catalog;
+  String _guideSearch = '';
+  Key? _guideSearchKey;
   FieldTab _tab = FieldTab.main;
   FieldTab _guideOrigin = FieldTab.main;
   bool _cameraOpen = false;
@@ -224,9 +226,11 @@ class _FieldJournalState extends State<_FieldJournal>
     }
   }
 
-  Future<void> _register(Animal animal, FirstEncounter encounter) async {
-    if (_examples || !_recordsReady || _registered.containsKey(animal.id)) {
-      return;
+  Future<String> _register(Animal animal, FirstEncounter encounter) async {
+    if (_examples) return '예시 도감에서는 관찰 기록을 저장하지 않아요.';
+    if (!_recordsReady) return '도감 기록을 읽는 중이에요. 잠시 후 다시 시도해 주세요.';
+    if (_registered.containsKey(animal.id)) {
+      return '${animal.name} · 이미 도감에 등록되어 있어요.';
     }
     final prefs = widget.app.preferences;
     final key = 'guide.encounters.$_profile';
@@ -238,12 +242,25 @@ class _FieldJournalState extends State<_FieldJournal>
         throw StateError('Could not save registration');
       }
     } catch (_) {
-      if (mounted) _message('이 기기에 등록 기록을 저장하지 못했어요.');
-      return;
+      return '이 기기에 등록 기록을 저장하지 못했어요.';
     }
-    if (!mounted) return;
-    await _refreshRecords();
-    if (mounted && _recordsReady) _message('${animal.name} 등록 완료');
+    if (mounted) await _refreshRecords();
+    return '${animal.name} 등록 완료';
+  }
+
+  Future<void> _registerManually(
+    Animal animal,
+    FirstEncounter encounter,
+  ) async {
+    final message = await _register(animal, encounter);
+    if (mounted) _message(message);
+  }
+
+  Future<String> _registerPhoto(String id, FirstEncounter encounter) async {
+    final animals = await _animals();
+    final animal = animals.where((animal) => animal.jejuId == id).firstOrNull;
+    if (!mounted || animal == null || id.isEmpty) return '도감에서 해당 종을 찾지 못했어요.';
+    return _register(animal, encounter);
   }
 
   void _message(String message) =>
@@ -277,16 +294,30 @@ class _FieldJournalState extends State<_FieldJournal>
     );
   }
 
-  Future<void> _openCamera([XFile? recovered]) async {
+  Future<void> _openCamera([List<XFile> recovered = const []]) async {
     if (_cameraOpen) return;
     _cameraOpen = true;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
-      final browse = await Navigator.push<bool>(
+      final search = await Navigator.push<String>(
         context,
-        MaterialPageRoute(builder: (_) => CameraScreen(recovered: recovered)),
+        MaterialPageRoute(
+          builder: (_) => CameraScreen(
+            recovered: recovered,
+            registerPhoto: _registerPhoto,
+            preferences: widget.app.preferences,
+          ),
+        ),
       );
-      if (mounted && browse == true) _openGuide();
+      if (mounted && search != null) {
+        if (search.isNotEmpty) {
+          setState(() {
+            _guideSearch = search;
+            _guideSearchKey = UniqueKey();
+          });
+        }
+        _openGuide();
+      }
     } finally {
       _cameraOpen = false;
     }
@@ -295,9 +326,15 @@ class _FieldJournalState extends State<_FieldJournal>
   Future<void> _recoverCamera() async {
     try {
       final result = await ImagePicker().retrieveLostData();
-      if (!mounted || result.isEmpty) return;
-      if (result.file case final file?) {
-        await _openCamera(file);
+      if (!mounted) return;
+      final prefs = widget.app.preferences;
+      final paths =
+          prefs?.getStringList(pendingObservationPaths) ?? const <String>[];
+      final files = [for (final path in paths) XFile(path), ?result.file];
+      if (paths.isNotEmpty) await prefs?.remove(pendingObservationPaths);
+      if (!mounted) return;
+      if (files.isNotEmpty) {
+        await _openCamera(files);
       } else if (result.exception != null) {
         _message('마지막 촬영 사진을 복원하지 못했어요.');
       }
@@ -385,6 +422,8 @@ class _FieldJournalState extends State<_FieldJournal>
                                   const SizedBox.shrink()
                                 else
                                   AnimalGuide(
+                                    key: _guideSearchKey,
+                                    initialSearch: _guideSearch,
                                     catalog: _catalog!,
                                     discovered: ids,
                                     examples: _examples,
@@ -393,7 +432,7 @@ class _FieldJournalState extends State<_FieldJournal>
                                         ? '마당으로 돌아가기'
                                         : '메인으로 돌아가기',
                                     onRegister: _recordsReady && !_examples
-                                        ? _register
+                                        ? _registerManually
                                         : null,
                                     onSendToYard: _snapshot.value == null
                                         ? null

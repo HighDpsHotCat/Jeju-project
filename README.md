@@ -35,6 +35,6 @@ flutter run
 
 마당 씬을 수정한 뒤에는 Unity 6000.4.4f1의 Web Build Support를 설치하고 `unity/JejuYard`를 열어 **Jeju Yard → Build Flutter yard player**를 실행하세요. 이 메뉴가 앱에 포함되는 `assets/yard/player.js`를 갱신합니다.
 
-Mac에서 Xcode 없이 시연하려면 `flutter build web --no-web-resources-cdn`으로 빌드하고 `python3 -m http.server 8765 --bind 127.0.0.1 --directory build/web`을 실행하세요. 브라우저에서 `http://localhost:8765`를 열면 로컬 도감과 클립보드 전송을 사용할 수 있습니다. 웹에서 직접 등록한 기록은 해당 브라우저에 저장됩니다. 웹 빌드는 로컬 CanvasKit과 한글 글꼴을 포함합니다. 한글 글꼴은 나눔고딕에서 추출했으며 라이선스는 `assets/web_fonts/OFL.txt`에 있습니다.
+Mac에서 Xcode 없이 시연하려면 `flutter build web --no-web-resources-cdn`으로 빌드하고, BioCLIP 2 설치 후 프로젝트 루트에서 `tool/bioclip2/.venv/bin/python tool/bioclip2/server.py`를 실행하세요. 브라우저에서 `http://localhost:8765`를 열면 로컬 도감과 클립보드 전송을 사용할 수 있습니다. 웹에서 직접 등록한 기록은 해당 브라우저에 저장됩니다. 웹 빌드는 로컬 CanvasKit과 한글 글꼴을 포함합니다. 한글 글꼴은 나눔고딕에서 추출했으며 라이선스는 `assets/web_fonts/OFL.txt`에 있습니다.
 
-**카메라**에서는 현장 사진을 촬영하고 미리 볼 수 있습니다. 사진의 제주 위치 검증과 종 식별을 거쳐 도감에 쓰는 과정은 후속 연동 범위입니다.
+**카메라**에서 같은 동물의 사진을 최대 5장까지 촬영하거나 앨범에서 추가합니다. 미리보기에서 사진을 골라 삭제할 수 있습니다. **다음**을 눌러야 BioCLIP 2가 모아 둔 사진 전체를 함께 판별하고 제주 도감의 한 종을 다른 종과 뚜렷하게 구분한 경우에만 현재 프로필에 자동 등록합니다. 사람·배경 사진이거나 종이 불분명하면 저장을 건너뛰고 촬영 안내를 표시합니다. 기본 설정에서는 GPS가 없어도 등록되며, 같은 종을 다시 판별해도 기록은 한 번만 저장합니다. 제주 촬영 제한을 다시 켜려면 Flutter 빌드에 `--dart-define=REQUIRE_JEJU_PHOTO_LOCATION=true`를 추가하세요. [판별 서버 설치와 휴대폰 연결](tool/bioclip2/README.md)

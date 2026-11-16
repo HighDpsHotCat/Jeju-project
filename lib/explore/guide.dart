@@ -7,6 +7,7 @@ import 'style.dart';
 class AnimalGuide extends StatefulWidget {
   const AnimalGuide({
     super.key,
+    this.initialSearch = '',
     required this.catalog,
     required this.discovered,
     required this.examples,
@@ -16,6 +17,7 @@ class AnimalGuide extends StatefulWidget {
     required this.onRegister,
     required this.onSendToYard,
   });
+  final String initialSearch;
   final Future<List<Animal>> catalog;
   final Set<String> discovered;
   final bool examples;
@@ -30,8 +32,8 @@ class AnimalGuide extends StatefulWidget {
 }
 
 class _AnimalGuideState extends State<AnimalGuide> {
-  final _search = TextEditingController();
-  String _query = '';
+  late final _search = TextEditingController(text: widget.initialSearch);
+  late String _query = widget.initialSearch.toLowerCase();
   GuideRegion _region = GuideRegion.combined;
   AnimalGroup _group = AnimalGroup.all;
 
