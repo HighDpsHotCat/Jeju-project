@@ -140,6 +140,7 @@ namespace Jeju.Yard
             { "JJ-000532", "grasshopper" },
             { "JJ-001114", "ladybird" },
             { "JJ-004705", "rhino_beetle" },
+            { "120000053293", "leopard_cat" },
             { "JJ-004503", "chipmunk" },
             { "120000053353", "water_deer" },
             { "120000053303", "raccoon_dog" },

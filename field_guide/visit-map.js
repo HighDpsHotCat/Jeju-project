@@ -5,7 +5,7 @@ const zones = [
   { id: "jeju", name: "제주시" },
   { id: "seogwipo", name: "서귀포시" },
 ];
-const kinds = { all: "전체", sight: "관광지", park: "생태공원·수목원" };
+const kinds = { all: "전체", sight: "관광지", park: "생태공원·수목원", facility: "수족관·동물원·목장" };
 const photoCredits = {
   arboretum: ["한라수목원 야간 안내 표지", "Mar del Este", "Arboretum_of_Halla1.jpg", "by", "3.0"],
   cheonjiyeon: ["천지연폭포와 계곡", "Jaeyeong951", "Jeju_Cheonjiyeon_Waterfall.jpg", "by-sa", "3.0"],
@@ -97,7 +97,8 @@ export function renderVisits({zone, kind}) {
     const copy = node("span", null, "trip-copy");
     const summary = node("small", p.type);
     copy.append(node("strong", p.name), summary);
-    loadNearby().then(({places}) => {
+    if (p.animalContext) summary.textContent = p.type + " · 대표 동물 " + p.species.length + "종";
+    else loadNearby().then(({places}) => {
       if (places[p.id]) summary.textContent = p.type + " · 주변 관찰 " + places[p.id].length + "종";
     }).catch(() => { /* Keep the place type available offline. */ });
     card.append(thumbnail(p), copy, node("span", "›", "trip-arrow"));

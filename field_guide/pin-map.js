@@ -11,13 +11,14 @@ function nearbyAnimals(place) {
   loadNearby().then(({places, radiusM, collected}) => {
     const rows = places[place.id];
     if (!rows) throw Error("Missing place");
-    block.replaceChildren(node("p", "반경 " + radiusM / 1000 + "km · GBIF 관찰 " + rows.length + "종", "bubble-count"));
+    block.replaceChildren(node("p", "반경 " + radiusM / 1000 + "km · GBIF 관찰 " + rows.length + "종 중 대표 기록", "bubble-count"));
     if (!rows.length) block.append(node("small", "수집 표본에 일치하는 관찰이 없습니다."));
     const list = node("ul", null, "bubble-animals");
     const params = new URLSearchParams(location.search);
     const match = params.get("pin") === place.id && rows.find(r => r.species === params.get("species"));
     const ordered = match ? [match, ...rows.filter(row => row !== match)] : rows;
-    for (const r of ordered) {
+    const featured = ordered.filter(row => !place.species.includes(row.name)).slice(0, 5 - place.species.length);
+    for (const r of featured) {
       const li = node("li"), guide = node("a", r.name + " ›");
       guide.href = guideUrl(r.species, r.name);
       const source = node("a", r.date.split("T")[0] + " · " + r.metres.toLocaleString("ko-KR") + "m · GBIF ↗");
@@ -32,6 +33,21 @@ function nearbyAnimals(place) {
     block.append(list, node("small", "표본 수집 " + collected));
     positionBubble();
   }).catch(() => { block.replaceChildren(node("small", "관찰 기록을 불러오지 못했습니다. 핀을 다시 열어주세요.")); });
+  return block;
+}
+
+function representativeAnimals(place) {
+  const block = node("section", null, "facility-exhibit");
+  block.append(node("small", place.area),
+    node("p", "대표 동물 " + place.species.length + "종 · " + place.animalContext, "bubble-count"));
+  const list = node("ul");
+  for (const name of place.species) list.append(node("li", name));
+  block.append(list);
+  for (const [label, href] of place.sources) {
+    const link = node("a", label + " ↗");
+    link.href = href;
+    block.append(link);
+  }
   return block;
 }
 
@@ -165,7 +181,8 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo, 
   $("place-count").textContent = entries.length + "곳";
   const markers = [];
   for (const [index,p] of entries.entries()) {
-    const marker = action(null, pinUrl(layer, p.id, layer === "visit"), "map-point", layer === "visit" ? "animals" : "name");
+    const showAnimals = layer === "visit";
+    const marker = action(null, pinUrl(layer, p.id, showAnimals), "map-point", showAnimals ? "animals" : "name");
     marker.dataset.id = p.id;
     marker.dataset.kind = p.kind || "habitat";
     marker.setAttribute("aria-label", (index + 1) + "번 " + p.name);
@@ -183,7 +200,8 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo, 
       if (level >= 2) {
         const summary = node("small", layer === "visit" ? "관찰 기록 조회 중…" : p.species.slice(0, 2).join(" · "));
         marker.append(summary);
-        if (layer === "visit") loadNearby().then(({places}) => {
+        if (p.animalContext) summary.textContent = p.type + " · 대표 동물 " + p.species.length + "종";
+        else if (layer === "visit") loadNearby().then(({places}) => {
           const rows = places[p.id] || [];
           summary.textContent = rows.length ? rows.slice(0, 2).map(r => r.name).join(" · ") + (rows.length > 2 ? " 외 " + (rows.length - 2) + "종" : "") : "주변 관찰 표본 없음";
         }).catch(() => { summary.textContent = "관찰 기록 조회 실패"; });
@@ -211,28 +229,32 @@ export function renderPinMap(layer, entries, selected, expanded, level, zoomTo, 
     title.tabIndex = -1;
     head.append(title, dismiss);
     const content = node("div", null, "bubble-content");
-    const kind = layer === "visit" && selected.id === "park" ? "보호·사육 동물" : "관찰·서식 동물";
-    const reference = layer === "visit" ? node("details") : content;
-    if (layer === "visit") {
-      content.append(nearbyAnimals(selected));
-      if (selected.species.length) content.append(reference);
-      reference.append(node("summary", kind + " 자료 " + selected.species.length + "종"));
-    } else content.append(node("p", kind + " " + selected.species.length + "종", "bubble-count"));
-    const list = node("ul", null, "bubble-animals");
-    for (const name of selected.species) {
-      const li = node("li"), guide = node("a", name);
-      guide.href = guideUrl(speciesIds[name], name);
-      guide.setAttribute("aria-label", name + " 동물 도감 열기");
-      guide.append(node("span", "›"));
-      li.append(guide);
-      if (speciesIds[name]?.startsWith("JJ-")) {
-        const analysis = analysisLink(speciesIds[name], "제주 전체 목격 분석");
-        analysis.className = "pin-analysis";
-        li.append(analysis);
+    if (selected.animalContext) {
+      content.append(representativeAnimals(selected));
+    } else {
+      const kind = "관찰·서식 동물";
+      const reference = layer === "visit" ? node("details") : content;
+      if (layer === "visit") {
+        content.append(nearbyAnimals(selected));
+        if (selected.species.length) content.append(reference);
+        reference.append(node("summary", kind + " 자료 " + selected.species.length + "종"));
+      } else content.append(node("p", kind + " " + selected.species.length + "종", "bubble-count"));
+      const list = node("ul", null, "bubble-animals");
+      for (const name of selected.species) {
+        const li = node("li"), guide = node("a", name);
+        guide.href = guideUrl(speciesIds[name], name);
+        guide.setAttribute("aria-label", name + " 동물 도감 열기");
+        guide.append(node("span", "›"));
+        li.append(guide);
+        if (speciesIds[name]?.startsWith("JJ-")) {
+          const analysis = analysisLink(speciesIds[name], "제주 전체 목격 분석");
+          analysis.className = "pin-analysis";
+          li.append(analysis);
+        }
+        list.append(li);
       }
-      list.append(li);
+      reference.append(list);
     }
-    reference.append(list);
     bubble.append(head, content);
   }
   bubble.hidden = false;

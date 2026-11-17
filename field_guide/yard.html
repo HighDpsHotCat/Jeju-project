@@ -3,7 +3,8 @@
 <style>html,body,iframe{margin:0;width:100%;height:100%;border:0;display:block;background:#fbf6ef}</style></head>
 <body><iframe title="제주 마당" id="player" allow="fullscreen"></iframe>
 <script type="module">
-import { contestAnimals, exampleIds, exampleModelKeys } from "./demo-roster.js";
+import { contestAnimals, contestInsects, dogCoats, exampleIds, exampleModelKeys } from "./demo-roster.js";
+import {claimedAnimals} from "./adoption-profile.js";
 const frame=document.getElementById("player");
 addEventListener("message", async e=>{
   if(e.origin!==location.origin || e.source!==frame.contentWindow)return;
@@ -12,6 +13,19 @@ addEventListener("message", async e=>{
   let demo=false;
   try {demo=localStorage.getItem("jeju.examples")==="true";}catch{}
   const animals = contestAnimals.map(animal => ({ ...animal, startInYard: true }));
+  animals.push(...contestInsects, ...dogCoats);
+  if(!demo) {
+    try {
+      const models = [...contestAnimals,...contestInsects,{id:"120000053293",name:"삵",modelKey:"leopard_cat"}];
+      for(const claim of await claimedAnimals()) {
+        const model=models.find(m=>m.id===claim.species);
+        if(!model) continue;
+        let animal=animals.find(m=>m.id===model.id);
+        if(!animal) { animal={...model}; animals.push(animal); }
+        animal.firstMetDate=new Date(claim.claimed+9*3600000).toISOString().slice(0,10);
+      }
+    } catch { /* Keep the yard available when collection sync is offline. */ }
+  }
   if(demo){
     const ids = new Set(exampleIds);
     try {

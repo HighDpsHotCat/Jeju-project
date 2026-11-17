@@ -1,4 +1,5 @@
-import { contestAnimals, exampleIds } from "./demo-roster.js";
+import {claimedAnimals} from "./adoption-profile.js";
+import { contestAnimals, contestInsects, exampleIds } from "./demo-roster.js";
 import { byId as $, node, icon } from "./ui.js";
 import { visits, habitats, speciesIds, mapUrl, loadRecords, loadNearby, pinUrl } from "./map-data.js";
 
@@ -37,7 +38,7 @@ function stored(key) {
   }
 }
 const demo = stored("examples") === "true";
-const registeredIds = new Set(contestAnimals.map(animal => animal.id));
+const registeredIds = new Set([...contestAnimals, ...contestInsects].map(animal => animal.id));
 if (demo) exampleIds.forEach(id => registeredIds.add(id));
 const explorer = stored("explorer") || "";
 const view = params.get("view") === "yard" ? "yard" :
@@ -151,6 +152,18 @@ function observedPlaces(id) {
   }).catch(() => { status.textContent = "관찰 장소를 불러오지 못했어요. 도감을 다시 열어 주세요."; });
   return section;
 }
+function creditedPhoto(img, photo) {
+  const figure = node("figure", null, "guide-photo");
+  const credit = node("figcaption");
+  const source = node("a", photo.title || "사진 원본");
+  source.href = photo.source;
+  const license = node("a", photo.license);
+  license.href = photo.licenseUrl;
+  credit.append(photo.note ? photo.note + " · " : "", (photo.displayCredit || photo.author) + " · ", source, " · ", license,
+    photo.unmodified ? " · 원본 그대로 제공" : " · 도감용 크기 조정. 원본과 같은 이용 조건.");
+  figure.append(img, credit);
+  return figure;
+}
 function details(row) {
   const dl = node("dl");
   const entries = [
@@ -172,6 +185,19 @@ function details(row) {
   for (const [label, value] of entries)
     if (value) dl.append(node("dt", label), node("dd", value));
   const parts = [badge(row), observedPlaces(animalId(row)), dl];
+  if (row.breeds?.length) {
+    const gallery = node("details");
+    gallery.append(node("summary", "품종 사진 " + row.breeds.length + "장"));
+    gallery.addEventListener("toggle", () => {
+      if (!gallery.open || gallery.childElementCount > 1) return;
+      for (const breed of row.breeds) {
+        const img = node("img"); img.loading = "lazy"; img.alt = breed.name;
+        img.src = "/guide-photos/" + breed.id + ".jpg";
+        gallery.append(node("h3", breed.name), creditedPhoto(img, breed));
+      }
+    });
+    parts.splice(1, 0, gallery);
+  }
   const image = featured.get(animalId(row));
   if (row.photo || image) {
     const img = node("img");
@@ -179,16 +205,7 @@ function details(row) {
     img.alt = animalName(row);
     if (row.photo) {
       const photo = row.photo;
-      const figure = node("figure", null, "guide-photo");
-      const credit = node("figcaption");
-      const source = node("a", photo.title || "사진 원본");
-      source.href = photo.source;
-      const license = node("a", photo.license);
-      license.href = photo.licenseUrl;
-      credit.append(photo.note ? photo.note + " · " : "", (photo.displayCredit || photo.author) + " · ", source, " · ", license,
-        photo.unmodified ? " · 원본 그대로 제공" : " · 도감용 크기 조정. 원본과 같은 이용 조건.");
-      figure.append(img, credit);
-      parts.unshift(figure);
+      parts.unshift(creditedPhoto(img, photo));
     } else {
       parts.unshift(img);
     }
@@ -269,6 +286,7 @@ function apply() {
           row.jeju_id,
           row.korean_name,
           row.scientific_name,
+          ...(row.breeds || []).map(breed => breed.name),
           animalId(row) === "JJ-000821" ? "강아지 웰시코기" : "",
         ].some((v) => v && v.toLowerCase().includes(q))),
   );
@@ -306,12 +324,12 @@ async function load() {
         scope === "jeju"
           ? data.filter((r) => r.in_guide !== false && Number(r.source_occurrence_count) > 0)
           : data.map(
-              ([ktsn, korean_name, scientific_name, taxon, jeju_id, photo]) => ({
+              ([ktsn, korean_name, scientific_name, taxon, jeju_id, photo, breeds]) => ({
                 species_id: "KTSN-" + ktsn,
                 korean_name,
                 scientific_name,
                 class: taxon,
-                jeju_id,
+                jeju_id, breeds,
                 photo,
               }),
             );
@@ -425,3 +443,13 @@ $("sheet").addEventListener("close", () => {
 updateCharacter();
 counts();
 if (view === "guide") load();
+
+async function refreshAdoptions() {
+  try {
+    for (const claim of await claimedAnimals()) registeredIds.add(/^\d+$/.test(claim.species) ? 'KTSN-'+claim.species : claim.species);
+    counts();
+    if (view === "guide" && rows.length) apply();
+  } catch { /* Keep the offline guide available. */ }
+}
+refreshAdoptions();
+window.addEventListener("pageshow", e => { if (e.persisted) refreshAdoptions(); });

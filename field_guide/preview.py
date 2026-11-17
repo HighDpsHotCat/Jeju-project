@@ -23,8 +23,10 @@ FILES = {
     "/visit-jeju.json": (HERE / "visit-jeju.json", "application/json"),
     "/nearby.json": (HERE / "nearby.json", "application/json"),
 }
-for name in ("field.css", "map.css", "ui.js", "demo-roster.js", "guide.js", "map.js", "map-data.js", "visit-map.js", "pin-map.js", "observation-analysis.js"):
+for name in ("field.css", "map.css", "ui.js", "demo-roster.js", "guide.js", "map.js", "map-data.js", "adoption-map.js", "adoption-profile.js", "review-model.js", "visit-map.js", "pin-map.js", "observation-analysis.js"):
     FILES["/" + name] = (HERE / name, "text/css" if name.endswith(".css") else "text/javascript")
+for path in (HERE / "review-models").glob("*.json"):
+    FILES["/review-models/" + path.name] = (path, "application/json")
 for path in (ROOT / "assets/art").glob("*.jpg"):
     FILES["/art/" + path.name] = (path, "image/jpeg")
 
@@ -69,6 +71,10 @@ class Handler(BaseHTTPRequestHandler):
         elif route in FILES:
             path, mime = FILES[route]
             content = path.read_bytes()
+            # The Python viewer serves static files; adoption uses the team's hosted API.
+            if route in ("/adoption-map.js", "/adoption-profile.js"):
+                content = content.replace(b"fetch('/api/adoption/",
+                    b"fetch('https://jeju-wildlife-field-guide.gimhoyeon.chatgpt.site/api/adoption/")
         else:
             self.send_error(404)
             return

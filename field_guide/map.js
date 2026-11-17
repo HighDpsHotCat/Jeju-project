@@ -1,12 +1,15 @@
 import { analysisLink, loadAnalysisCatalog, openAnalysis } from "./observation-analysis.js";
 import { byId as $, node } from "./ui.js";
-import { visits, habitats, guideUrl, mapUrl, pinUrl, loadNearby, loadRecords } from "./map-data.js";
+import { visits, animalVisits, habitats, guideUrl, mapUrl, pinUrl, loadNearby, loadRecords } from "./map-data.js";
 import { readVisit, renderVisits, filterUrl } from "./visit-map.js";
 
 import { clearPinMap, positionBubble, renderPinMap } from "./pin-map.js";
 
+import { updateAdoptionMap } from "./adoption-map.js";
+
 const layers = {
-  visit: ["탐방 장소", "숫자는 가까운 장소의 수예요. 누르면 확대되고, 장소 이름을 누르면 관찰 동물이 보여요."],
+  adoption: ["분양", "다른 탐험가가 발견한 희귀 동물이에요. 붉은 원을 눌러 반경 2km 안에서 주변을 촬영해 보세요."],
+  visit: ["탐방 장소", "장소 이름을 누르면 대표 동물을 볼 수 있어요. 숫자 핀을 누르면 가까운 장소가 펼쳐져요."],
   habitat: ["서식 기록", "숫자를 눌러 가까운 서식 장소를 펼쳐보세요."],
   records: ["관찰 기록", "행정시를 고르면 날짜가 있는 관찰 기록과 원문을 볼 수 있습니다."],
 };
@@ -17,15 +20,18 @@ const cities = [
 let records, recordError = false;
 let layer, selected, filterSpecies, trip, pinMode, pinPlace, expanded;
 
+function pinEntries() {
+  return layer === "visit" ? visits : habitats;
+}
 function readSelection() {
   const params = new URLSearchParams(location.search);
   layer = Object.hasOwn(layers, params.get("layer")) ? params.get("layer") : "visit";
   trip = readVisit(params);
-  const entries = layer === "visit" ? visits : layer === "habitat" ? habitats : cities;
+  const entries = layer === "adoption" ? [] : layer === "records" ? cities : pinEntries();
   const place = entries.find((p) => p.id === params.get("place"));
   const pin = entries.find((p) => p.id === params.get("pin"));
   const regionList = layer === "visit" && trip.zone && !place && !pin;
-  pinMode = layer !== "records" && !regionList;
+  pinMode = layer === "adoption" || (layer !== "records" && !regionList);
   pinPlace = pinMode ? pin || place : null;
   expanded = Boolean(pinPlace) && (pin ? params.get("show") === "animals" : true);
   selected = pinMode ? pinPlace : place || trip.zone || entries[0];
@@ -98,7 +104,10 @@ function render() {
   clearPinMap();
   $("layer-title").textContent = layers[layer][0];
   $("layer-note").textContent = layers[layer][1];
-  $("layer-select").value = layer;
+  for (const link of $("map-layers").children) {
+    if (link.dataset.layer === layer) link.setAttribute("aria-current","page");
+    else link.removeAttribute("aria-current");
+  }
   $("markers").replaceChildren();
   $("offshore").replaceChildren();
   $("places").replaceChildren();
@@ -109,11 +118,14 @@ function render() {
   $("detail").hidden = pinMode;
   $("places").hidden = layer !== "records";
   $("pin-search").hidden = layer !== "visit" || !pinMode;
+  $("animal-visits").hidden = $("pin-search").hidden;
   if ($("pin-search").hidden) $("pin-results").hidden = true;
   $("pin-key").hidden = !pinMode || layer !== "visit";
   $("zone-lists").hidden = layer !== "visit";
+  updateAdoptionMap(layer === "adoption");
+  if (layer === "adoption") return;
   if (pinMode) {
-    renderPinMap(layer, layer === "visit" ? visits : habitats, pinPlace, expanded, level, zoomTo, scales.length - 1);
+    renderPinMap(layer, pinEntries(), pinPlace, expanded, level, zoomTo, scales.length - 1);
     return;
   }
   if (layer === "visit") { renderVisits(trip); return; }
@@ -141,8 +153,11 @@ async function fetchRecords() {
   try { records = await loadRecords(); } catch { recordError = true; }
   if (layer === "records") render();
 }
-$("layer-select").onchange = (event) => {
-  const id = event.target.value;
+$("map-layers").onclick = (event) => {
+  const link = event.target.closest("a[data-layer]");
+  if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+  event.preventDefault();
+  const id = link.dataset.layer;
   if (id === layer) return;
   const equivalent = id === "habitat" ? habitats.find((p) => p.id === selected?.habitat) :
     id === "visit" && layer === "habitat" && selected ? visits.find((p) => p.habitat === selected.id) : null;
@@ -165,10 +180,19 @@ async function searchPins() {
   results.replaceChildren();
   results.hidden = !term;
   if (!term) return;
+  const matches = [];
+  for (const place of animalVisits) {
+    const animal = place.species.find(name => normalize(name).includes(term));
+    const nameMatch = [place.name, place.type].some(name => normalize(name).includes(term));
+    if (!nameMatch && !animal) continue;
+    const link = anchor(place.name, pinUrl(layer, place.id, true));
+    link.append(node("small", animal ? animal + " · " + place.animalContext : place.type));
+    matches.push({link, rank: nameMatch ? 0 : 1});
+    results.append(link);
+  }
   const [nearby, catalog] = await Promise.allSettled([loadNearby(), loadAnalysisCatalog()]);
   const places = nearby.value?.places;
   if (run !== searchRun || results.hidden) return;
-  const matches = [];
   const animals = (catalog.value || []).map(animal => ({
     animal, names: [animal.korean_name, animal.scientific_name].filter(Boolean).map(normalize),
   })).filter(({names}) => names.some(name => name.includes(term)))
@@ -179,6 +203,7 @@ async function searchPins() {
     matches.push({link, rank: names.includes(term) ? -1 : 2});
   }
   for (const place of visits) {
+    if (place.animalContext) continue;
     const exactPlace = normalize(place.name).includes(term);
     const rows = places?.[place.id] || [];
     const animal = rows.find(row => normalize(row.name) === term) ||
@@ -287,7 +312,12 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 function navigate() {
   const oldDepth = depth(), oldLayer = layer, oldTrip = trip, lastPin = pinPlace;
   readSelection();
-  if (pinPlace?.pixel && (!level || oldLayer !== layer)) zoomTo(2, pinPlace.pixel);
+  if (oldLayer !== layer) {
+    ++searchRun;
+    results.hidden = true;
+    query.value = "";
+  }
+  if (pinPlace?.pixel && (!level || oldLayer !== layer || (pinPlace.animalContext && lastPin !== pinPlace))) zoomTo(2, pinPlace.pixel);
   else render();
   if (pinMode) {
     const focus = $("map-bubble").querySelector(".bubble-name, .bubble-head strong") ||
@@ -389,6 +419,17 @@ document.addEventListener("keydown", (event) => {
     dismissPin();
   }
 });
+for (const place of animalVisits) {
+  const link = anchor(place.name, pinUrl("visit", place.id, true));
+  link.dataset.trip = "open";
+  $("animal-visits").querySelector("div").append(link);
+}
+// Earlier shared URLs used a separate layer. Keep their selected pin in Visit.
+const entryUrl = new URL(location.href);
+if (entryUrl.searchParams.get("layer") === "facilities") {
+  entryUrl.searchParams.delete("layer");
+  history.replaceState(history.state, "", entryUrl);
+}
 readSelection();
 zoomTo(pinPlace?.pixel ? 2 : 0, pinPlace?.pixel || [720,455]);
 fetchRecords();

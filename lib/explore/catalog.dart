@@ -39,6 +39,7 @@ const _yardModels = {
   'JJ-000532': ('grasshopper', '섬서구메뚜기'),
   'JJ-001114': ('ladybird', '칠성무당벌레'),
   'JJ-004705': ('rhino_beetle', '장수풍뎅이'),
+  '120000053293': ('leopard_cat', '삵'),
   'JJ-004503': ('chipmunk', '다람쥐'),
   '120000053353': ('water_deer', '고라니'),
   '120000053303': ('raccoon_dog', '너구리'),

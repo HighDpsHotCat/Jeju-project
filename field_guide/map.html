@@ -13,20 +13,22 @@
     <main class="atlas">
       <div class="map-title">
         <div class="title-line"><a class="back" href="/" aria-label="메인으로 돌아가기" title="메인으로 돌아가기">←</a><h1>제주 관찰 지도</h1></div>
-        <select id="layer-select" aria-label="지도에서 볼 내용">
-          <option value="visit">탐방 장소</option>
-          <option value="habitat">서식 기록</option>
-          <option value="records">관찰 기록</option>
-        </select>
+        <nav id="map-layers" aria-label="지도 종류">
+          <a href="/map" data-layer="visit">탐방지</a>
+          <a href="/map?layer=adoption" data-layer="adoption">분양</a>
+          <a href="/map?layer=habitat" data-layer="habitat">서식 기록</a>
+          <a href="/map?layer=records" data-layer="records">관찰 기록</a>
+        </nav>
       </div>
       <div class="atlas-layout" id="atlas-layout">
         <section id="map-panel" class="map-card paper" aria-label="관찰 지도와 지역 목록">
           <div class="map-card-head"><h2 id="map-heading" tabindex="-1"><span id="layer-title">탐방 장소</span></h2><span id="place-count"></span></div>
           <p id="layer-note" class="layer-note"></p>
           <div id="pin-search" role="search" aria-label="탐방 지도 검색">
-            <label><i data-icon="search" aria-hidden="true"></i><input id="pin-query" type="search" aria-label="장소 또는 관찰 동물 검색" placeholder="장소 또는 분석할 동물 검색" autocomplete="off" /></label>
+            <label><i data-icon="search" aria-hidden="true"></i><input id="pin-query" type="search" aria-label="장소 또는 동물 검색" placeholder="장소 또는 동물 검색" autocomplete="off" /></label>
             <div id="pin-results" hidden></div>
           </div>
+          <nav id="animal-visits" aria-label="동물 탐방지 바로가기" hidden><strong>동물 탐방지 바로가기</strong><div></div></nav>
           <figure>
             <div class="map-frame" id="map-frame">
               <div class="map-viewport" id="viewport" tabindex="0" aria-label="제주 본섬 지도">
@@ -51,7 +53,7 @@
             </div>
             <figcaption>
               <small class="basemap-credit">도로·해안선 © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap 기여자</a> · <a href="https://registry.opendata.aws/terrain-tiles/">고도 자료</a></small>
-              <div id="pin-key" hidden><span>생태공원·수목원</span><span>관광지</span></div>
+              <div id="pin-key" hidden><span>생태공원·수목원</span><span>관광지</span><span class="facility-key">수족관·동물원·목장</span></div>
               <details id="map-options"><summary>지도 설정</summary>
               <label class="grade-toggle"><input type="checkbox" id="grades" />생태·자연도 겹쳐 보기</label>
               <div class="legend" id="grade-legend" hidden>
@@ -67,18 +69,52 @@
               </nav>
             </details></figcaption>
           </figure>
+          <section id="adoption-panel" hidden aria-label="분양 스팟"></section>
           <div id="places" class="place-options" role="group" aria-label="모든 지도 항목"></div>
         </section>
         <article id="detail" class="detail paper" tabindex="-1" hidden></article>
       </div>
       <details class="source-note">
         <summary>지도와 관찰 기록의 출처</summary>
+        <p>분양 스팟의 시설 제외 구역은 <a href="https://www.data.go.kr/data/15103124/fileData.do">제주특별자치도 동물원 현황</a>의 주소와 지도에 수록한 전시시설 위치를 기준으로 합니다.</p>
         <p>관광지는 <a href="https://www.data.go.kr/data/15049995/fileData.do">제주관광공사 VISIT JEJU 여행장소</a>에서 이름을 대조하고 관광 안내나 운영기관 자료에서 위치를 확인했습니다. 기존 탐방지도 함께 표시합니다. 1100고지는 남북에 걸쳐 있어 휴게소 쪽 접근로를 기준으로 서귀포시에 넣었습니다. 동물 카드마다 현장 관찰, 서식 자료, 보호·사육 안내의 출처를 볼 수 있습니다.</p>
-        <p>관찰 기록 탭에는 프로젝트가 선별한 GBIF 자료를 행정시 단위로 표시합니다. 관광지별 동물 자료는 각 장소의 출처를 따릅니다.</p>
+        <p>동물 탐방지마다 대표 동물 다섯 종을 소개합니다. 목장과 전시·보호시설은 운영기관과 관광 안내를, 한라생태숲은 현장 관찰 기록을 따릅니다. 관찰 기록 탭에는 프로젝트가 선별한 GBIF 자료를 행정시 단위로 표시합니다. 관광지별 동물 자료는 각 장소의 출처를 따릅니다.</p>
         <p>기본 지도는 <a href="https://versatiles.org/">VersaTiles</a>가 제공하는 OpenStreetMap 도로·해안선·지명과 <a href="https://registry.opendata.aws/terrain-tiles/">Mapzen 지형 고도 자료</a>를 같은 좌표계로 투영해 그렸습니다.</p>
         <p>행정 경계는 <a href="https://github.com/wmgeolab/geoBoundaries/tree/9469f09/releaseData/gbOpen/KOR/ADM2">geoBoundaries gbOpen KOR ADM2</a> (citypopulation.de, <a href="https://creativecommons.org/licenses/by/3.0/">CC BY 3.0</a>)를 가공했습니다. 선택형 생태·자연도에는 국립생태원 에코뱅크 제주 배포본(고시 제2026-128호, 2026.05.26)과 Natural Earth 해안선을 사용했습니다.</p>
         <p><a href="https://www.nie-ecobank.kr/opn/file/list.do?svcId=101&amp;unitCode=U004&amp;unitSeRealCode=50&amp;unit=U004&amp;unitSeCode=50">공식 공간자료 ↗</a>　<a href="/ecology">생태자연도 원자료 →</a></p>
       </details>
+      <dialog id="spot-card" aria-labelledby="spot-card-name">
+        <header class="spot-card-head">
+          <span id="spot-card-kind">분양 스팟</span>
+          <button type="button" id="spot-card-close" aria-label="분양 카드 닫기" autofocus>×</button>
+        </header>
+        <div class="spot-card-species">
+          <img id="spot-card-image" alt="" width="96" height="90" hidden>
+          <h2 id="spot-card-name"></h2>
+        </div>
+        <dl class="spot-card-facts">
+          <div><dt>위치</dt><dd id="spot-card-area"></dd></div>
+          <div><dt>남은 시간</dt><dd id="spot-card-time"></dd></div>
+        </dl>
+        <p id="spot-card-note"></p>
+        <p id="spot-card-status" role="status" hidden></p>
+        <div class="spot-card-actions">
+          <button id="spot-card-preview" class="pill" type="button" hidden>3D 모델 보기</button>
+          <button id="spot-card-camera" class="pill" type="button">주변 사진 촬영</button>
+        </div>
+      </dialog>
+      <dialog id="review-model" aria-labelledby="review-title">
+        <div class="review-head"><span>심사용 3D 미리보기</span><button type="button" class="pill" id="review-close">닫기</button></div>
+        <h3 id="review-title"></h3>
+        <canvas tabindex="0" aria-label="동물 3D 모델. 드래그하거나 방향키로 돌려 보세요."></canvas>
+        <p role="status">드래그하거나 방향키로 돌려 보세요.</p>
+      </dialog>
+      <dialog id="adoption-camera" aria-labelledby="capture-heading">
+        <h2 id="capture-heading">주변 사진 촬영</h2>
+        <video autoplay playsinline muted></video>
+        <p role="status"></p><div class="capture-actions"><button type="button" class="pill" id="capture-cancel">닫기</button>
+        <button type="button" class="pill" id="capture-now" disabled>촬영하고 등록</button></div>
+      </dialog>
       <dialog id="analysis-dialog" aria-labelledby="analysis-title">
         <div class="analysis-head">
           <h2 id="analysis-title">동물 목격 분석</h2>
