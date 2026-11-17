@@ -127,6 +127,10 @@ const _yardModels = {
   'JJ-004873': ('white_eye', '동박새'),
   'JJ-003658': ('magpie', '까치'),
   'JJ-003671': ('cabbage_white', '배추흰나비'),
+  'JJ-000532': ('grasshopper', '섬서구메뚜기'),
+  'JJ-001114': ('ladybird', '칠성무당벌레'),
+  'JJ-004705': ('rhino_beetle', '장수풍뎅이'),
+  '120000053293': ('leopard_cat', '삵'),
   'JJ-004503': ('chipmunk', '다람쥐'),
   '120000053353': ('water_deer', '고라니'),
   '120000053303': ('raccoon_dog', '너구리'),
@@ -141,7 +145,18 @@ const _yardModels = {
   'JJ-004729': ('dolphin', '남방큰돌고래'),
 };
 
-// Used only when the explorer explicitly turns on the example in Settings.
+// The same four model-backed residents appear in the competition web guide.
+const contestSpeciesIds = {
+  'JJ-000821', // 웰시코기
+  'JJ-001834', // 노란 고양이
+  'JJ-003483', // 참새
+  'JJ-004729', // 남방큰돌고래
+};
+
+// Registered in the guide and available to invite from the paw menu.
+const contestInsectIds = {'JJ-000532', 'JJ-001114', 'JJ-004705'};
+
+// Additional animals shown when example records are enabled.
 const exampleSpeciesIds = {
   'JJ-000837',
   'JJ-004873',

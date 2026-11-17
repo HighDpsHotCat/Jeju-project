@@ -73,11 +73,14 @@ def catalog_species():
     species = {}
     all_names = set()
     with gzip.open(CATALOG, "rt", encoding="utf-8") as file:
-        for jeju_id, _, korean, scientific, _ in csv.reader(file, delimiter="\t"):
+        for jeju_id, national_id, korean, scientific, taxon in csv.reader(file, delimiter="\t"):
             all_names.add(scientific)
             if jeju_id:
                 item = species.setdefault(scientific, {"name": korean or scientific, "jeju_ids": []})
                 item["jeju_ids"].append(jeju_id)
+            elif (korean == "삵" or (taxon == "Insecta" and
+                  korean.endswith(("사슴벌레", "장수풍뎅이")))):
+                species.setdefault(scientific, {"name": korean, "jeju_ids": [], "national_id": national_id})
     # A national subspecies is compatible with a species-level Jeju entry.
     other_names = sorted(name for name in all_names - species.keys()
                          if " ".join(name.split()[:2]) not in species)

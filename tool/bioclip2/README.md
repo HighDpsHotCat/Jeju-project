@@ -38,3 +38,9 @@ curl -fLsS --retry 3 "$base/open_clip_model.safetensors" -o .model/weights.part 
   echo 'b7b2bf6fbc95799e42630e394cf95803892ab447c1a8ab629dbc82fbeaf7dfef  .model/weights.part' | shasum -a 256 -c - &&
   mv .model/weights.part .model/open_clip_model.safetensors
 ```
+
+## 분양 지도 연결
+
+현재 프로필에서 사진 판별 후 새로 등록한 제주 동물은 촬영 위치가 확인되면 분양 지도에 전달됩니다. 서버 실행 환경의 `ADOPTION_SIGNING_KEY` 또는 이 디렉터리의 비공개 `.adoption-key` 파일에 Sites의 동명 시크릿과 같은 값을 설정하세요. 이 키는 판별 서버와 지도 서버에서만 사용합니다. 새 판별 서버로 이전할 때도 같은 값을 설정해야 분양 스팟이 생성됩니다. 일반 도감 등록은 키 없이도 사용할 수 있습니다.
+
+지도에서 다른 탐험가의 스팟을 선택한 뒤 24시간 안에 반경 2km에서 주변을 촬영하면 같은 종을 내 도감에 등록합니다. 앱에서 연 지도의 등록은 앱으로 돌아올 때 해당 프로필에 반영됩니다. 단독 브라우저의 도감은 해당 브라우저의 프로필을 사용합니다.

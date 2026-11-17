@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
@@ -17,8 +18,14 @@ class CameraScreen extends StatefulWidget {
     required this.registerPhoto,
     this.recovered = const [],
     this.preferences,
+    this.spotOwner,
   });
-  final Future<String> Function(String speciesId, FirstEncounter encounter)
+  final String? spotOwner;
+  final Future<String> Function(
+    String speciesId,
+    FirstEncounter encounter,
+    Map<String, String>? receipt,
+  )
   registerPhoto;
   final List<XFile> recovered;
   final SharedPreferences? preferences;
@@ -28,7 +35,7 @@ class CameraScreen extends StatefulWidget {
 
 class _CameraScreenState extends State<CameraScreen> {
   final _picker = ImagePicker();
-  final _photos = <({XFile file, Uint8List bytes})>[];
+  final _photos = <({XFile file, Uint8List bytes, Map<String, double>? fix})>[];
   int _selected = 0;
   String? _error;
   String? _notice;
@@ -61,14 +68,19 @@ class _CameraScreenState extends State<CameraScreen> {
       _clearResult();
     });
     try {
-      final result = await identifyPhotos([
-        for (final photo in _photos) photo.bytes,
-      ], client);
+      Map<String, String>? receipt;
+      final result = await identifyPhotos(
+        [for (final photo in _photos) photo.bytes],
+        client,
+        spotOwner: widget.spotOwner,
+        fieldFixes: [for (final p in _photos) p.fix],
+        onSpotReceipt: (value) => receipt = value,
+      );
       if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
       final id = result.speciesId;
       final encounter = result.encounter;
       final notice = id != null && encounter != null
-          ? await widget.registerPhoto(id, encounter)
+          ? await widget.registerPhoto(id, encounter, receipt)
           : result.notice;
       if (mounted) {
         setState(() {
@@ -101,14 +113,14 @@ class _CameraScreenState extends State<CameraScreen> {
     if (widget.recovered.isNotEmpty) _restore();
   }
 
-  Future<void> _stage(XFile file) async {
+  Future<void> _stage(XFile file, [Map<String, double>? fix]) async {
     if (await file.length() > maxPhotoBytes) {
       throw const IdentificationException('사진 한 장당 12MB 이하로 선택해 주세요.');
     }
     final bytes = await file.readAsBytes();
     if (!mounted) return;
     setState(() {
-      _photos.add((file: file, bytes: bytes));
+      _photos.add((file: file, bytes: bytes, fix: fix));
       _selected = _photos.length - 1;
       _clearResult();
     });
@@ -149,12 +161,39 @@ class _CameraScreenState extends State<CameraScreen> {
           for (final photo in _photos) photo.file.path,
         ]);
       }
+      final selectedSource =
+          source ?? (_hasCamera ? ImageSource.camera : ImageSource.gallery);
       final file = await _picker.pickImage(
-        source:
-            source ?? (_hasCamera ? ImageSource.camera : ImageSource.gallery),
-        requestFullMetadata: requireJejuPhotoLocation,
+        source: selectedSource,
+        requestFullMetadata:
+            requireJejuPhotoLocation || widget.spotOwner != null,
       );
-      if (file != null && mounted) await _stage(file);
+      if (file != null && mounted) {
+        Map<String, double>? fix;
+        if (selectedSource == ImageSource.camera && widget.spotOwner != null) {
+          try {
+            var permission = await Geolocator.checkPermission();
+            if (permission == LocationPermission.denied) {
+              permission = await Geolocator.requestPermission();
+            }
+            if (permission == LocationPermission.whileInUse ||
+                permission == LocationPermission.always) {
+              final pos = await Geolocator.getCurrentPosition(
+                locationSettings: const LocationSettings(
+                  accuracy: LocationAccuracy.high,
+                  timeLimit: Duration(seconds: 8),
+                ),
+              );
+              if (pos.accuracy <= 100) {
+                fix = {'lat': pos.latitude, 'lon': pos.longitude};
+              }
+            }
+          } catch (_) {
+            /* A photo without a location still qualifies for the personal guide. */
+          }
+        }
+        if (mounted) await _stage(file, fix);
+      }
     } on IdentificationException catch (error) {
       if (mounted) setState(() => _error = error.message);
     } on PlatformException catch (error) {
@@ -222,6 +261,8 @@ class _CameraScreenState extends State<CameraScreen> {
                   '현장에서 만난 동물과 주변이 함께 보이게 여러 각도에서 찍어 주세요. 사진을 모은 뒤 다음을 누르면 AI가 함께 판별해요.',
                   style: TextStyle(color: muted, height: 1.5),
                 ),
+                if (widget.spotOwner != null)
+                  const Text('촬영 위치가 있는 희귀 동물은 분양 지도에 24시간 동안 대략적인 위치로 표시돼요.'),
                 if (requireJejuPhotoLocation)
                   const Text('제주에서 촬영한 GPS 원본 사진을 사용해 주세요.'),
                 const SizedBox(height: 16),

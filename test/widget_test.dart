@@ -19,6 +19,12 @@ const animals = [
   Animal('JJ-004873', '2', '동박새', 'Zosterops japonicus', 'Aves'),
   Animal('JJ-003382', '3', '호랑나비', 'Papilio xuthus', 'Insecta'),
   Animal('JJ-004729', '', '남방큰돌고래', 'Tursiops aduncus', 'Mammalia'),
+  Animal('JJ-000821', '', '개', 'Canis familiaris', 'Mammalia'),
+  Animal('JJ-001834', '', '고양이', 'Felis catus', 'Mammalia'),
+  Animal('JJ-003483', '5', '참새', 'Passer montanus', 'Aves'),
+  Animal('JJ-000532', '', '섬서구메뚜기', '', 'Insecta'),
+  Animal('JJ-001114', '', '칠성무당벌레', '', 'Insecta'),
+  Animal('JJ-004705', '', '장수풍뎅이', '', 'Insecta'),
   Animal('', '4', '반달가슴곰', 'Ursus thibetanus', 'Mammalia'),
 ];
 
@@ -76,6 +82,7 @@ void main() {
     final rows = (data['animals'] as List).cast<Map>();
     expect(rows.map((row) => row['id']).toSet(), {
       for (final a in models) a.id,
+      for (final k in ['dog_black', 'dog_white', 'dog_brown']) 'JJ-000821/$k',
       'recorder-only',
     });
     expect(
@@ -86,6 +93,13 @@ void main() {
         'white_eye': '동박새',
         'magpie': '까치',
         'cabbage_white': '배추흰나비',
+        'ladybird': '칠성무당벌레',
+        'grasshopper': '섬서구메뚜기',
+        'rhino_beetle': '장수풍뎅이',
+        'leopard_cat': '삵',
+        'dog_white': '흰색 강아지',
+        'dog_black': '검은색 강아지',
+        'dog_brown': '갈색 강아지',
         'chipmunk': '다람쥐',
         'water_deer': '고라니',
         'raccoon_dog': '너구리',
@@ -101,7 +115,7 @@ void main() {
         '': 'recorder-only',
       },
     );
-    expect(rows, hasLength(18));
+    expect(rows, hasLength(25));
   });
 
   testWidgets(
@@ -207,7 +221,7 @@ void main() {
         },
         publish: (value) async => snapshot = value,
       );
-      expect(jsonDecode(snapshot!)['animals'], hasLength(1));
+      expect(jsonDecode(snapshot!)['animals'], hasLength(11));
       await tapText(tester, '도감');
       await tapText(tester, '호랑나비');
       await tester.tap(find.byType(DropdownButtonFormField<String>).first);
@@ -229,33 +243,55 @@ void main() {
         ['JJ-003382'],
       );
       expect(prefs.getStringList('guide.manual.user:field-b'), ['JJ-004729']);
-      expect(find.text('2종'), findsOneWidget);
+      expect(find.text('9종'), findsOneWidget);
       await tapText(tester, '마당으로 보내기');
       expect(clipboard, snapshot);
       final data = jsonDecode(snapshot!);
       expect(data['version'], 1);
       expect(data['profile'], 'user:field-a');
       expect(data['examples'], false);
-      expect(data['animals'], [
-        {'id': 'JJ-000837', 'name': '노루', 'modelKey': 'roe_deer'},
+      final exported = (data['animals'] as List).cast<Map>();
+      expect(
         {
-          'id': 'JJ-003382',
-          'name': '호랑나비',
-          'modelKey': 'swallowtail',
-          'firstMetDate': calendarDay(DateTime.now()),
-          'firstMetLocation': '제주시 한림읍',
+          for (final row in exported.where((row) => row['startInYard'] == true))
+            row['id']: row['modelKey'],
         },
-      ]);
+        {
+          'JJ-000821': 'corgi',
+          'JJ-001834': 'tabby',
+          'JJ-003483': 'sparrow',
+          'JJ-004729': 'dolphin',
+        },
+      );
+      expect(
+        exported.where((row) => {'JJ-000837', 'JJ-003382'}.contains(row['id'])),
+        [
+          {'id': 'JJ-000837', 'name': '노루', 'modelKey': 'roe_deer'},
+          {
+            'id': 'JJ-003382',
+            'name': '호랑나비',
+            'modelKey': 'swallowtail',
+            'firstMetDate': calendarDay(DateTime.now()),
+            'firstMetLocation': '제주시 한림읍',
+          },
+        ],
+      );
       await prefs.setString('device_profile.user_id', 'field-b');
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
       expect(jsonDecode(snapshot!)['profile'], 'user:field-b');
-      expect(jsonDecode(snapshot!)['animals'].last, {
-        'id': 'JJ-004729',
-        'name': '남방큰돌고래',
-        'modelKey': 'dolphin',
-      });
+      expect(
+        (jsonDecode(snapshot!)['animals'] as List).singleWhere(
+          (a) => a['id'] == 'JJ-004729',
+        ),
+        {
+          'id': 'JJ-004729',
+          'name': '남방큰돌고래',
+          'modelKey': 'dolphin',
+          'startInYard': true,
+        },
+      );
     },
   );
 
@@ -364,10 +400,10 @@ void main() {
     tester,
   ) async {
     await start(tester, discoveries: {'JJ-000837'});
-    expect(find.text('1종'), findsOneWidget);
+    expect(find.text('8종'), findsOneWidget);
     await tapText(tester, '발견한 동물');
-    expect(find.text('1종'), findsOneWidget);
-    expect(find.text('등록 완료'), findsOneWidget);
+    expect(find.text('8종'), findsOneWidget);
+    expect(find.text('등록 완료'), findsWidgets);
     await tapText(tester, '조류');
     expect(find.text('동박새'), findsOneWidget);
     expect(find.text('노루'), findsNothing);
@@ -404,23 +440,30 @@ void main() {
         tester,
         publish: (value) async => snapshot = value,
       );
-      expect(find.text('0종'), findsOneWidget);
+      expect(find.text('7종'), findsOneWidget);
       await tapText(tester, '설정');
       await tapText(tester, '예시 기록 보기');
       await tapText(tester, '적용');
       expect(prefs.getBool('explorer.examples'), isTrue);
       expect(jsonDecode(snapshot!)['examples'], true);
       await tapText(tester, '도감');
-      expect(find.text('3종'), findsOneWidget);
+      expect(find.text('10종'), findsOneWidget);
       expect(find.text('발견한 동물 · 예시'), findsOneWidget);
-      expect(find.text('등록 완료'), findsNWidgets(3));
+      expect(find.text('등록 완료'), findsWidgets);
       await tapText(tester, '마당');
       await tapText(tester, '설정');
       await tapText(tester, '예시 기록 보기');
       await tapText(tester, '적용');
-      expect(find.text('0종'), findsOneWidget);
+      expect(find.text('7종'), findsOneWidget);
       expect(jsonDecode(snapshot!)['examples'], false);
-      expect(jsonDecode(snapshot!)['animals'], isEmpty);
+      final residents = (jsonDecode(snapshot!)['animals'] as List).cast<Map>();
+      expect(
+        residents
+            .where((row) => row['startInYard'] == true)
+            .map((row) => row['id']),
+        unorderedEquals(contestSpeciesIds),
+      );
+      expect(residents.map((row) => row['id']), containsAll(contestInsectIds));
     },
   );
 
@@ -470,10 +513,13 @@ void main() {
     expect(tester.getCenter(find.text('도감')).dx, lessThan(main.dx));
     expect(tester.getCenter(find.text('마당')).dx, greaterThan(main.dx));
     await tapText(tester, '지도');
-    expect(
-      tester.widget<ObservationMapPage>(find.byType(ObservationMapPage)).url,
-      observationMapUrl,
-    );
+    final mapUrl = tester
+        .widget<ObservationMapPage>(find.byType(ObservationMapPage))
+        .url;
+    expect(mapUrl.origin, observationMapUrl.origin);
+    expect(mapUrl.path, observationMapUrl.path);
+    expect(mapUrl.queryParameters['appMap'], '1');
+    expect(mapUrl.fragment, matches(RegExp(r'^profile=[a-f0-9]{64}$')));
     await tester.binding.handlePopRoute();
     await tester.pumpAndSettle();
     await tapText(tester, '마당');

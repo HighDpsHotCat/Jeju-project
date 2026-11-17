@@ -106,6 +106,13 @@ namespace Jeju.Yard
                     AddModel("cabbage_white",root.transform.Find("Small white"));
                     AddModel("swallowtail",root.transform.Find("Asian swallowtail"));
                     var paint = root.GetComponentInChildren<MeshRenderer>(true).sharedMaterial;
+                    AddWildlife(root.transform, paint, "grasshopper", 2, 3);
+                    AddWildlife(root.transform, paint, "ladybird", -2, -2);
+                    AddWildlife(root.transform, paint, "rhino_beetle", 3, -3);
+                    AddWildlife(root.transform, paint, "leopard_cat", 1, 2);
+                    AddWildlife(root.transform, paint, "dachshund", -1, 3);
+                    AddWildlife(root.transform, paint, "dalmatian", 0, -3);
+                    AddWildlife(root.transform, paint, "pomeranian", 4, 1);
                     AddWildlife(root.transform, paint, "chipmunk", -3, 1);
                     AddWildlife(root.transform, paint, "water_deer", 3, 3);
                     AddWildlife(root.transform, paint, "raccoon_dog", -4, 3);
@@ -115,6 +122,9 @@ namespace Jeju.Yard
                     AddWildlife(root.transform, paint, "white_cat", 4, -2);
                     AddWildlife(root.transform, paint, "jindo", 1, -4);
                     AddWildlife(root.transform, paint, "beagle", -3, -3);
+                    AddWildlife(root.transform, paint, "dog_brown", -2, 2);
+                    AddWildlife(root.transform, paint, "dog_white", 3, -1);
+                    AddWildlife(root.transform, paint, "dog_black", -3, -1);
                     AddWildlife(root.transform, paint, "poodle", 0, 2);
                 }
                 var dolphin = root.GetComponentInChildren<DolphinVisitor>(true);
