@@ -16,6 +16,44 @@ export const speciesIds = {
 
 export const visits = [
   {
+    id: "aquaplanet", name: "아쿠아플라넷 제주", kind: "facility", type: "수족관", animalContext: "전시 동물", zone: "seogwipo",
+    area: "서귀포시 성산읍 섭지코지로 95", destination: [33.43298, 126.92780], pixel: [1341.5, 358.7],
+    species: ["아프리카펭귄", "바이칼물범", "동수구리", "물총고기", "빅벨리드해마"],
+    sources: [["공식 생물 소개", "https://m.aquaplanet.co.kr/jeju/introduce/friend/list.do"],
+      ["펭귄 전시 안내", "https://m.aquaplanet.co.kr/contents/jeju/introduce/gallery/second-floor/aquarium.do"]],
+  },
+  {
+    id: "hwajowon", name: "화조원", kind: "facility", type: "조류 동물원", animalContext: "전시 동물", zone: "jeju",
+    area: "제주시 애월읍 애원로 804", destination: [33.411109, 126.3714311], pixel: [400.6, 399.6],
+    species: ["알파카", "흰머리수리", "사랑앵무", "알락꼬리여우원숭이", "잉어"],
+    sources: [["공식 동물 소개", "https://www.flowerbirdpark.com/"],
+      ["야외공원 안내", "https://www.flowerbirdpark.com/page2-1"]],
+  },
+  {
+    id: "dochidol", name: "도치돌알파카목장", kind: "facility", type: "목장", animalContext: "목장 동물", zone: "jeju",
+    area: "제주시 애월읍 도치돌길 303", destination: [33.4098961, 126.3665965], pixel: [392.4, 402.0],
+    species: ["알파카", "양", "염소", "말", "토끼"],
+    sources: [["목장 공식 안내", "https://www.alpacajeju.com/DOCHIDOLRANCH"], ["비짓제주 목장 소개", visitJeju("CNTS_200000000010953")]],
+  },
+  {
+    id: "saebyeol-friends", name: "새별프렌즈", kind: "facility", type: "목장", animalContext: "목장 동물", zone: "jeju",
+    area: "제주시 애월읍 평화로 1529", destination: [33.364338, 126.3552026], pixel: [372.5, 493.7],
+    species: ["당나귀", "알파카", "양", "말", "염소"],
+    sources: [["비짓제주 목장 소개", visitJeju("CNTS_200000000010957")]],
+  },
+  {
+    id: "fathers-garden", name: "파더스가든", kind: "facility", type: "동물농장", animalContext: "농장 동물", zone: "seogwipo",
+    area: "서귀포시 안덕면 병악로 44-33", destination: [33.2805107, 126.3655186], pixel: [389.0, 662.9],
+    species: ["꽃사슴", "한라말", "토끼", "양", "염소"],
+    sources: [["공식 동물농장 안내", "https://fathersgarden.co.kr/animal"], ["비짓제주 농원 소개", visitJeju("CNTS_200000000014189")]],
+  },
+  {
+    id: "halla-eco-forest", name: "한라생태숲", kind: "park", type: "생태숲", animalContext: "야생 관찰", zone: "jeju",
+    area: "제주시 516로 2596", destination: [33.430924, 126.595761], pixel: [780.1, 361.5],
+    species: ["족제비", "큰유리새", "제비딱새", "왜가리", "비바리뱀"],
+    sources: [["현장 관찰 기록", "https://www.jejubirds.com/2026/09/2026-09-13-halla-eco-forest.html"], ["비짓제주 생태숲 안내", visitJeju("CONT_000000000500688")]],
+  },
+  {
     id: "arboretum", name: "한라수목원", type: "수목원", zone: "jeju", kind: "park",
     area: "제주시 연동 · 수목원길 72", pixel: [604.7, 282.8], search: "제주 한라수목원 주차장",
     csvName: "한라수목원", species: ["노루", "큰오색딱다구리"],
@@ -99,13 +137,13 @@ export const visits = [
   },
   {
     zone: "seogwipo", kind: "park",
-    id: "park", name: "제주자연생태공원", type: "보호·사육 관찰장", area: "서귀포시 성산읍 · 금백조로 446",
+    id: "park", name: "제주자연생태공원", type: "생태공원", animalContext: "보호·사육 동물", area: "서귀포시 성산읍 · 금백조로 446",
     pixel: [1165.4, 344.8], destination: [33.43972902, 126.823609], destinationName: "제주자연생태공원 주출입구",
     grade: "주출입구에는 등급 도형이 없습니다. 반경 500m에는 2·3등급 구역이 있습니다.",
-    species: ["노루", "독수리", "반달가슴곰"],
+    species: ["노루", "독수리", "반달가슴곰", "수리부엉이", "매"],
     description: "제주도 무장애여행 안내서에 소개된 보호·사육 관찰장입니다. 안내서에 실린 동물을 도감에서 미리 살펴볼 수 있습니다.",
     access: "길찾기는 공원 주출입구로 연결됩니다. 전망대 방향에는 약 9° 오르막이 있습니다. 당일 관람 가능한 동물은 공원(064-787-4711)에 확인하세요.",
-    sources: [["제주도 무장애여행 안내", hub(740)]],
+    sources: [["제주도 무장애여행 안내", hub(740)], ["한국관광공사 공원 소개", "https://korean.visitkorea.or.kr/detail/ms_detail.do?cotid=127bc76f-f4d6-4a45-9cc3-d0d91a84a59f"]],
   },
   {
     zone: "seogwipo", kind: "sight",
@@ -118,6 +156,8 @@ export const visits = [
   },
   ...tourismSites.map(place => ({ ...place, species: [] })),
 ];
+
+export const animalVisits = visits.filter(place => place.animalContext);
 
 export const habitats = [
   { id: "dongbaek", name: "동백동산습지", type: "곶자왈 습지", area: "제주시 조천읍 선흘리", pixel: [982, 215], species: ["제주도롱뇽"],

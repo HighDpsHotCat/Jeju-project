@@ -1,0 +1,45 @@
+<!doctype html><html lang="ko"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>제주 생태자연도</title>
+<style>body{max-width:1000px;margin:3rem auto;padding:0 1rem;background:#f3f2e9;color:#163e34;font:16px/1.65 system-ui}a{color:#176049}select,button,input{font:inherit;padding:.4em .7em}table{background:white;border-collapse:collapse;width:100%}td,th{padding:.6em;text-align:left;border-bottom:1px solid #cdd6ce}nav,form{display:flex;gap:.6em;align-items:center;flex-wrap:wrap;margin:1rem 0}.scroll{overflow:auto}#setup[hidden]{display:none}</style>
+<a href="/?view=guide">← 야생동물 도감</a>　<a href="/map">동물 관찰 지도 →</a><h1>제주 생태자연도</h1>
+<form id="setup" hidden><label>제주데이터허브 프로젝트키 <input type="password" required autocomplete="off"></label><button>키 확인 및 저장</button><button type="button" id="testHub">허브에서 1건 직접 확인</button></form>
+<p id="settings"></p><label>습지 평가 등급 <select><option value="">전체</option><option>1</option><option>2</option><option>3</option></select></label>
+<p id="status" role="status"></p><div class="scroll"><table><thead></thead><tbody></tbody></table></div><nav><button id="prev">이전</button><button id="next">다음</button><button id="retry">다시 조회</button></nav>
+<small>자료 제공 · 제주데이터허브 / 국립생태원 에코뱅크</small>
+<script>
+const el=s=>document.querySelector(s);
+const cols={ecologicalNatureRank:'생태자연도 등급',vegetationRank:'식생 등급',wetlandRank:'습지 등급',topographyRank:'지형 등급',animalPlantRank:'동식물 등급',colonySymbol:'군락 기호',plantColonyName:'식물 군락',ageclassCode:'영급 코드',ageclassCodeName:'영급명',preciseWetlandName:'습지명',censusName:'조사명',topographyName:'지형명'};
+let page=1, version=0;
+async function loadPage(){
+ const v=++version;
+ el('#prev').disabled=el('#next').disabled=true;el('tbody').replaceChildren();el('thead').replaceChildren();el('#status').textContent='조회 중…';
+ try{const rank=el('select').value;
+ const r=await fetch('/api/ecology?number='+page+(rank?'&wetlandRank='+rank:''));
+ const data=await r.json();if(v!==version)return;if(!r.ok)throw Error(data.error);
+ const keys=[...new Set([...Object.keys(cols),...data.data.flatMap(Object.keys)])].filter(k=>data.data.some(row=>row[k]!=null));
+ const header=el('thead').insertRow();for(const k of keys){const th=document.createElement('th');th.textContent=cols[k]||k;header.append(th)}
+ for(const row of data.data){const tr=el('tbody').insertRow();for(const k of keys)tr.insertCell().textContent=row[k]??'—'}
+ const fetched=data.fetchedAt?new Date(data.fetchedAt).toLocaleString('ko-KR',{timeZone:'Asia/Seoul'}):'';
+ const state=data.source==='stale'?'허브 갱신 실패 · 마지막 저장 결과':'최근 허브 조회';
+ el('#status').textContent='총 '+data.totCnt.toLocaleString()+'건 · '+page+'페이지'+(fetched?' · '+state+' '+fetched+' (한국시간)':'');
+ el('#next').disabled=!data.hasMore;
+ }catch(e){if(v===version)el('#status').textContent=e.message}finally{if(v===version)el('#prev').disabled=page<=1}
+}
+el('#prev').onclick=()=>{page--;loadPage()};el('#next').onclick=()=>{page++;loadPage()};el('#retry').onclick=loadPage;el('select').onchange=()=>{page=1;loadPage()};
+fetch('/api/session').then(r=>r.json()).then(s=>{el('#setup').hidden=!s.owner;if(!s.owner&&!s.signedIn){const a=document.createElement('a');a.href='/signin-with-chatgpt?return_to=/ecology';a.target='_top';a.textContent='관리자 로그인';el('#settings').append(a)}});
+el('#testHub').onclick=async()=>{
+ const input=el('#setup input');
+ if(!input.reportValidity())return;
+ const button=el('#testHub');button.disabled=true;
+ el('#settings').textContent='이 브라우저에서 제주데이터허브에 직접 1건을 요청하고 있습니다.';
+ try{
+  const key=input.value.trim();
+  const base='https://open.jejudatahub.net/api/proxy/6bttat6t84Daa1b18aat1a6DD4648Daa/';
+  const r=await fetch(base+encodeURIComponent(key)+'?number=1&limit=1',{credentials:'omit',referrerPolicy:'no-referrer',redirect:'error',cache:'no-store',signal:AbortSignal.timeout(15000)});
+  if(!r.ok)throw Error('브라우저 → 제주데이터허브 직접 조회: HTTP '+r.status+'.');
+  const data=await r.json();
+  el('#settings').textContent=Array.isArray(data?.data)?'직접 조회 성공. 허브가 반환한 전체 건수: '+data.totCnt+'건.':'허브 응답에 데이터 목록이 없습니다.';
+ }catch(error){el('#settings').textContent=error.message.startsWith('브라우저 →')?error.message:'브라우저에서 허브 응답을 읽을 수 없습니다. 이 결과만으로는 키 유효 여부를 판단할 수 없습니다.'}
+ finally{button.disabled=false}
+};
+el('#setup').onsubmit=async e=>{e.preventDefault();const input=el('input');try{const r=await fetch('/api/setup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:input.value.trim()})});const data=await r.json();if(!r.ok)throw Error(data.error);input.value='';el('#settings').textContent='인증키를 저장했습니다.';loadPage()}catch(err){el('#settings').textContent=err.message}};loadPage();
+</script></html>

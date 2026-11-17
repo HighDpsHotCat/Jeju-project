@@ -109,6 +109,7 @@ namespace Jeju.Yard
                     AddWildlife(root.transform, paint, "grasshopper", 2, 3);
                     AddWildlife(root.transform, paint, "ladybird", -2, -2);
                     AddWildlife(root.transform, paint, "rhino_beetle", 3, -3);
+                    AddWildlife(root.transform, paint, "leopard_cat", 1, 2);
                     AddWildlife(root.transform, paint, "dachshund", -1, 3);
                     AddWildlife(root.transform, paint, "dalmatian", 0, -3);
                     AddWildlife(root.transform, paint, "pomeranian", 4, 1);
