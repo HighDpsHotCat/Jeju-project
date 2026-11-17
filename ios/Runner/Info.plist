@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>희귀 동물 분양 스팟을 만들 때 촬영 위치를 확인합니다.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>같은 네트워크의 제주 동물 판별 서버에 사진을 보냅니다.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>

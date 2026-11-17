@@ -137,6 +137,10 @@ namespace Jeju.Yard
 
         static readonly Dictionary<string,string> WildlifeKeys = new Dictionary<string,string>
         {
+            { "JJ-000532", "grasshopper" },
+            { "JJ-001114", "ladybird" },
+            { "JJ-004705", "rhino_beetle" },
+            { "120000053293", "leopard_cat" },
             { "JJ-004503", "chipmunk" },
             { "120000053353", "water_deer" },
             { "120000053303", "raccoon_dog" },
@@ -170,6 +174,9 @@ namespace Jeju.Yard
                     case "JJ-000821":
                         AddCoat("jindo", "진돗개");
                         AddCoat("beagle", "비글");
+                        AddCoat("dachshund", "닥스훈트");
+                        AddCoat("dalmatian", "달마시안");
+                        AddCoat("pomeranian", "포메라니안");
                         AddCoat("poodle", "푸들");
                         break;
                 }
@@ -196,6 +203,9 @@ namespace Jeju.Yard
                     new Animal("JJ-003483", "참새", "sparrow", "2026-05-12", "제주시 조천읍"),
                     new Animal("JJ-003382", "호랑나비", "swallowtail", "2026-05-16", "제주시 한림읍"),
                     new Animal("JJ-004729", "남방큰돌고래", "dolphin", "2026-05-21", "서귀포시 대정읍"),
+                    new Animal("JJ-000532", "섬서구메뚜기", "grasshopper"),
+                    new Animal("JJ-001114", "칠성무당벌레", "ladybird"),
+                    new Animal("JJ-004705", "장수풍뎅이", "rhino_beetle"),
                     new Animal("JJ-004503", "다람쥐", "chipmunk"),
                     new Animal("120000053353", "고라니", "water_deer"),
                     new Animal("120000053303", "너구리", "raccoon_dog"),

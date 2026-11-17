@@ -9,6 +9,8 @@ namespace Jeju.Yard
         [SerializeField] Transform[] limbs;
         [SerializeField] Quaternion[] rest;
         [SerializeField] bool bird;
+        [SerializeField] bool insect;
+        [SerializeField] bool jumps;
         [SerializeField] float altitude;
         float clock;
 
@@ -18,8 +20,11 @@ namespace Jeju.Yard
         {
             frame = visual;
             bird = key == "mallard" || key == "crow" || key == "swallow";
+            jumps = key == "grasshopper";
+            insect = jumps || key == "ladybird" || key == "rhino_beetle";
             altitude = key == "swallow" ? .9f : key == "crow" ? .45f : 0f;
-            string[] joints = bird ? new[] { "WingLeft", "WingRight" } :
+            string[] joints = insect ? new[] { "ForeLeft", "ForeRight", "MidLeft", "MidRight", "HindLeft", "HindRight" } :
+                bird ? new[] { "WingLeft", "WingRight" } :
                 new[] { "ForeLeft", "ForeRight", "HindLeft", "HindRight", "Tail" };
             limbs = new Transform[joints.Length];
             rest = new Quaternion[joints.Length];
@@ -46,14 +51,19 @@ namespace Jeju.Yard
             float t = clock * (altitude > 0 ? .85f : .48f);
             frame.localPosition = new Vector3(.55f * Mathf.Sin(t), altitude + .016f * (1 + Mathf.Cos(clock * 8)),
                 .38f * Mathf.Cos(t));
+            if (jumps)
+            {
+                float phase = Mathf.Repeat(clock, 2.4f) / .48f;
+                if (phase < 1f) frame.localPosition += Vector3.up * (.20f * Mathf.Sin(Mathf.PI * phase));
+            }
             frame.localRotation = Quaternion.LookRotation(new Vector3(.55f * Mathf.Cos(t), 0, -.38f * Mathf.Sin(t)));
             float swing = Mathf.Sin(clock * (altitude > 0 ? 9f : 6f)) * (1f - Attention);
             for (int i = 0; i < limbs.Length; i++)
             {
                 if (limbs[i] == null) continue;
-                bool tail = !bird && i == 4;
+                bool tail = !bird && !insect && i == 4;
                 var axis = bird ? Vector3.forward : tail ? Vector3.up : Vector3.right;
-                float sign = i == 1 || i == 2 ? -1f : 1f;
+                float sign = i == 1 || i == 2 || (insect && i == 5) ? -1f : 1f;
                 float angle = bird ? (altitude > 0 ? 39f : 7f) : 20f;
                 var jointAxis = limbs[i].parent.InverseTransformDirection(frame.TransformDirection(axis));
                 limbs[i].localRotation = Quaternion.AngleAxis(sign * swing * angle, jointAxis) * rest[i];

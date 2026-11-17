@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
 const mapRoute = '/map';
@@ -36,8 +37,34 @@ class _ObservationMapPageState extends State<ObservationMapPage> {
               setState(() => failed = true);
             }
           },
-          onNavigationRequest: (request) {
+          onNavigationRequest: (request) async {
             final uri = Uri.tryParse(request.url);
+            if (request.isMainFrame &&
+                uri != null &&
+                uri.scheme == "https" &&
+                uri.origin == widget.url.origin &&
+                uri.path == mapRoute &&
+                uri.queryParameters['camera'] == '1' &&
+                RegExp(r'^[a-f0-9]{64}$')
+                    .hasMatch(uri.queryParameters['spot'] ?? '')) {
+              final camera = uri.replace(fragment: widget.url.fragment);
+              try {
+                if (await launchUrl(
+                  camera,
+                  mode: LaunchMode.externalApplication,
+                )) {
+                  return NavigationDecision.prevent;
+                }
+              } catch (_) {
+                /* Report launch failure in the map. */
+              }
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('카메라를 사용할 브라우저를 열 수 없어요.')),
+                );
+              }
+              return NavigationDecision.prevent;
+            }
             if (request.isMainFrame &&
                 uri?.host == widget.url.host &&
                 uri?.path == '/' &&

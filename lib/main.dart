@@ -6,6 +6,9 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'dart:async';
+
+import 'explore/adoption.dart';
 import 'explore/camera.dart';
 import 'explore/catalog.dart';
 import 'explore/collection.dart';
@@ -156,6 +159,9 @@ class _FieldJournalState extends State<_FieldJournal>
         add(id, FirstEncounter.unknown);
       }
       manual.forEach(add);
+      readManualEncounters(
+        prefs?.getString('adoption.claims.${records.profile}'),
+      ).forEach(add);
       final breedIds = entries.keys
           .where((id) => breedSpeciesId(id) != null)
           .toSet();
@@ -177,6 +183,9 @@ class _FieldJournalState extends State<_FieldJournal>
         _recordsReady = true;
       });
       await _publishYard();
+      if (prefs?.getString('adoption.profile.${records.profile}') != null) {
+        unawaited(_syncAdoptions(prefs!, records.profile, generation));
+      }
     } catch (_) {
       if (mounted && generation == _readGeneration) {
         _message('기기에서 발견 기록을 읽지 못했어요.');
@@ -184,16 +193,50 @@ class _FieldJournalState extends State<_FieldJournal>
     }
   }
 
+  Future<void> _syncAdoptions(
+    SharedPreferences prefs,
+    String profile,
+    int generation,
+  ) async {
+    try {
+      final adopted = await (await AdoptionProfile.open(prefs, profile)).sync();
+      if (!mounted ||
+          generation != _readGeneration ||
+          profile != _profile ||
+          adopted.isEmpty) {
+        return;
+      }
+      final key = 'adoption.claims.$profile';
+      final cached = readManualEncounters(prefs.getString(key));
+      if (adopted.keys.every(cached.containsKey)) return;
+      cached.addAll(adopted);
+      if (await prefs.setString(key, writeManualEncounters(cached)) &&
+          mounted &&
+          generation == _readGeneration) {
+        await _refreshRecords();
+      }
+    } catch (_) {
+      /* Cached claims are usable offline and refresh on resume. */
+    }
+  }
+
+  Set<String> get _discoveries => {
+    ...contestSpeciesIds,
+    ...contestInsectIds,
+    ...(_examples ? exampleSpeciesIds : _registered.keys),
+  };
+
   Future<String> _yardSnapshot() async {
-    final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
+    final ids = _discoveries;
     final profile = _profile;
     final examples = _examples;
     return encodeYardSnapshot(
       profile: profile,
       examples: examples,
       discoveries: ids,
+      startInYard: contestSpeciesIds,
       encounters: _examples ? const {} : _registered,
-      catalog: ids.isEmpty ? const [] : await _animals(),
+      catalog: await _animals(),
     );
   }
 
@@ -240,6 +283,7 @@ class _FieldJournalState extends State<_FieldJournal>
     Animal animal,
     FirstEncounter encounter, {
     PetBreed? breed,
+    VoidCallback? onSaved,
   }) async {
     if (_examples) return '예시 도감에서는 관찰 기록을 저장하지 않아요.';
     if (!_recordsReady) return '도감 기록을 읽는 중이에요. 잠시 후 다시 시도해 주세요.';
@@ -264,6 +308,7 @@ class _FieldJournalState extends State<_FieldJournal>
     } catch (_) {
       return '이 기기에 등록 기록을 저장하지 못했어요.';
     }
+    onSaved?.call();
     if (mounted) await _refreshRecords();
     return breed == null ? '${animal.name} 등록 완료' : '${breed.name} 수집 완료';
   }
@@ -276,11 +321,31 @@ class _FieldJournalState extends State<_FieldJournal>
     if (mounted) _message(message);
   }
 
-  Future<String> _registerPhoto(String id, FirstEncounter encounter) async {
+  Future<String> _registerPhoto(
+    String id,
+    FirstEncounter encounter,
+    Map<String, String>? receipt,
+    AdoptionProfile? profile,
+  ) async {
     final animals = await _animals();
-    final animal = animals.where((animal) => animal.jejuId == id).firstOrNull;
+    final animal = animals.where((animal) => animal.id == id).firstOrNull;
     if (!mounted || animal == null || id.isEmpty) return '도감에서 해당 종을 찾지 못했어요.';
-    return _register(animal, encounter);
+    if (profile != null && profile.profile != _profile) {
+      return '프로필이 바뀌었어요. 다시 촬영해 주세요.';
+    }
+    var saved = false;
+    final notice = await _register(
+      animal,
+      encounter,
+      onSaved: () => saved = true,
+    );
+    if (!saved || profile == null || receipt == null) return notice;
+    try {
+      final shared = await profile.share(id, receipt);
+      return shared == null ? notice : '$notice · $shared';
+    } catch (_) {
+      return '$notice · 분양 지도를 연결하면 스팟 등록을 다시 시도해요.';
+    }
   }
 
   void _message(String message) =>
@@ -319,13 +384,29 @@ class _FieldJournalState extends State<_FieldJournal>
       await Navigator.pushNamed(context, mapRoute);
       return;
     }
-    final url = observationMapUrl;
+    final prefs = widget.app.preferences;
+    final embedded =
+        !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.android ||
+            defaultTargetPlatform == TargetPlatform.iOS);
+    final profile = !_examples && _recordsReady && prefs != null
+        ? await AdoptionProfile.open(prefs, _profile)
+        : null;
+    if (!mounted) return;
+    final url = observationMapUrl.replace(
+      queryParameters: {
+        if (embedded) 'appMap': '1',
+        if (profile == null) 'examples': '1',
+      },
+      fragment: profile == null ? null : 'profile=${profile.token}',
+    );
     if (!kIsWeb &&
         (defaultTargetPlatform == TargetPlatform.android ||
             defaultTargetPlatform == TargetPlatform.iOS)) {
       await Navigator.of(context).push(
         MaterialPageRoute<void>(builder: (_) => ObservationMapPage(url: url)),
       );
+      if (mounted) await _refreshRecords();
       return;
     }
     try {
@@ -341,12 +422,19 @@ class _FieldJournalState extends State<_FieldJournal>
     _cameraOpen = true;
     FocusManager.instance.primaryFocus?.unfocus();
     try {
+      final prefs = widget.app.preferences;
+      final profile = !_examples && _recordsReady && prefs != null
+          ? await AdoptionProfile.open(prefs, _profile)
+          : null;
+      if (!mounted) return;
       final search = await Navigator.push<String>(
         context,
         MaterialPageRoute(
           builder: (_) => CameraScreen(
             recovered: recovered,
-            registerPhoto: _registerPhoto,
+            spotOwner: profile?.owner,
+            registerPhoto: (id, encounter, receipt) =>
+                _registerPhoto(id, encounter, receipt, profile),
             preferences: widget.app.preferences,
           ),
         ),
@@ -425,7 +513,7 @@ class _FieldJournalState extends State<_FieldJournal>
   @override
   Widget build(BuildContext context) {
     final guideProfile = _profile;
-    final ids = _examples ? exampleSpeciesIds : _registered.keys.toSet();
+    final ids = _discoveries;
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.dark.copyWith(

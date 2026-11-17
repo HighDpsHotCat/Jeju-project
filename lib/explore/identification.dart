@@ -41,6 +41,9 @@ Future<PhotoIdentification> identifyPhotos(
   List<Uint8List> photos,
   http.Client client, {
   bool requireJejuLocation = requireJejuPhotoLocation,
+  String? spotOwner,
+  List<Map<String, double>?> fieldFixes = const [],
+  void Function(Map<String, String>)? onSpotReceipt,
 }) async {
   if (photos.isEmpty || photos.length > maxObservationPhotos) {
     throw const IdentificationException('관찰 사진을 1~5장 선택해 주세요.');
@@ -51,6 +54,10 @@ Future<PhotoIdentification> identifyPhotos(
       queryParameters: {'capture': requireJejuLocation ? '1' : 'date'},
     ),
   );
+  if (spotOwner != null) {
+    request.headers['X-Field-Profile'] = spotOwner;
+    request.headers['X-Field-Fixes'] = jsonEncode(fieldFixes);
+  }
   for (var i = 0; i < photos.length; i++) {
     if (photos[i].length > maxPhotoBytes) {
       throw const IdentificationException('사진 한 장당 12MB 이하로 선택해 주세요.');
@@ -75,16 +82,36 @@ Future<PhotoIdentification> identifyPhotos(
   if (data
       case {
         'decision': 'accepted',
-        'candidates': [{'jeju_ids': [String id, ...]}, ...],
+        'candidates': [final Map candidate, ...],
         'captures': List captures,
       }
-      when id.isNotEmpty && captures.length == photos.length) {
+      when captures.length == photos.length) {
+    final id = switch (candidate) {
+      {'jeju_ids': [String localId, ...]} => localId,
+      {'jeju_ids': [], 'national_id': String nationalId}
+          when spotOwner != null && data['species_id'] == nationalId =>
+        nationalId,
+      _ => '',
+    };
+    if (id.isEmpty) {
+      return (
+        speciesId: null,
+        encounter: null,
+        notice: '종을 확실히 구분하기 어려워 등록하지 않았어요.',
+      );
+    }
     FirstEncounter? earliest;
     for (final capture in captures) {
       final result = await _acceptedPhoto(id, capture, requireJejuLocation);
       final encounter = result.encounter;
       if (encounter == null) return result;
       earliest = earliest?.earliest(encounter) ?? encounter;
+    }
+    if (data['spot_receipt'] case {
+      'payload': String payload,
+      'signature': String signature,
+    }) {
+      onSpotReceipt?.call({'payload': payload, 'signature': signature});
     }
     return (speciesId: id, encounter: earliest, notice: null);
   }
